@@ -1,0 +1,390 @@
+{
+    "@@locale": "ar",
+    "appTitle": "تحليلات كرة القدم",
+    "generalPreferences": "التفضيلات العامة",
+    "enableNotifications": "تفعيل الإشعارات",
+    "darkMode": "الوضع الداكن",
+    "enableDataSync": "تفعيل مزامنة البيانات",
+    "dataManagement": "إدارة البيانات",
+    "clearCache": "مسح ذاكرة التخزين المؤقت",
+    "exportData": "تصدير البيانات",
+    "language": "اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية",
+    "french": "الفرنسية",
+    "tunisianArabic": "العربية (تونس)",
+    "strategie": "الاستراتيجية",
+    "loggedInAs": "تسجيل الدخول باسم:",
+    "guest": "ضيف",
+    "training": "التدريب",
+    "reunions": "الاجتماعات",
+    "matches": "المباريات",
+    "allMatches": "جميع المباريات",
+    "upcoming": "القادمة",
+    "past": "الماضية",
+    "filterByEvent": "التصفية حسب الحدث",
+    "errorLoadingEvents": "خطأ في تحميل الأحداث:",
+    "noMatchesFound": "لم يتم العثور على مباريات.",
+    "noMatchesInCategory": "لا توجد مباريات في هذه الفئة.",
+    "event": "الحدث:",
+    "players": "اللاعبون",
+    "analyze": "تحليل",
+    "settings": "الإعدادات",
+    "searchSettings": "البحث في الإعدادات",
+    "teamAndAccount": "الفريق والحساب",
+    "preferences": "التفضيلات",
+    "manageEvents": "إدارة الأحداث",
+    "advancedSettings": "إعدادات متقدمة",
+    "about": "حول",
+    "logout": "تسجيل الخروج",
+    "confirmLogout": "تأكيد تسجيل الخروج",
+    "areYouSureYouWantToLogout": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+    "cancel": "إلغاء",
+    "addReunion": "إضافة اجتماع",
+    "title": "العنوان",
+    "pleaseEnterATitle": "الرجاء إدخال عنوان",
+    "location": "الموقع",
+    "pleaseEnterALocation": "الرجاء إدخال موقع",
+    "iconNameExample": "اسم الأيقونة (مثال: group_work)",
+    "pleaseEnterAnIconName": "الرجاء إدخال اسم أيقونة",
+    "selectDate": "اختر التاريخ",
+    "saveReunion": "حفظ الاجتماع",
+    "reunionCreatedSuccessfully": "تم إنشاء الاجتماع بنجاح!",
+    "addTrainingSession": "إضافة حصة تدريبية",
+    "focusExample": "التركيز (مثال: الدفاع)",
+    "pleaseEnterAFocus": "الرجاء إدخال محور التركيز",
+    "iconNameExampleTraining": "اسم الأيقونة (مثال: sports_soccer)",
+    "saveSession": "حفظ الحصة",
+    "trainingSessionCreatedSuccessfully": "تم إنشاء الحصة التدريبية بنجاح!",
+    "noReunionsFound": "لم يتم العثور على اجتماعات.",
+    "noTrainingSessionsFound": "لم يتم العثور على حصص تدريبية.",
+    "newAnalysis": "تحليل جديد",
+    "history": "السجل",
+    "noAnalysisHistoryFound": "لم يتم العثور على سجل تحليل.",
+    "noImageSelected": "لم يتم اختيار أي صورة.",
+    "pleaseSelectAnImageFirst": "الرجاء اختيار صورة أولاً.",
+    "uploadingAndAnalyzingImage": "جاري تحميل الصورة وتحليلها...",
+    "detectionCompletedSuccessfully": "اكتمل الكشف بنجاح!",
+    "imageAnalysis": "تحليل الصور",
+    "pickImage": "اختر صورة",
+    "runDetection": "بدء الكشف",
+    "login": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "anUnexpectedErrorOccurred": "حدث خطأ غير متوقع.",
+    "pleaseEnterYourEmail": "الرجاء إدخال بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "pleaseEnterYourPassword": "الرجاء إدخال كلمة المرور الخاصة بك",
+    "dontHaveAnAccountRegisterHere": "ليس لديك حساب؟ سجل هنا.",
+    "register": "تسجيل",
+    "registrationSuccessful": "تم التسجيل بنجاح! أنت الآن مسجل الدخول.",
+    "pleaseEnterAValidEmailAddress": "الرجاء إدخال عنوان بريد إلكتروني صالح",
+    "passwordTooShort": "يجب أن لا تقل كلمة المرور عن 6 أحرف",
+    "fullNameOptional": "الاسم الكامل (اختياري)",
+    "alreadyHaveAnAccountLoginHere": "هل لديك حساب بالفعل؟ سجل الدخول هنا.",
+    "vs": "ضد",
+    "saveFormation": "حفظ التشكيلة",
+    "noDataFound": "لم يتم العثور على بيانات.",
+    "selectFormation": "اختر التشكيلة",
+    "pleaseSelectAValidFormation": "الرجاء اختيار تشكيلة صالحة.",
+    "pleaseAssign11Players": "الرجاء تعيين لاعب لجميع المراكز الـ 11.",
+    "formationSavedSuccessfully": "تم حفظ التشكيلة بنجاح!",
+    "matchReport": "تقرير المباراة",
+    "eventTimeline": "الجدول الزمني للأحداث",
+    "lineups": "التشكيلات",
+    "statistics": "الإحصائيات",
+    "noDetailsFoundForThisMatch": "لم يتم العثور على تفاصيل لهذه المباراة.",
+    "notAvailable": "غير متاح",
+    "venue": "الملعب:",
+    "unknown": "غير معروف",
+    "close": "إغلاق",
+    "minutesPlayed": "دقائق اللعب:",
+    "shots": "التسديدات:",
+    "shotsOnTarget": "التسديدات على المرمى:",
+    "passes": "التمريرات:",
+    "accuratePasses": "التمريرات الدقيقة:",
+    "tackles": "التدخلات:",
+    "keyPasses": "التمريرات المفتاحية:",
+    "expectedGoalsXG": "الأهداف المتوقعة (xG):",
+    "progressiveCarries": "الحملات التقدمية:",
+    "defensiveCoverage": "التغطية الدفاعية:",
+    "km": "كم",
+    "rating": "التقييم:",
+    "outOf10": "/10",
+    "notes": "ملاحظات:",
+    "noNotesAvailable": "لا توجد ملاحظات متاحة.",
+    "age": "العمر",
+    "height": "الطول",
+    "weight": "الوزن",
+    "average": "المعدل",
+    "averageNA": "المعدل: غير متاح",
+    "teamComparison": "مقارنة الفرق",
+    "possession": "الاستحواذ",
+    "totalShots": "إجمالي التسديدات",
+    "final3rdPasses": "تمريرات الثلث الأخير",
+    "playerPerformance": "أداء اللاعبين",
+    "addNewEvent": "إضافة حدث جديد",
+    "eventName": "اسم الحدث",
+    "pleaseEnterAnEventName": "الرجاء إدخال اسم الحدث",
+    "saveEvent": "حفظ الحدث",
+    "eventCreatedSuccessfully": "تم إنشاء الحدث بنجاح!",
+    "addNewMatch": "إضافة مباراة جديدة",
+    "opponentTeamName": "اسم الفريق المنافس",
+    "pleaseEnterOpponentTeamName": "الرجاء إدخال اسم الفريق المنافس",
+    "time": "الوقت:",
+    "selectTime": "اختر الوقت",
+    "homeGame": "مباراة على أرضنا",
+    "noEventsAvailable": "لا توجد أحداث متاحة.",
+    "pleaseSelectAnEvent": "الرجاء اختيار حدث",
+    "saveMatch": "حفظ المباراة",
+    "matchCreatedSuccessfully": "تم إنشاء المباراة بنجاح!",
+    "search": "بحث",
+    "sort": "فرز",
+    "name": "الاسم",
+    "jerseyNumber": "رقم القميص",
+    "marketValue": "القيمة السوقية",
+    "position": "المركز",
+    "noPlayersFound": "لم يتم العثور على لاعبين.",
+    "addNewPlayer": "إضافة لاعب جديد",
+    "playerName": "اسم اللاعب",
+    "pleaseEnterPlayerName": "الرجاء إدخال اسم اللاعب",
+    "birthDateSelectDate": "تاريخ الميلاد: اختر التاريخ",
+    "birthDate": "تاريخ الميلاد:",
+    "dominantFoot": "القدم المهيمنة",
+    "left": "يسرى",
+    "right": "يمنى",
+    "heightCm": "الطول (سم)",
+    "weightKg": "الوزن (كجم)",
+    "imageUrl": "رابط الصورة",
+    "savePlayer": "حفظ اللاعب",
+    "noTeamFoundForUser": "لم يتم العثور على فريق للمستخدم الحالي. الرجاء إنشاء فريق أولاً.",
+    "playerCreatedSuccessfully": "تم إنشاء اللاعب بنجاح!",
+    "details": "التفاصيل",
+    "imageUpdatedSuccessfully": "تم تحديث الصورة بنجاح!",
+    "noMatchStatsFoundForPlayer": "لم يتم العثور على إحصائيات مباريات لهذا اللاعب.",
+    "ratingEvolution": "تطور التقييم",
+    "matchHistory": "سجل المباريات",
+    "matchId": "معرف المباراة:",
+    "onTarget": "على المرمى",
+    "version": "الإصدار 1.0.0",
+    "appDescription": "رفيقك الأمثل لتحليل مباريات كرة القدم، وتتبع أداء اللاعبين، ووضع الاستراتيجيات لتحقيق النجاح.",
+    "termsOfService": "شروط الخدمة",
+    "privacyPolicy": "سياسة الخصوصية",
+    "copyright": "© 2025 Soccer Analytics. جميع الحقوق محفوظة.",
+    "noTeamFoundCreateOne": "لم يتم العثور على فريق. الرجاء إنشاء فريق.",
+    "teamName": "اسم الفريق",
+    "pleaseEnterTeamName": "الرجاء إدخال اسم الفريق",
+    "primaryColor": "اللون الأساسي",
+    "secondaryColor": "اللون الثانوي",
+    "change": "تغيير",
+    "selectAColor": "اختر لونًا",
+    "select": "اختيار",
+    "changesSavedAutomatically": "تم حفظ التغييرات تلقائيًا.",
+    "account": "الحساب",
+    "userNotFound": "المستخدم غير موجود",
+    "noDataFoundEnsureLoggedIn": "لم يتم العثور على بيانات. يرجى التأكد من تسجيل الدخول.",
+    "createTeamToAddLogo": "أنشئ فريقًا أولاً لإضافة شعار.",
+    "noTeamFound": "لم يتم العثور على فريق",
+    "accountSettings": "إعدادات الحساب",
+    "changePassword": "تغيير كلمة المرور",
+    "notLoggedIn": "لم يتم تسجيل الدخول",
+    "changePasswordNotImplemented": "وظيفة تغيير كلمة المرور لم تنفذ بعد.",
+    "confirmDeletion": "تأكيد الحذف",
+    "thisActionCannotBeUndone": "لا يمكن التراجع عن هذا الإجراء.",
+    "delete": "حذف",
+    "eventDeletedSuccessfully": "تم حذف الحدث بنجاح!",
+    "teamSettings": "إعدادات الفريق",
+    "selectTeam": "اختر الفريق",
+    "primaryColorHex": "اللون الأساسي (Hex e.g., #FF0000)",
+    "pleaseEnterPrimaryColor": "الرجاء إدخال لون أساسي",
+    "enterValidHexColor": "أدخل لون hex صالح (e.g., #FF0000)",
+    "secondaryColorHex": "اللون الثانوي (Hex e.g., #0000FF)",
+    "logoUrl": "رابط الشعار",
+    "enterValidUrl": "أدخل رابطًا صالحًا",
+    "createTeam": "إنشاء فريق",
+    "saveChanges": "حفظ التغييرات",
+    "teamCreatedSuccessfully": "تم إنشاء الفريق بنجاح!",
+    "teamUpdateNotImplemented": "تحديث الفريق لم يتم تنفيذه بعد في الواجهة الخلفية.",
+    "failedToSaveFormation": "فشل حفظ التشكيلة: {error}",
+    "@failedToSaveFormation": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorWithMessage": "خطأ: {message}",
+    "@errorWithMessage": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "registrationFailed": "فشل التسجيل: {message}",
+    "@registrationFailed": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "anUnexpectedErrorOccurredWithMessage": "حدث خطأ غير متوقع: {error}",
+    "@anUnexpectedErrorOccurredWithMessage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "imageSelected": "تم اختيار الصورة: {name}",
+    "@imageSelected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionCompleteResponse": "اكتمل الكشف! الاستجابة: {responseBody}",
+    "@detectionCompleteResponse": {
+        "placeholders": {
+            "responseBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailedWithCode": "فشل الكشف: {statusCode} - {errorBody}",
+    "@detectionFailedWithCode": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            },
+            "errorBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailed": "فشل الكشف: {statusCode}",
+    "@detectionFailed": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            }
+        }
+    },
+    "errorDuringDetection": "خطأ أثناء الكشف: {error}",
+    "@errorDuringDetection": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "selected": "المحدد: {name}",
+    "@selected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateMatch": "فشل إنشاء المباراة: {error}",
+    "@failedToCreateMatch": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "date": "التاريخ: {date}",
+    "@date": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateEvent": "فشل إنشاء الحدث: {error}",
+    "@failedToCreateEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToGetUserTeam": "فشل الحصول على فريق المستخدم: {error}",
+    "@failedToGetUserTeam": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreatePlayer": "فشل إنشاء اللاعب: {error}",
+    "@failedToCreatePlayer": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToUploadImage": "فشل تحميل الصورة: {error}",
+    "@failedToUploadImage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "logoUpdatedSuccessfully": "تم تحديث الشعار بنجاح!",
+    "failedToUploadLogo": "فشل تحميل الشعار: {error}",
+    "@failedToUploadLogo": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToSaveChanges": "فشل حفظ التغييرات: {error}",
+    "@failedToSaveChanges": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "confirmDeleteEvent": "هل أنت متأكد أنك تريد حذف الحدث \"{eventName}\"؟",
+    "@confirmDeleteEvent": {
+        "placeholders": {
+            "eventName": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToDeleteEvent": "فشل حذف الحدث: {error}",
+    "@failedToDeleteEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateReunion": "فشل إنشاء الاجتماع: {error}",
+    "@failedToCreateReunion": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateSession": "فشل إنشاء الحصة: {error}",
+    "@failedToCreateSession": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "pressures": "الضغوط",
+    "noEventsFound": "لم يتم العثور على أحداث.",
+    "nationality": "الجنسية"
+}

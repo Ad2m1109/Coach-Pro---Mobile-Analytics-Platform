@@ -1,0 +1,404 @@
+{
+    "@@locale": "en",
+    "appTitle": "Soccer Analytics",
+    "generalPreferences": "General Preferences",
+    "enableNotifications": "Enable Notifications",
+    "darkMode": "Dark Mode",
+    "enableDataSync": "Enable Data Sync",
+    "dataManagement": "Data Management",
+    "clearCache": "Clear Cache",
+    "exportData": "Export Data",
+    "language": "Language",
+    "english": "English",
+    "arabic": "العربية",
+    "french": "Français",
+    "tunisianArabic": "العربية (تونس)",
+    "strategie": "Strategie",
+    "loggedInAs": "Logged in as:",
+    "guest": "Guest",
+    "training": "Training",
+    "reunions": "Reunions",
+    "matches": "Matches",
+    "allMatches": "All Matches",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "filterByEvent": "Filter by Event",
+    "errorLoadingEvents": "Error loading events:",
+    "noMatchesFound": "No matches found.",
+    "noMatchesInCategory": "No matches in this category.",
+    "event": "Event:",
+    "players": "Players",
+    "analyze": "Analyze",
+    "settings": "Settings",
+    "searchSettings": "Search settings",
+    "teamAndAccount": "Team & Account",
+    "preferences": "Preferences",
+    "manageEvents": "Manage Events",
+    "advancedSettings": "Advanced Settings",
+    "about": "About",
+    "logout": "Logout",
+    "confirmLogout": "Confirm Logout",
+    "areYouSureYouWantToLogout": "Are you sure you want to logout?",
+    "cancel": "Cancel",
+    "addReunion": "Add Reunion",
+    "title": "Title",
+    "pleaseEnterATitle": "Please enter a title",
+    "location": "Location",
+    "pleaseEnterALocation": "Please enter a location",
+    "iconNameExample": "Icon Name (e.g., group_work)",
+    "pleaseEnterAnIconName": "Please enter an icon name",
+    "selectDate": "Select date",
+    "saveReunion": "Save Reunion",
+    "reunionCreatedSuccessfully": "Reunion created successfully!",
+    "addTrainingSession": "Add Training Session",
+    "focusExample": "Focus (e.g., Defense)",
+    "pleaseEnterAFocus": "Please enter a focus",
+    "iconNameExampleTraining": "Icon Name (e.g., sports_soccer)",
+    "saveSession": "Save Session",
+    "trainingSessionCreatedSuccessfully": "Training session created successfully!",
+    "noReunionsFound": "No reunions found.",
+    "noTrainingSessionsFound": "No training sessions found.",
+    "newAnalysis": "New Analysis",
+    "history": "History",
+    "noAnalysisHistoryFound": "No analysis history found.",
+    "noImageSelected": "No image selected.",
+    "pleaseSelectAnImageFirst": "Please select an image first.",
+    "uploadingAndAnalyzingImage": "Uploading and analyzing image...",
+    "detectionCompletedSuccessfully": "Detection completed successfully!",
+    "imageAnalysis": "Image Analysis",
+    "pickImage": "Pick Image",
+    "runDetection": "Run Detection",
+    "login": "Login",
+    "email": "Email",
+    "anUnexpectedErrorOccurred": "An unexpected error occurred.",
+    "pleaseEnterYourEmail": "Please enter your email",
+    "password": "Password",
+    "pleaseEnterYourPassword": "Please enter your password",
+    "dontHaveAnAccountRegisterHere": "Don't have an account? Register here.",
+    "register": "Register",
+    "registrationSuccessful": "Registration successful! You are now logged in.",
+    "pleaseEnterAValidEmailAddress": "Please enter a valid email address",
+    "passwordTooShort": "Password must be at least 6 characters long",
+    "fullNameOptional": "Full Name (Optional)",
+    "alreadyHaveAnAccountLoginHere": "Already have an account? Login here.",
+    "vs": "vs",
+    "saveFormation": "Save Formation",
+    "noDataFound": "No data found.",
+    "selectFormation": "Select Formation",
+    "pleaseSelectAValidFormation": "Please select a valid formation.",
+    "pleaseAssign11Players": "Please assign a player to all 11 positions.",
+    "formationSavedSuccessfully": "Formation saved successfully!",
+    "matchReport": "Match Report",
+    "eventTimeline": "Event Timeline",
+    "lineups": "Lineups",
+    "statistics": "Statistics",
+    "noDetailsFoundForThisMatch": "No details found for this match.",
+    "notAvailable": "N/A",
+    "venue": "Venue:",
+    "unknown": "Unknown",
+    "close": "Close",
+    "minutesPlayed": "Minutes Played:",
+    "shots": "Shots:",
+    "shotsOnTarget": "Shots on Target:",
+    "passes": "Passes:",
+    "accuratePasses": "Accurate Passes:",
+    "tackles": "Tackles:",
+    "keyPasses": "Key Passes:",
+    "expectedGoalsXG": "Expected Goals (xG):",
+    "progressiveCarries": "Progressive Carries:",
+    "defensiveCoverage": "Defensive Coverage:",
+    "km": "km",
+    "rating": "Rating:",
+    "outOf10": "/10",
+    "notes": "Notes:",
+    "noNotesAvailable": "No notes available.",
+    "age": "Age",
+    "height": "Height",
+    "weight": "Weight",
+    "average": "Average",
+    "averageNA": "Average: N/A",
+    "teamComparison": "Team Comparison",
+    "possession": "Possession",
+    "totalShots": "Total Shots",
+    "final3rdPasses": "Final 3rd Passes",
+    "playerPerformance": "Player Performance",
+    "addNewEvent": "Add New Event",
+    "eventName": "Event Name",
+    "pleaseEnterAnEventName": "Please enter an event name",
+    "saveEvent": "Save Event",
+    "eventCreatedSuccessfully": "Event created successfully!",
+    "addNewMatch": "Add New Match",
+    "opponentTeamName": "Opponent Team Name",
+    "pleaseEnterOpponentTeamName": "Please enter opponent team name",
+    "time": "Time:",
+    "selectTime": "Select Time",
+    "homeGame": "Home Game",
+    "noEventsAvailable": "No events available.",
+    "pleaseSelectAnEvent": "Please select an event",
+    "saveMatch": "Save Match",
+    "matchCreatedSuccessfully": "Match created successfully!",
+    "search": "Search",
+    "sort": "Sort",
+    "name": "Name",
+    "jerseyNumber": "Jersey Number",
+    "marketValue": "Market Value",
+    "position": "Position",
+    "noPlayersFound": "No players found.",
+    "addNewPlayer": "Add New Player",
+    "playerName": "Player Name",
+    "pleaseEnterPlayerName": "Please enter a player name",
+    "birthDateSelectDate": "Birth Date: Select Date",
+    "birthDate": "Birth Date:",
+    "dominantFoot": "Dominant Foot",
+    "left": "left",
+    "right": "right",
+    "heightCm": "Height (cm)",
+    "weightKg": "Weight (kg)",
+    "imageUrl": "Image URL",
+    "savePlayer": "Save Player",
+    "noTeamFoundForUser": "No team found for the current user. Please create a team first.",
+    "playerCreatedSuccessfully": "Player created successfully!",
+    "details": "Details",
+    "imageUpdatedSuccessfully": "Image updated successfully!",
+    "noMatchStatsFoundForPlayer": "No match statistics found for this player.",
+    "ratingEvolution": "Rating Evolution",
+    "matchHistory": "Match History",
+    "matchId": "Match ID:",
+    "onTarget": "on target",
+    "version": "Version 1.0.0",
+    "appDescription": "Your ultimate companion for analyzing soccer matches, tracking player performance, and strategizing for success.",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "copyright": "© 2025 Soccer Analytics. All rights reserved.",
+    "noTeamFoundCreateOne": "No team found. Please create a team.",
+    "teamName": "Team Name",
+    "pleaseEnterTeamName": "Please enter a team name",
+    "primaryColor": "Primary Color",
+    "secondaryColor": "Secondary Color",
+    "change": "Change",
+    "selectAColor": "Select a Color",
+    "select": "Select",
+    "changesSavedAutomatically": "Changes saved automatically.",
+    "account": "Account",
+    "userNotFound": "User not found",
+    "noDataFoundEnsureLoggedIn": "No data found. Please ensure you are logged in.",
+    "createTeamToAddLogo": "Create a team first to add a logo.",
+    "noTeamFound": "No team found",
+    "accountSettings": "Account Settings",
+    "changePassword": "Change Password",
+    "notLoggedIn": "Not logged in",
+    "changePasswordNotImplemented": "Change password functionality is not yet implemented.",
+    "confirmDeletion": "Confirm Deletion",
+    "thisActionCannotBeUndone": "This action cannot be undone.",
+    "delete": "Delete",
+    "eventDeletedSuccessfully": "Event deleted successfully!",
+    "teamSettings": "Team Settings",
+    "selectTeam": "Select Team",
+    "primaryColorHex": "Primary Color (Hex e.g., #FF0000)",
+    "pleaseEnterPrimaryColor": "Please enter a primary color",
+    "enterValidHexColor": "Enter a valid hex color (e.g., #FF0000)",
+    "secondaryColorHex": "Secondary Color (Hex e.g., #0000FF)",
+    "logoUrl": "Logo URL",
+    "enterValidUrl": "Enter a valid URL",
+    "createTeam": "Create Team",
+    "saveChanges": "Save Changes",
+    "teamCreatedSuccessfully": "Team created successfully!",
+    "teamUpdateNotImplemented": "Team update not yet implemented in API.",
+    "failedToSaveFormation": "Failed to save formation: {error}",
+    "@failedToSaveFormation": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorWithMessage": "Error: {message}",
+    "@errorWithMessage": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "registrationFailed": "Registration failed: {message}",
+    "@registrationFailed": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "anUnexpectedErrorOccurredWithMessage": "An unexpected error occurred: {error}",
+    "@anUnexpectedErrorOccurredWithMessage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "imageSelected": "Image selected: {name}",
+    "@imageSelected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionCompleteResponse": "Detection complete! Response: {responseBody}",
+    "@detectionCompleteResponse": {
+        "placeholders": {
+            "responseBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailedWithCode": "Detection failed: {statusCode} - {errorBody}",
+    "@detectionFailedWithCode": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            },
+            "errorBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailed": "Detection failed: {statusCode}",
+    "@detectionFailed": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            }
+        }
+    },
+    "errorDuringDetection": "Error during detection: {error}",
+    "@errorDuringDetection": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "selected": "Selected: {name}",
+    "@selected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateMatch": "Failed to create match: {error}",
+    "@failedToCreateMatch": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "date": "Date: {date}",
+    "@date": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateEvent": "Failed to create event: {error}",
+    "@failedToCreateEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToGetUserTeam": "Failed to get user team: {error}",
+    "@failedToGetUserTeam": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreatePlayer": "Failed to create player: {error}",
+    "@failedToCreatePlayer": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToUploadImage": "Failed to upload image: {error}",
+    "@failedToUploadImage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "logoUpdatedSuccessfully": "Logo updated successfully!",
+    "failedToUploadLogo": "Failed to upload logo: {error}",
+    "@failedToUploadLogo": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToSaveChanges": "Failed to save changes: {error}",
+    "@failedToSaveChanges": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "confirmDeleteEvent": "Are you sure you want to delete the event \"{eventName}\"",
+    "@confirmDeleteEvent": {
+        "placeholders": {
+            "eventName": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToDeleteEvent": "Failed to delete event: {error}",
+    "@failedToDeleteEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateReunion": "Failed to create reunion: {error}",
+    "@failedToCreateReunion": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateSession": "Failed to create session: {error}",
+    "@failedToCreateSession": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "pressures": "Pressures",
+    "noEventsFound": "No events found.",
+    "nationality": "Nationality",
+    "uploadVideo": "Upload Video",
+    "selectVideoFirst": "Please select a video first",
+    "noVideoSelected": "No video selected",
+    "uploadingAndAnalyzingVideo": "Uploading and analyzing video...",
+    "videoAnalysisProgress": "Video Analysis Progress",
+    "videoAnalysisCompleted": "Video analysis completed!",
+    "videoAnalysisFailed": "Video analysis failed: {error}",
+    "@videoAnalysisFailed": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    }
+}

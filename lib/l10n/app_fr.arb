@@ -1,0 +1,390 @@
+{
+    "@@locale": "fr",
+    "appTitle": "Analyse de Football",
+    "generalPreferences": "Préférences Générales",
+    "enableNotifications": "Activer les Notifications",
+    "darkMode": "Mode Sombre",
+    "enableDataSync": "Activer la Synchronisation des Données",
+    "dataManagement": "Gestion des Données",
+    "clearCache": "Vider le Cache",
+    "exportData": "Exporter les Données",
+    "language": "Langue",
+    "english": "Anglais",
+    "arabic": "Arabe",
+    "french": "Français",
+    "tunisianArabic": "Arabe (Tunisie)",
+    "strategie": "Stratégie",
+    "loggedInAs": "Connecté en tant que :",
+    "guest": "Invité",
+    "training": "Entraînement",
+    "reunions": "Réunions",
+    "matches": "Matchs",
+    "allMatches": "Tous les matchs",
+    "upcoming": "À venir",
+    "past": "Passés",
+    "filterByEvent": "Filtrer par événement",
+    "errorLoadingEvents": "Erreur lors du chargement des événements :",
+    "noMatchesFound": "Aucun match trouvé.",
+    "noMatchesInCategory": "Aucun match dans cette catégorie.",
+    "event": "Événement :",
+    "players": "Joueurs",
+    "analyze": "Analyser",
+    "settings": "Paramètres",
+    "searchSettings": "Rechercher dans les paramètres",
+    "teamAndAccount": "Équipe & Compte",
+    "preferences": "Préférences",
+    "manageEvents": "Gérer les Événements",
+    "advancedSettings": "Paramètres Avancés",
+    "about": "À propos",
+    "logout": "Déconnexion",
+    "confirmLogout": "Confirmer la déconnexion",
+    "areYouSureYouWantToLogout": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "cancel": "Annuler",
+    "addReunion": "Ajouter une Réunion",
+    "title": "Titre",
+    "pleaseEnterATitle": "Veuillez entrer un titre",
+    "location": "Lieu",
+    "pleaseEnterALocation": "Veuillez entrer un lieu",
+    "iconNameExample": "Nom de l'icône (ex: group_work)",
+    "pleaseEnterAnIconName": "Veuillez entrer un nom d'icône",
+    "selectDate": "Sélectionner la date",
+    "saveReunion": "Enregistrer la Réunion",
+    "reunionCreatedSuccessfully": "Réunion créée avec succès !",
+    "addTrainingSession": "Ajouter une Session d'Entraînement",
+    "focusExample": "Objectif (ex: Défense)",
+    "pleaseEnterAFocus": "Veuillez entrer un objectif",
+    "iconNameExampleTraining": "Nom de l'icône (ex: sports_soccer)",
+    "saveSession": "Enregistrer la Session",
+    "trainingSessionCreatedSuccessfully": "Session d'entraînement créée avec succès !",
+    "noReunionsFound": "Aucune réunion trouvée.",
+    "noTrainingSessionsFound": "Aucune session d'entraînement trouvée.",
+    "newAnalysis": "Nouvelle Analyse",
+    "history": "Historique",
+    "noAnalysisHistoryFound": "Aucun historique d'analyse trouvé.",
+    "noImageSelected": "Aucune image sélectionnée.",
+    "pleaseSelectAnImageFirst": "Veuillez d'abord sélectionner une image.",
+    "uploadingAndAnalyzingImage": "Téléchargement et analyse de l'image...",
+    "detectionCompletedSuccessfully": "Détection terminée avec succès !",
+    "imageAnalysis": "Analyse d'Image",
+    "pickImage": "Choisir une Image",
+    "runDetection": "Lancer la Détection",
+    "login": "Connexion",
+    "email": "Email",
+    "anUnexpectedErrorOccurred": "Une erreur inattendue est survenue.",
+    "pleaseEnterYourEmail": "Veuillez entrer votre email",
+    "password": "Mot de passe",
+    "pleaseEnterYourPassword": "Veuillez entrer votre mot de passe",
+    "dontHaveAnAccountRegisterHere": "Vous n'avez pas de compte ? Inscrivez-vous ici.",
+    "register": "S'inscrire",
+    "registrationSuccessful": "Inscription réussie ! Vous êtes maintenant connecté.",
+    "pleaseEnterAValidEmailAddress": "Veuillez entrer une adresse email valide",
+    "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères",
+    "fullNameOptional": "Nom complet (Optionnel)",
+    "alreadyHaveAnAccountLoginHere": "Vous avez déjà un compte ? Connectez-vous ici.",
+    "vs": "vs",
+    "saveFormation": "Enregistrer la Formation",
+    "noDataFound": "Aucune donnée trouvée.",
+    "selectFormation": "Sélectionner la Formation",
+    "pleaseSelectAValidFormation": "Veuillez sélectionner une formation valide.",
+    "pleaseAssign11Players": "Veuillez assigner un joueur aux 11 postes.",
+    "formationSavedSuccessfully": "Formation enregistrée avec succès !",
+    "matchReport": "Rapport de Match",
+    "eventTimeline": "Chronologie des Événements",
+    "lineups": "Compositions",
+    "statistics": "Statistiques",
+    "noDetailsFoundForThisMatch": "Aucun détail trouvé pour ce match.",
+    "notAvailable": "N/A",
+    "venue": "Stade :",
+    "unknown": "Inconnu",
+    "close": "Fermer",
+    "minutesPlayed": "Minutes jouées :",
+    "shots": "Tirs :",
+    "shotsOnTarget": "Tirs cadrés :",
+    "passes": "Passes :",
+    "accuratePasses": "Passes réussies :",
+    "tackles": "Tacles :",
+    "keyPasses": "Passes clés :",
+    "expectedGoalsXG": "Buts attendus (xG) :",
+    "progressiveCarries": "Courses progressives :",
+    "defensiveCoverage": "Couverture défensive :",
+    "km": "km",
+    "rating": "Note :",
+    "outOf10": "/10",
+    "notes": "Notes :",
+    "noNotesAvailable": "Aucune note disponible.",
+    "age": "Âge",
+    "height": "Taille",
+    "weight": "Poids",
+    "average": "Moyenne",
+    "averageNA": "Moyenne : N/A",
+    "teamComparison": "Comparaison des Équipes",
+    "possession": "Possession",
+    "totalShots": "Total des Tirs",
+    "final3rdPasses": "Passes dans le dernier tiers",
+    "playerPerformance": "Performance des Joueurs",
+    "addNewEvent": "Ajouter un Nouvel Événement",
+    "eventName": "Nom de l'Événement",
+    "pleaseEnterAnEventName": "Veuillez entrer un nom d'événement",
+    "saveEvent": "Enregistrer l'Événement",
+    "eventCreatedSuccessfully": "Événement créé avec succès !",
+    "addNewMatch": "Ajouter un Nouveau Match",
+    "opponentTeamName": "Nom de l'Équipe Adverse",
+    "pleaseEnterOpponentTeamName": "Veuillez entrer le nom de l'équipe adverse",
+    "time": "Heure :",
+    "selectTime": "Sélectionner l'heure",
+    "homeGame": "Match à Domicile",
+    "noEventsAvailable": "Aucun événement disponible.",
+    "pleaseSelectAnEvent": "Veuillez sélectionner un événement",
+    "saveMatch": "Enregistrer le Match",
+    "matchCreatedSuccessfully": "Match créé avec succès !",
+    "search": "Rechercher",
+    "sort": "Trier",
+    "name": "Nom",
+    "jerseyNumber": "Numéro de Maillot",
+    "marketValue": "Valeur Marchande",
+    "position": "Poste",
+    "noPlayersFound": "Aucun joueur trouvé.",
+    "addNewPlayer": "Ajouter un Nouveau Joueur",
+    "playerName": "Nom du Joueur",
+    "pleaseEnterPlayerName": "Veuillez entrer un nom de joueur",
+    "birthDateSelectDate": "Date de Naissance : Sélectionner",
+    "birthDate": "Date de Naissance :",
+    "dominantFoot": "Pied Dominant",
+    "left": "gauche",
+    "right": "droit",
+    "heightCm": "Taille (cm)",
+    "weightKg": "Poids (kg)",
+    "imageUrl": "URL de l'Image",
+    "savePlayer": "Enregistrer le Joueur",
+    "noTeamFoundForUser": "Aucune équipe trouvée pour l'utilisateur actuel. Veuillez d'abord créer une équipe.",
+    "playerCreatedSuccessfully": "Joueur créé avec succès !",
+    "details": "Détails",
+    "imageUpdatedSuccessfully": "Image mise à jour avec succès !",
+    "noMatchStatsFoundForPlayer": "Aucune statistique de match trouvée pour ce joueur.",
+    "ratingEvolution": "Évolution de la Note",
+    "matchHistory": "Historique des Matchs",
+    "matchId": "ID du Match :",
+    "onTarget": "cadrés",
+    "version": "Version 1.0.0",
+    "appDescription": "Votre compagnon ultime pour analyser les matchs de football, suivre les performances des joueurs et élaborer des stratégies pour le succès.",
+    "termsOfService": "Conditions d'Utilisation",
+    "privacyPolicy": "Politique de Confidentialité",
+    "copyright": "© 2025 Soccer Analytics. Tous droits réservés.",
+    "noTeamFoundCreateOne": "Aucune équipe trouvée. Veuillez créer une équipe.",
+    "teamName": "Nom de l'Équipe",
+    "pleaseEnterTeamName": "Veuillez entrer un nom d'équipe",
+    "primaryColor": "Couleur Principale",
+    "secondaryColor": "Couleur Secondaire",
+    "change": "Changer",
+    "selectAColor": "Sélectionner une Couleur",
+    "select": "Sélectionner",
+    "changesSavedAutomatically": "Modifications enregistrées automatiquement.",
+    "account": "Compte",
+    "userNotFound": "Utilisateur non trouvé",
+    "noDataFoundEnsureLoggedIn": "Aucune donnée trouvée. Veuillez vous assurer que vous êtes connecté.",
+    "createTeamToAddLogo": "Créez d'abord une équipe pour ajouter un logo.",
+    "noTeamFound": "Aucune équipe trouvée",
+    "accountSettings": "Paramètres du Compte",
+    "changePassword": "Changer le Mot de Passe",
+    "notLoggedIn": "Non connecté",
+    "changePasswordNotImplemented": "La fonctionnalité de changement de mot de passe n'est pas encore implémentée.",
+    "confirmDeletion": "Confirmer la Suppression",
+    "thisActionCannotBeUndone": "Cette action est irréversible.",
+    "delete": "Supprimer",
+    "eventDeletedSuccessfully": "Événement supprimé avec succès !",
+    "teamSettings": "Paramètres de l'Équipe",
+    "selectTeam": "Sélectionner l'Équipe",
+    "primaryColorHex": "Couleur Principale (Hex ex: #FF0000)",
+    "pleaseEnterPrimaryColor": "Veuillez entrer une couleur principale",
+    "enterValidHexColor": "Entrez une couleur hexadécimale valide (ex: #FF0000)",
+    "secondaryColorHex": "Couleur Secondaire (Hex ex: #0000FF)",
+    "logoUrl": "URL du Logo",
+    "enterValidUrl": "Entrez une URL valide",
+    "createTeam": "Créer une Équipe",
+    "saveChanges": "Enregistrer les Modifications",
+    "teamCreatedSuccessfully": "Équipe créée avec succès !",
+    "teamUpdateNotImplemented": "La mise à jour de l'équipe n'est pas encore implémentée dans l'API.",
+    "failedToSaveFormation": "Échec de l'enregistrement de la formation : {error}",
+    "@failedToSaveFormation": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "errorWithMessage": "Erreur : {message}",
+    "@errorWithMessage": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "registrationFailed": "Échec de l'inscription : {message}",
+    "@registrationFailed": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
+    "anUnexpectedErrorOccurredWithMessage": "Une erreur inattendue est survenue : {error}",
+    "@anUnexpectedErrorOccurredWithMessage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "imageSelected": "Image sélectionnée : {name}",
+    "@imageSelected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionCompleteResponse": "Détection terminée ! Réponse : {responseBody}",
+    "@detectionCompleteResponse": {
+        "placeholders": {
+            "responseBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailedWithCode": "Échec de la détection : {statusCode} - {errorBody}",
+    "@detectionFailedWithCode": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            },
+            "errorBody": {
+                "type": "String"
+            }
+        }
+    },
+    "detectionFailed": "Échec de la détection : {statusCode}",
+    "@detectionFailed": {
+        "placeholders": {
+            "statusCode": {
+                "type": "int"
+            }
+        }
+    },
+    "errorDuringDetection": "Erreur lors de la détection : {error}",
+    "@errorDuringDetection": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "selected": "Sélectionné : {name}",
+    "@selected": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateMatch": "Échec de la création du match : {error}",
+    "@failedToCreateMatch": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "date": "Date : {date}",
+    "@date": {
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateEvent": "Échec de la création de l'événement : {error}",
+    "@failedToCreateEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToGetUserTeam": "Échec de la récupération de l'équipe de l'utilisateur : {error}",
+    "@failedToGetUserTeam": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreatePlayer": "Échec de la création du joueur : {error}",
+    "@failedToCreatePlayer": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToUploadImage": "Échec du téléversement de l'image : {error}",
+    "@failedToUploadImage": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "logoUpdatedSuccessfully": "Logo mis à jour avec succès !",
+    "failedToUploadLogo": "Échec du téléversement du logo : {error}",
+    "@failedToUploadLogo": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToSaveChanges": "Échec de l'enregistrement des modifications : {error}",
+    "@failedToSaveChanges": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "confirmDeleteEvent": "Êtes-vous sûr de vouloir supprimer l'événement \"{eventName}\"",
+    "@confirmDeleteEvent": {
+        "placeholders": {
+            "eventName": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToDeleteEvent": "Échec de la suppression de l'événement : {error}",
+    "@failedToDeleteEvent": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateReunion": "Échec de la création de la réunion : {error}",
+    "@failedToCreateReunion": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "failedToCreateSession": "Échec de la création de la session : {error}",
+    "@failedToCreateSession": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "pressures": "Pressions",
+    "noEventsFound": "Aucun événement trouvé.",
+    "nationality": "Nationalité"
+}
