@@ -25,17 +25,9 @@ class PlayerService {
   Future<Player> createPlayer(Player player) async {
     try {
       // The backend PlayerCreate model does not have an id, so we don't send it.
-      final playerData = {
-        'team_id': player.teamId,
-        'name': player.name,
-        'position': player.position,
-        'jersey_number': player.jerseyNumber,
-        'birth_date': player.birthDate?.toIso8601String(),
-        'dominant_foot': player.dominantFoot,
-        'height_cm': player.heightCm,
-        'weight_kg': player.weightKg,
-        'image_url': player.imageUrl,
-      };
+      final playerData = player.toJson();
+      playerData.remove('id');
+      
       final responseData = await _apiClient.post('/players', data: playerData);
       return Player.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {

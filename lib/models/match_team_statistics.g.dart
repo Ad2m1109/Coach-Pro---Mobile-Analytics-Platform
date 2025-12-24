@@ -29,20 +29,20 @@ MatchTeamStatistics _$MatchTeamStatisticsFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$MatchTeamStatisticsToJson(
-        MatchTeamStatistics instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'match_id': instance.matchId,
-      'team_id': instance.teamId,
-      'possession_percentage': instance.possessionPercentage,
-      'total_shots': instance.totalShots,
-      'shots_on_target': instance.shotsOnTarget,
-      'expected_goals': instance.expectedGoals,
-      'pressures': instance.pressures,
-      'final_third_passes': instance.finalThirdPasses,
-      'high_turnover_zones_data': instance.highTurnoverZonesData,
-      'set_piece_xg_breakdown_data': instance.setPieceXgBreakdownData,
-      'transition_speed_data': instance.transitionSpeedData,
-      'build_up_patterns': instance.buildUpPatterns,
-      'defensive_block_patterns': instance.defensiveBlockPatterns,
-    };
+  MatchTeamStatistics instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'match_id': instance.matchId,
+  'team_id': instance.teamId,
+  'possession_percentage': instance.possessionPercentage,
+  'total_shots': instance.totalShots,
+  'shots_on_target': instance.shotsOnTarget,
+  'expected_goals': instance.expectedGoals,
+  'pressures': instance.pressures,
+  'final_third_passes': instance.finalThirdPasses,
+  'high_turnover_zones_data': instance.highTurnoverZonesData,
+  'set_piece_xg_breakdown_data': instance.setPieceXgBreakdownData,
+  'transition_speed_data': instance.transitionSpeedData,
+  'build_up_patterns': instance.buildUpPatterns,
+  'defensive_block_patterns': instance.defensiveBlockPatterns,
+};

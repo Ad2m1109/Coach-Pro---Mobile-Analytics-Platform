@@ -22,7 +22,7 @@ PlayerWithPosition _$PlayerWithPositionFromJson(Map<String, dynamic> json) =>
       nationality: json['nationality'] as String?,
       countryCode: json['country_code'] as String?,
       imageUrl: json['image_url'] as String?,
-      marketValue: (json['marketValue'] as num?)?.toDouble(),
+      marketValue: toDouble(json['market_value']),
       positionInFormation: json['position_in_formation'] as String?,
     );
 
@@ -40,20 +40,20 @@ Map<String, dynamic> _$PlayerWithPositionToJson(PlayerWithPosition instance) =>
       'nationality': instance.nationality,
       'country_code': instance.countryCode,
       'image_url': instance.imageUrl,
-      'marketValue': instance.marketValue,
+      'market_value': instance.marketValue,
       'position_in_formation': instance.positionInFormation,
     };
 
 TeamLineup _$TeamLineupFromJson(Map<String, dynamic> json) => TeamLineup(
-      teamId: json['team_id'] as String,
-      teamName: json['team_name'] as String,
-      formation: json['formation'] == null
-          ? null
-          : Formation.fromJson(json['formation'] as Map<String, dynamic>),
-      players: (json['players'] as List<dynamic>)
-          .map((e) => PlayerWithPosition.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  teamId: json['team_id'] as String,
+  teamName: json['team_name'] as String,
+  formation: json['formation'] == null
+      ? null
+      : Formation.fromJson(json['formation'] as Map<String, dynamic>),
+  players: (json['players'] as List<dynamic>)
+      .map((e) => PlayerWithPosition.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
 
 Map<String, dynamic> _$TeamLineupToJson(TeamLineup instance) =>
     <String, dynamic>{
@@ -64,21 +64,19 @@ Map<String, dynamic> _$TeamLineupToJson(TeamLineup instance) =>
     };
 
 MatchDetails _$MatchDetailsFromJson(Map<String, dynamic> json) => MatchDetails(
-      matchInfo: Match.fromJson(json['match_info'] as Map<String, dynamic>),
-      homeLineup:
-          TeamLineup.fromJson(json['home_lineup'] as Map<String, dynamic>),
-      awayLineup:
-          TeamLineup.fromJson(json['away_lineup'] as Map<String, dynamic>),
-      events: (json['events'] as List<dynamic>)
-          .map((e) => MatchEvent.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      playerStats: (json['player_stats'] as List<dynamic>)
-          .map((e) => PlayerMatchStatistics.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      teamStats: (json['team_stats'] as List<dynamic>)
-          .map((e) => MatchTeamStatistics.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  matchInfo: Match.fromJson(json['match_info'] as Map<String, dynamic>),
+  homeLineup: TeamLineup.fromJson(json['home_lineup'] as Map<String, dynamic>),
+  awayLineup: TeamLineup.fromJson(json['away_lineup'] as Map<String, dynamic>),
+  events: (json['events'] as List<dynamic>)
+      .map((e) => MatchEvent.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  playerStats: (json['player_stats'] as List<dynamic>)
+      .map((e) => PlayerMatchStatistics.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  teamStats: (json['team_stats'] as List<dynamic>)
+      .map((e) => MatchTeamStatistics.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
 
 Map<String, dynamic> _$MatchDetailsToJson(MatchDetails instance) =>
     <String, dynamic>{

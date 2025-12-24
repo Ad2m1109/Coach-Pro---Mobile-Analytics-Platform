@@ -31,6 +31,7 @@ class Player {
   final String? countryCode;
   @JsonKey(name: 'image_url')
   final String? imageUrl;
+  @JsonKey(name: 'market_value', fromJson: toDouble)
   final double? marketValue;
 
   Player({
@@ -46,7 +47,6 @@ class Player {
     this.nationality,
     this.countryCode,
     this.imageUrl,
-    @JsonKey(name: 'market_value', fromJson: toDouble)
     this.marketValue,
   });
 

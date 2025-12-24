@@ -90,7 +90,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
         _loadTeams(); // Reload teams after save/create
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${appLocalizations.failedToSaveTeamSettings(e.toString())}')),
+          SnackBar(content: Text(appLocalizations.failedToSaveChanges(e.toString()))),
         );
       }
     }
@@ -181,7 +181,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
                 if (value == null || value.isEmpty) {
                   return appLocalizations.pleaseEnterPrimaryColor;
                 }
-                if (!RegExp(r'^#([0-9A-Fa-f]{6})).hasMatch(value)) {
+                if (!RegExp(r'^#([0-9A-Fa-f]{6})').hasMatch(value)) {
                   return appLocalizations.enterValidHexColor;
                 }
                 return null;
@@ -197,7 +197,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
               validator: (value) {
                 if (value != null &&
                     value.isNotEmpty &&
-                    !RegExp(r'^#([0-9A-Fa-f]{6})).hasMatch(value)) {
+                    !RegExp(r'^#([0-9A-Fa-f]{6})').hasMatch(value)) {
                   return appLocalizations.enterValidHexColor;
                 }
                 return null;

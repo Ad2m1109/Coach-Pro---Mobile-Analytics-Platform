@@ -7,14 +7,14 @@ part of 'match_event.dart';
 // **************************************************************************
 
 MatchEvent _$MatchEventFromJson(Map<String, dynamic> json) => MatchEvent(
-      id: json['id'] as String,
-      matchId: json['match_id'] as String?,
-      playerId: json['player_id'] as String?,
-      eventType: json['event_type'] as String,
-      minute: (json['minute'] as num).toInt(),
-      videoTimestamp: (json['video_timestamp'] as num?)?.toDouble(),
-      coordinates: json['coordinates'] as String?,
-    );
+  id: json['id'] as String,
+  matchId: json['match_id'] as String?,
+  playerId: json['player_id'] as String?,
+  eventType: json['event_type'] as String,
+  minute: (json['minute'] as num).toInt(),
+  videoTimestamp: (json['video_timestamp'] as num?)?.toDouble(),
+  coordinates: json['coordinates'] as String?,
+);
 
 Map<String, dynamic> _$MatchEventToJson(MatchEvent instance) =>
     <String, dynamic>{
