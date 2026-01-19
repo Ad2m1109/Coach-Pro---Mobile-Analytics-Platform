@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/routes/app_router.dart';
 
+import 'package:frontend/widgets/custom_text_field.dart';
+import 'package:frontend/widgets/custom_button.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -84,19 +88,16 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpacing.l),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextFormField(
+                CustomTextField(
                   controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.email,
-                    border: const OutlineInputBorder(),
-                    errorText: _emailApiError,
-                  ),
+                  label: appLocalizations.email,
+                  prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (_emailApiError != null) return null;
@@ -106,25 +107,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.password,
-                    border: const OutlineInputBorder(),
-                    errorText: _passwordApiError,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
+                if (_emailApiError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(_emailApiError!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
                   ),
-                  obscureText: !_isPasswordVisible,
+                const SizedBox(height: AppSpacing.m),
+                CustomTextField(
+                  controller: _passwordController,
+                  label: appLocalizations.password,
+                  prefixIcon: Icons.lock_outline,
+                  isPassword: !_isPasswordVisible,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                   validator: (value) {
                     if (_passwordApiError != null) return null;
                     if (value == null || value.isEmpty) {
@@ -133,18 +136,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24.0),
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          textStyle: const TextStyle(fontSize: 18),
-                        ),
-                        child: Text(appLocalizations.login),
-                      ),
-                const SizedBox(height: 16.0),
+                if (_passwordApiError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(_passwordApiError!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+                  ),
+                const SizedBox(height: AppSpacing.xl),
+                CustomButton(
+                  text: appLocalizations.login,
+                  onPressed: _login,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: AppSpacing.m),
                 TextButton(
                   onPressed: () {
                     context.go('/register');

@@ -9,21 +9,18 @@ class AnalyzeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
-    print('AnalyzeScreen built'); // Debug print
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: Text(appLocalizations.analyze),
-          flexibleSpace: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TabBar(
-                tabs: [
-                  Tab(text: appLocalizations.newAnalysis),
-                  Tab(text: appLocalizations.history),
-                ],
-              )
+          bottom: TabBar(
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            tabs: [
+              Tab(text: appLocalizations.newAnalysis),
+              Tab(text: appLocalizations.history),
             ],
           ),
         ),

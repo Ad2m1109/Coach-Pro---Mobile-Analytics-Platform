@@ -6,6 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/routes/app_router.dart';
 
+import 'package:frontend/widgets/custom_text_field.dart';
+import 'package:frontend/widgets/custom_button.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -72,18 +76,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpacing.l),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextFormField(
+                CustomTextField(
                   controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.email,
-                    border: const OutlineInputBorder(),
-                  ),
+                  label: appLocalizations.email,
+                  prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -96,24 +98,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
+                const SizedBox(height: AppSpacing.m),
+                CustomTextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.password,
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                  label: appLocalizations.password,
+                  prefixIcon: Icons.lock_outline,
+                  isPassword: !_isPasswordVisible,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
                   ),
-                  obscureText: !_isPasswordVisible,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return appLocalizations.pleaseEnterYourPassword;
@@ -124,26 +124,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16.0),
-                TextFormField(
+                const SizedBox(height: AppSpacing.m),
+                CustomTextField(
                   controller: _fullNameController,
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.fullNameOptional,
-                    border: const OutlineInputBorder(),
-                  ),
+                  label: appLocalizations.fullNameOptional,
+                  prefixIcon: Icons.person_outline,
                 ),
-                const SizedBox(height: 24.0),
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed: _register,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                          textStyle: const TextStyle(fontSize: 18),
-                        ),
-                        child: Text(appLocalizations.register),
-                      ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: AppSpacing.xl),
+                CustomButton(
+                  text: appLocalizations.register,
+                  onPressed: _register,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: AppSpacing.m),
                 TextButton(
                   onPressed: () {
                     context.go('/login');

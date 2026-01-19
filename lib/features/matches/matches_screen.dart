@@ -10,6 +10,9 @@ import 'package:frontend/features/matches/presentation/add_event_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/l10n/app_localizations.dart'; // New import
 
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
 
@@ -22,7 +25,7 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   late Future<List<Match>> _matchesFuture;
   Event? _selectedEvent;
   late TabController _tabController;
-  Event? _allEventsFilter; // Made nullable
+  Event? _allEventsFilter;
 
   @override
   void initState() {
@@ -86,6 +89,9 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
         title: Text(appLocalizations.matches),
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [
             Tab(text: appLocalizations.upcoming),
             Tab(text: appLocalizations.past),
@@ -100,7 +106,7 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(AppSpacing.m),
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
@@ -108,16 +114,19 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                   return Center(child: Text('${appLocalizations.errorLoadingEvents} ${snapshot.error}'));
                 }
 
-                final events = [_allEventsFilter!, ...?snapshot.data]; // Use _allEventsFilter!
+                final events = [_allEventsFilter!, ...?snapshot.data];
 
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(AppSpacing.m),
                   child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(labelText: appLocalizations.filterByEvent),
+                    decoration: InputDecoration(
+                      labelText: appLocalizations.filterByEvent,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+                    ),
                     value: _selectedEvent?.id,
                     onChanged: (String? newValue) {
                       setState(() {
-                        _selectedEvent = events.firstWhere((e) => e.id == newValue, orElse: () => _allEventsFilter!); // Use _allEventsFilter!
+                        _selectedEvent = events.firstWhere((e) => e.id == newValue, orElse: () => _allEventsFilter!);
                         _loadMatches();
                       });
                     },
@@ -166,7 +175,6 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateAndRefresh,
-        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );
@@ -178,13 +186,13 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
       return Center(child: Text(appLocalizations.noMatchesInCategory));
     }
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
       itemCount: matches.length,
       itemBuilder: (context, index) {
         final match = matches[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: Theme.of(context).cardColor,
-          child: ListTile(
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+          child: CustomCard(
             onTap: () {
               if (match.status == 'upcoming') {
                 context.goNamed('match-details', extra: match);
@@ -192,53 +200,80 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                 context.goNamed('match-statistics', extra: match);
               }
             },
-            leading: Icon(
-              Icons.emoji_events,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    match.homeTeam,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+              leading: Container(
+                padding: const EdgeInsets.all(AppSpacing.s),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    '${match.homeScore} - ${match.awayScore}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary),
-                  ),
+                child: Icon(
+                  Icons.emoji_events,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                Expanded(
-                  child: Text(
-                    match.awayTeam,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.end,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              title: Row(
                 children: [
-                  Text(
-                    DateFormat.yMd().add_jm().format(match.date),
-                    textAlign: TextAlign.start,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (match.eventName != null)
-                    Text(
-                      '${appLocalizations.event} ${match.eventName}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                  Expanded(
+                    child: Text(
+                      match.homeTeam,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.start,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                    child: Text(
+                      '${match.homeScore} - ${match.awayScore}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.secondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      match.awayTeam,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          DateFormat.yMd().add_jm().format(match.date),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    if (match.eventName != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.sports_soccer, size: 14, color: Colors.grey),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            '${appLocalizations.event} ${match.eventName}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),

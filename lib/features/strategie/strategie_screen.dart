@@ -7,6 +7,8 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/l10n/app_localizations.dart'; // New import
 
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 class StrategieScreen extends StatefulWidget {
   const StrategieScreen({super.key});
 
@@ -22,7 +24,7 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this); // Changed length to 2
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -50,7 +52,6 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
 
       if (result == true) {
         setState(() {
-          // Regenerate keys to force child widgets to rebuild and re-fetch data
           _trainingKey = UniqueKey();
           _reunionsKey = UniqueKey();
         });
@@ -60,7 +61,6 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    print('StrategieScreen built'); // Debug print
     final authService = Provider.of<AuthService>(context);
     final appLocalizations = AppLocalizations.of(context)!;
     final userEmail = authService.currentUser?.email ?? appLocalizations.guest;
@@ -71,11 +71,17 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(appLocalizations.strategie),
-            Text('${appLocalizations.loggedInAs} $userEmail', style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '${appLocalizations.loggedInAs} $userEmail',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+            ),
           ],
         ),
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [
             Tab(text: appLocalizations.training),
             Tab(text: appLocalizations.reunions),
@@ -91,7 +97,6 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateAndRefresh,
-        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );

@@ -5,6 +5,8 @@ import 'package:frontend/models/player_match_statistics.dart';
 import 'package:frontend/widgets/soccer_field_painter.dart';
 import 'package:frontend/models/match_event.dart'; // New import
 import 'package:frontend/models/player.dart'; // New import
+import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/widgets/custom_card.dart';
 
 class MatchLineupsPage extends StatefulWidget {
   final TeamLineup homeLineup;
@@ -192,69 +194,58 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
       children: [
         TabBar(
           controller: _tabController,
+          indicatorColor: Theme.of(context).colorScheme.primary,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [
-            Tab(
-              child: Builder(
-                builder: (BuildContext context) {
-                  final isSelected = _tabController.index == 0;
-                  final isLightMode = Theme.of(context).brightness == Brightness.light;
-                  return Text(
-                    widget.homeLineup.teamName,
-                    style: TextStyle(
-                      color: isSelected && isLightMode ? Theme.of(context).colorScheme.primary : null,
-                    ),
-                  );
-                },
-              ),
-            ),
-            Tab(
-              child: Builder(
-                builder: (BuildContext context) {
-                  final isSelected = _tabController.index == 1;
-                  final isLightMode = Theme.of(context).brightness == Brightness.light;
-                  return Text(
-                    widget.awayLineup.teamName,
-                    style: TextStyle(
-                      color: isSelected && isLightMode ? Theme.of(context).colorScheme.primary : null,
-                    ),
-                  );
-                },
-              ),
-            ),
+            Tab(text: widget.homeLineup.teamName),
+            Tab(text: widget.awayLineup.teamName),
           ],
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(AppSpacing.m),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: PlayerMetric.values.map((metric) {
-                  return ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedMetric = metric;
-                        _calculateAverage(); // Recalculate when metric changes
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedMetric == metric
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surface,
-                      foregroundColor: _selectedMetric == metric
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context).colorScheme.onSurface,
-                    ),
-                    child: Text(_getMetricName(metric, appLocalizations)),
-                  );
-                }).toList(),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: PlayerMetric.values.map((metric) {
+                    final isSelected = _selectedMetric == metric;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ChoiceChip(
+                        label: Text(_getMetricName(metric, appLocalizations)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedMetric = metric;
+                              _calculateAverage();
+                            });
+                          }
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                _averageMetric != null
-                    ? '${appLocalizations.average} ${_getMetricName(_selectedMetric, appLocalizations)}: ${_averageMetric!.toStringAsFixed(1)}'
-                    : appLocalizations.averageNA,
-                style: Theme.of(context).textTheme.titleMedium,
+              const SizedBox(height: AppSpacing.s),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _averageMetric != null
+                      ? '${appLocalizations.average} ${_getMetricName(_selectedMetric, appLocalizations)}: ${_averageMetric!.toStringAsFixed(1)}'
+                      : appLocalizations.averageNA,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
               ),
             ],
           ),
@@ -286,8 +277,8 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                     size: fieldSize,
                     painter: SoccerFieldPainter(
                       lineColor: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black,
+                          ? Colors.white54
+                          : Colors.black54,
                     ),
                   ),
                   ...teamLineup.players.map((player) {
@@ -311,11 +302,13 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                                   decoration: BoxDecoration(
                                     color: _getPlayerCircleColor(playerStat.rating),
                                     shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.3),
                                         spreadRadius: 1,
                                         blurRadius: 3,
+                                        offset: const Offset(0, 2),
                                       )
                                     ],
                                   ),
@@ -325,7 +318,7 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ),
@@ -334,14 +327,14 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                               // Metric badge
                               if (_getMetricValue(player, playerStat) != 'N/A')
                                 Positioned(
-                                  top: -5, // Slightly above the circle
-                                  right: -5, // Slightly to the right of the circle
+                                  top: -8, // Slightly above the circle
+                                  right: -8, // Slightly to the right of the circle
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Padding for the text
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Padding for the text
                                     decoration: BoxDecoration(
                                       color: _getMetricBadgeColor(_selectedMetric), // Dynamic color
-                                      borderRadius: BorderRadius.circular(8), // Rounded corners
-                                      border: Border.all(color: Colors.white, width: 1), // White border
+                                      borderRadius: BorderRadius.circular(10), // Rounded corners
+                                      border: Border.all(color: Colors.white, width: 1.5), // White border
                                     ),
                                     child: Text(
                                       _getMetricValue(player, playerStat), // Dynamic value
@@ -365,7 +358,7 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                                     color: cardEvent.eventType == 'yellow_card'
                                         ? Colors.yellow.shade700
                                         : Colors.red.shade700,
-                                    size: 20,
+                                    size: 18,
                                   ),
                                 ),
                               // Substitution Icon (Bottom-Left)
@@ -374,29 +367,27 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
                                   bottom: -5,
                                   left: -5,
                                   child: Icon(
-                                    subEvent.eventType == 'sub_in'
-                                        ? Icons.swap_horiz
-                                        : Icons.swap_horiz, // Same icon for in/out for simplicity
+                                    Icons.swap_horiz, // Same icon for in/out for simplicity
                                     color: Colors.blue.shade700,
-                                    size: 20,
+                                    size: 18,
                                   ),
                                 ),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            player.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 2.0,
-                                  color: Colors.black,
-                                  offset: Offset(1.0, 1.0),
-                                ),
-                              ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              player.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -407,7 +398,7 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
               );
             }),
           ),
-          const Divider(),
+          const Divider(height: 1),
           _buildPlayerList(context, teamLineup.players, playerStats, showPlayerStatsDialog),
         ],
       ),
@@ -421,23 +412,48 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
       return countryCode.toUpperCase().replaceAllMapped(RegExp(r'.'), (match) => String.fromCharCode(match.group(0)!.codeUnitAt(0) + 127397));
     }
 
-    String getPlayerName(String playerId) {
-      final allPlayers = [...widget.homeLineup.players, ...widget.awayLineup.players];
-      return allPlayers.firstWhere((p) => p.id == playerId, orElse: () => PlayerWithPosition(id: '', name: appLocalizations.unknown)).name;
-    }
-
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
       itemCount: players.length,
       itemBuilder: (context, index) {
         final player = players[index];
         final stat = playerStats.firstWhere((s) => s.playerId == player.id, orElse: () => PlayerMatchStatistics(id: '', matchId: '', playerId: ''));
-        return ListTile(
-          leading: Text('${player.jerseyNumber ?? '?'} ${getPlayerNationalityFlag(player.countryCode)}'),
-          title: Text(player.name),
-          subtitle: Text('${appLocalizations.minutesPlayed} ${stat.minutesPlayed ?? appLocalizations.notAvailable} | ${appLocalizations.rating} ${stat.rating?.toStringAsFixed(1) ?? appLocalizations.notAvailable}${appLocalizations.outOf10}'),
-          onTap: () => showPlayerStatsDialog(context, stat, player),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+          child: CustomCard(
+            onTap: () => showPlayerStatsDialog(context, stat, player),
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: _getPlayerCircleColor(stat.rating).withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    player.jerseyNumber?.toString() ?? '?',
+                    style: TextStyle(
+                      color: _getPlayerCircleColor(stat.rating),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              title: Row(
+                children: [
+                  Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text(getPlayerNationalityFlag(player.countryCode)),
+                ],
+              ),
+              subtitle: Text('${appLocalizations.minutesPlayed} ${stat.minutesPlayed ?? appLocalizations.notAvailable} | ${appLocalizations.rating} ${stat.rating?.toStringAsFixed(1) ?? appLocalizations.notAvailable}'),
+              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+            ),
+          ),
         );
       },
     );

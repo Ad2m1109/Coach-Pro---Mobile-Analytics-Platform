@@ -10,6 +10,8 @@ import 'package:frontend/services/match_lineup_service.dart';
 import 'package:frontend/models/formation.dart' as model;
 import 'package:frontend/services/formation_service.dart';
 import 'package:frontend/widgets/soccer_field_painter.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/widgets/custom_card.dart';
 
 // Data for preset formations
 class FormationPresets {
@@ -225,6 +227,7 @@ class FormationPresets {
   };
 }
 
+
 class MatchDetailsScreen extends StatefulWidget {
   final Match match;
 
@@ -240,7 +243,6 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   late Future<List<MatchLineup>> _lineupFuture;
   bool _isInitialSetupDone = false;
 
-  // Maps a position index (0-10) to an assigned Player
   final Map<int, Player> _assignedPlayers = {};
   model.Formation? _selectedFormation;
   List<Offset> _currentFormationOffsets = [];
@@ -248,17 +250,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _playersFuture =
-        Provider.of<PlayerService>(context, listen: false).getPlayers();
-    _formationsFuture =
-        Provider.of<FormationService>(context, listen: false).getFormations();
-    _lineupFuture = Provider.of<MatchLineupService>(context, listen: false)
-        .getLineups(matchId: widget.match.id);
+    _playersFuture = Provider.of<PlayerService>(context, listen: false).getPlayers();
+    _formationsFuture = Provider.of<FormationService>(context, listen: false).getFormations();
+    _lineupFuture = Provider.of<MatchLineupService>(context, listen: false).getLineups(matchId: widget.match.id);
   }
 
   void _onFormationChanged(model.Formation? newFormation) {
     if (newFormation == null || newFormation.id == _selectedFormation?.id) {
-      return; // Do nothing if the formation is the same or null
+      return;
     }
 
     setState(() {
@@ -268,39 +267,29 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       } else {
         _currentFormationOffsets = [];
       }
-      // NOTE: This will naively remap players based on their index.
-      // The user can then drag and drop to correct positions.
     });
   }
 
-  void _setupInitialState(List<Player> allPlayers,
-      List<model.Formation> formations, List<MatchLineup> savedLineups) {
+  void _setupInitialState(List<Player> allPlayers, List<model.Formation> formations, List<MatchLineup> savedLineups) {
     if (savedLineups.isEmpty) return;
 
     final formationId = savedLineups.first.formationId;
-    final initialFormation =
-        formations.firstWhereOrNull((f) => f.id == formationId);
+    final initialFormation = formations.firstWhereOrNull((f) => f.id == formationId);
 
     if (initialFormation != null) {
       _selectedFormation = initialFormation;
-      _currentFormationOffsets =
-          FormationPresets.presets[initialFormation.name] ?? [];
+      _currentFormationOffsets = FormationPresets.presets[initialFormation.name] ?? [];
 
       for (final lineupEntry in savedLineups) {
-        final player =
-            allPlayers.firstWhereOrNull((p) => p.id == lineupEntry.playerId);
+        final player = allPlayers.firstWhereOrNull((p) => p.id == lineupEntry.playerId);
         if (player == null || lineupEntry.positionInFormation == null) continue;
 
         final posParts = lineupEntry.positionInFormation!.split(',');
         if (posParts.length != 2) continue;
 
-        final offset =
-            Offset(double.parse(posParts[0]), double.parse(posParts[1]));
+        final offset = Offset(double.parse(posParts[0]), double.parse(posParts[1]));
 
-        // Find the index of this offset in the formation preset
-        final index = _currentFormationOffsets.indexWhere((presetOffset) =>
-            (presetOffset.dx - offset.dx).abs() < 0.001 &&
-            (presetOffset.dy - offset.dy).abs() < 0.001);
+        final index = _currentFormationOffsets.indexWhere((presetOffset) => (presetOffset.dx - offset.dx).abs() < 0.001 && (presetOffset.dy - offset.dy).abs() < 0.001);
 
         if (index != -1) {
           _assignedPlayers[index] = player;
@@ -330,14 +319,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     bool success = true;
 
     try {
-      // 1. Delete existing lineups for this match and team
       final existingLineups = await matchLineupService.getLineups(matchId: widget.match.id);
       final lineupsToDelete = existingLineups.where((lu) => lu.teamId == teamId).toList();
       for (final lineup in lineupsToDelete) {
         await matchLineupService.deleteLineup(lineup.id);
       }
 
-      // 2. Create new lineups
       for (int i = 0; i < _currentFormationOffsets.length; i++) {
         final player = _assignedPlayers[i];
         final position = _currentFormationOffsets[i];
@@ -405,24 +392,20 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
             _setupInitialState(allPlayers, formations, savedLineups);
           }
 
-          // Filter out players already on the field
-          final availablePlayers = allPlayers
-              .where((p) => !_assignedPlayers.containsValue(p))
-              .toList();
+          final availablePlayers = allPlayers.where((p) => !_assignedPlayers.containsValue(p)).toList();
 
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(AppSpacing.m),
                 child: DropdownButtonFormField<model.Formation>(
-                  decoration:
-                      InputDecoration(labelText: appLocalizations.selectFormation),
+                  decoration: InputDecoration(
+                    labelText: appLocalizations.selectFormation,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+                  ),
                   value: _selectedFormation,
                   onChanged: _onFormationChanged,
-                  items: formations
-                      .where(
-                          (f) => FormationPresets.presets.containsKey(f.name))
-                      .map<DropdownMenuItem<model.Formation>>((f) {
+                  items: formations.where((f) => FormationPresets.presets.containsKey(f.name)).map<DropdownMenuItem<model.Formation>>((f) {
                     return DropdownMenuItem<model.Formation>(
                       value: f,
                       child: Text(f.name),
@@ -433,27 +416,19 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final fieldSize =
-                        Size(constraints.maxWidth, constraints.maxHeight);
+                    final fieldSize = Size(constraints.maxWidth, constraints.maxHeight);
                     return Stack(
                       children: [
                         CustomPaint(
                           size: fieldSize,
                           painter: SoccerFieldPainter(
-                            lineColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.white
-                                    : Colors.black,
+                            lineColor: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black54,
                           ),
                         ),
-                        // Render placeholders and assigned players
-                        ...List.generate(_currentFormationOffsets.length,
-                            (index) {
+                        ...List.generate(_currentFormationOffsets.length, (index) {
                           final position = _currentFormationOffsets[index];
                           final assignedPlayer = _assignedPlayers[index];
-                          final pixelPosition = Offset(
-                              position.dx * fieldSize.width,
-                              position.dy * fieldSize.height);
+                          final pixelPosition = Offset(position.dx * fieldSize.width, position.dy * fieldSize.height);
 
                           return Positioned(
                             left: pixelPosition.dx - 25,
@@ -469,17 +444,13 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                                     : _buildPlaceholder(index);
                               },
                               onWillAcceptWithDetails: (details) {
-                                // Prevent dropping a GK on a non-GK spot and vice-versa
                                 bool isGkSpot = index == 0;
                                 bool isPlayerGk = details.data.position == 'GK';
                                 return isGkSpot == isPlayerGk;
                               },
                               onAcceptWithDetails: (details) {
                                 setState(() {
-                                  // If player was already assigned elsewhere, remove old assignment
-                                  _assignedPlayers.removeWhere((key, value) =>
-                                      value.id == details.data.id);
-                                  // Assign player to the new spot
+                                  _assignedPlayers.removeWhere((key, value) => value.id == details.data.id);
                                   _assignedPlayers[index] = details.data;
                                 });
                               },
@@ -491,22 +462,30 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                   },
                 ),
               ),
-              // Available players list
               Container(
-                height: 100,
-                color: Theme.of(context).cardColor,
+                height: 110,
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
                   itemCount: availablePlayers.length,
                   itemBuilder: (context, index) {
                     final player = availablePlayers[index];
                     final playerMarker = _buildDraggablePlayer(player);
                     return Draggable<Player>(
                       data: player,
-                      feedback: Material(
-                          color: Colors.transparent, child: playerMarker),
-                      childWhenDragging:
-                          Opacity(opacity: 0.3, child: playerMarker),
+                      feedback: Material(color: Colors.transparent, child: playerMarker),
+                      childWhenDragging: Opacity(opacity: 0.3, child: playerMarker),
                       child: playerMarker,
                     );
                   },
@@ -525,33 +504,38 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       child: Column(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: player.position == 'GK'
-                  ? Colors.orange.shade700
-                  : Theme.of(context).colorScheme.primary,
+              color: player.position == 'GK' ? Colors.orange.shade700 : Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Center(
               child: Text(
                 player.jerseyNumber?.toString() ?? '?',
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            player.name,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                shadows: [Shadow(blurRadius: 2.0, color: Colors.black)]),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              player.name,
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -560,20 +544,18 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
   Widget _buildPlaceholder(int index) {
     return Container(
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        color: (index == 0 ? Colors.orange.shade900 : Colors.black)
-            .withOpacity(0.4),
+        color: (index == 0 ? Colors.orange.shade900 : Colors.black).withOpacity(0.3),
         shape: BoxShape.circle,
-        border: Border.all(
-            color: Colors.white54, width: 1, style: BorderStyle.solid),
+        border: Border.all(color: Colors.white54, width: 2, style: BorderStyle.solid),
       ),
       child: Center(
         child: Icon(
           index == 0 ? Icons.pan_tool : Icons.add,
           color: Colors.white54,
-          size: 20,
+          size: 24,
         ),
       ),
     );
@@ -581,21 +563,28 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
   Widget _buildDraggablePlayer(Player player) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
-            backgroundColor: player.position == 'GK'
-                ? Colors.orange.shade700
-                : Theme.of(context).colorScheme.secondary,
-            child: Text(player.jerseyNumber?.toString() ?? '?',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+            radius: 24,
+            backgroundColor: player.position == 'GK' ? Colors.orange.shade700 : Theme.of(context).colorScheme.secondary,
+            child: Text(
+              player.jerseyNumber?.toString() ?? '?',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(height: 4),
-          Text(player.name,
-              style: const TextStyle(color: Colors.white, fontSize: 10)),
+          SizedBox(
+            width: 60,
+            child: Text(
+              player.name,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );

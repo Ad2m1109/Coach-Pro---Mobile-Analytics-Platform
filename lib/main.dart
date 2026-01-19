@@ -22,11 +22,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend/l10n/app_localizations.dart'; 
 import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
+import 'package:frontend/core/design_system/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   String baseUrl = '';
-  const String localApiUrl = 'http://192.168.1.180:8000/api';
+  const String localApiUrl = 'http://localhost:8000/api';
   if (!kIsWeb) {
     try {
       await dotenv.load(fileName: ".env");
@@ -131,90 +132,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'Soccer Analytics',
           themeMode: themeNotifier.themeMode,
-          theme: ThemeData(
-            brightness: Brightness.light,
-            scaffoldBackgroundColor: Colors.white,
-            primaryColor: const Color(0xFF50C878),
-            cardColor: Colors.white,
-            colorScheme: ColorScheme.light(
-              primary: const Color(0xFF50C878),
-              secondary: const Color(0xFFE94560),
-              background: Colors.white,
-              surface: Colors.white,
-              onPrimary: Colors.white,
-              onSecondary: Colors.white,
-              onBackground: Colors.black,
-              onSurface: Colors.black,
-              error: Colors.redAccent,
-              onError: Colors.white,
-            ),
-            textTheme: TextTheme(
-              bodyLarge: TextStyle(color: Colors.black),
-              bodyMedium: TextStyle(color: Colors.grey[700]),
-              titleLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              headlineSmall: TextStyle(color: Color(0xFFE94560)),
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF50C878),
-              elevation: 0,
-              titleTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            bottomNavigationBarTheme: BottomNavigationBarThemeData(
-              backgroundColor: Colors.white,
-              selectedItemColor: Color(0xFF50C878),
-              unselectedItemColor: Colors.grey[700],
-              showUnselectedLabels: true,
-            ),
-            tabBarTheme: TabBarThemeData(
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.grey[700],
-            ),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            scaffoldBackgroundColor: const Color(0xFF1A1A2E),
-            primaryColor: const Color(0xFF50C878),
-            cardColor: const Color(0xFF16213E),
-            colorScheme: ColorScheme.dark(
-              primary: const Color(0xFF50C878),
-              secondary: const Color(0xFFE94560),
-              background: const Color(0xFF1A1A2E),
-              surface: const Color(0xFF16213E),
-              onPrimary: Colors.white,
-              onSecondary: Colors.white,
-              onBackground: Colors.white,
-              onSurface: Colors.white,
-              error: Colors.redAccent,
-              onError: Colors.white,
-            ),
-            textTheme: TextTheme(
-              bodyLarge: TextStyle(color: Colors.white),
-              bodyMedium: TextStyle(color: Color(0xFFA9A9A9)),
-              titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              headlineSmall: TextStyle(color: Color(0xFFE94560)),
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Color(0xFF16213E),
-              elevation: 0,
-              titleTextStyle: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            bottomNavigationBarTheme: BottomNavigationBarThemeData(
-              backgroundColor: Color(0xFF16213E),
-              selectedItemColor: Color(0xFF50C878),
-              unselectedItemColor: Color(0xFFA9A9A9),
-              showUnselectedLabels: true,
-            ),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
           locale: localeNotifier.locale,
           localizationsDelegates: [
             AppLocalizations.delegate,

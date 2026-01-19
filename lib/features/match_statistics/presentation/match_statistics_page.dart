@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/models/match_details.dart';
 import 'package:frontend/models/match_event.dart';
 import 'package:frontend/models/match_team_statistics.dart';
 import 'package:frontend/models/player_match_statistics.dart';
 import 'package:frontend/models/player.dart'; // New import
+import 'package:frontend/widgets/custom_card.dart';
 
 class MatchStatisticsPage extends StatelessWidget {
   final List<MatchTeamStatistics> teamStats;
@@ -28,12 +30,13 @@ class MatchStatisticsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(AppSpacing.m),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTeamComparison(context, teamStats, homeLineup, awayLineup),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.m),
+          _buildPlayerPerformance(context, playerStats, homeLineup, awayLineup),
         ],
       ),
     );
@@ -44,10 +47,15 @@ class MatchStatisticsPage extends StatelessWidget {
     final homeStats = teamStats.firstWhere((s) => s.teamId == home.teamId);
     final awayStats = teamStats.firstWhere((s) => s.teamId == away.teamId);
 
-    return _buildSectionCard(context,
-      title: appLocalizations.teamComparison,
-      child: Column( // Changed from SingleChildScrollView with DataTable
+    return CustomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            appLocalizations.teamComparison,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppSpacing.m),
           _buildStatRowWithPercentage(context, appLocalizations.possession, homeStats.possessionPercentage ?? 0, awayStats.possessionPercentage ?? 0, home, away, unit: '%', isPercentage: true),
           _buildStatRowWithPercentage(context, appLocalizations.totalShots, homeStats.totalShots ?? 0, awayStats.totalShots ?? 0, home, away),
           _buildStatRowWithPercentage(context, appLocalizations.shotsOnTarget, homeStats.shotsOnTarget ?? 0, awayStats.shotsOnTarget ?? 0, home, away),
@@ -78,38 +86,36 @@ class MatchStatisticsPage extends StatelessWidget {
     final awayPercentage = total > 0 ? (awayValue / total) : 0.0;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(metric, style: Theme.of(context).textTheme.titleMedium),
+          Text(metric, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                flex: 4,
-                child: Text(
-                  '${homeLineup.teamName}: ${isPercentage ? homeValue.toStringAsFixed(1) : homeValue.toStringAsFixed(0)}${unit ?? ''}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+              Text(
+                '${isPercentage ? homeValue.toStringAsFixed(1) : homeValue.toStringAsFixed(0)}${unit ?? ''}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
               ),
-              Expanded(
-                flex: 4,
-                child: Text(
-                  '${awayLineup.teamName}: ${isPercentage ? awayValue.toStringAsFixed(1) : awayValue.toStringAsFixed(0)}${unit ?? ''}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.right,
-                ),
+              Text(
+                '${isPercentage ? awayValue.toStringAsFixed(1) : awayValue.toStringAsFixed(0)}${unit ?? ''}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: homePercentage,
-            backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-            minHeight: 8,
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: homePercentage,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
+              minHeight: 8,
+            ),
           ),
+          const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -124,42 +130,46 @@ class MatchStatisticsPage extends StatelessWidget {
 
   Widget _buildPlayerPerformance(BuildContext context, List<PlayerMatchStatistics> playerStats, TeamLineup home, TeamLineup away) {
     final appLocalizations = AppLocalizations.of(context)!;
-    return _buildSectionCard(context,
-      title: appLocalizations.playerPerformance,
+    return CustomCard(
       child: Column(
-        children: playerStats.map((stat) {
-          // Get the Player object
-          final allPlayers = [...home.players, ...away.players];
-          final player = allPlayers.firstWhere((p) => p.id == stat.playerId, orElse: () => PlayerWithPosition(id: '', name: appLocalizations.unknown));
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            appLocalizations.playerPerformance,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: AppSpacing.s),
+          ...playerStats.map((stat) {
+            // Get the Player object
+            final allPlayers = [...home.players, ...away.players];
+            final player = allPlayers.firstWhere((p) => p.id == stat.playerId, orElse: () => PlayerWithPosition(id: '', name: appLocalizations.unknown));
 
-          return ListTile(
-            title: Text(player.name),
-            subtitle: Text(stat.notes ?? appLocalizations.noNotesAvailable, maxLines: 2, overflow: TextOverflow.ellipsis),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => showPlayerStatsDialog(context, stat, player),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildSectionCard(BuildContext context, {required String title, required Widget child}) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            child,
-          ],
-        ),
+            return ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(stat.notes ?? appLocalizations.noNotesAvailable, maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      stat.rating?.toStringAsFixed(1) ?? 'N/A',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                ],
+              ),
+              onTap: () => showPlayerStatsDialog(context, stat, player),
+            );
+          }).toList(),
+        ],
       ),
     );
   }

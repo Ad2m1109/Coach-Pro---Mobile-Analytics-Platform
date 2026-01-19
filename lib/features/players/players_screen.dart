@@ -7,6 +7,9 @@ import 'package:frontend/services/api_client.dart';
 import 'package:frontend/services/player_service.dart';
 import 'package:provider/provider.dart';
 
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 enum PlayerSortOption { name, jerseyNumber, marketValue, position }
 
 class PlayersScreen extends StatefulWidget {
@@ -20,8 +23,8 @@ class _PlayersScreenState extends State<PlayersScreen> {
   late Future<List<Player>> _playersFuture;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  PlayerSortOption _selectedSortOption = PlayerSortOption.name; // Default sort option
-  List<Player> _allPlayers = []; // To hold all players fetched from API
+  PlayerSortOption _selectedSortOption = PlayerSortOption.name;
+  List<Player> _allPlayers = [];
 
   @override
   void initState() {
@@ -41,8 +44,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
     final playerService = Provider.of<PlayerService>(context, listen: false);
     setState(() {
       _playersFuture = playerService.getPlayers().then((players) {
-        _allPlayers = players; // Store all players
-        // Initial sort
+        _allPlayers = players;
         return _filterAndSortPlayers(players);
       });
     });
@@ -50,7 +52,6 @@ class _PlayersScreenState extends State<PlayersScreen> {
 
   void _onSearchChanged() {
     setState(() {
-      // This will trigger a rebuild, which will call _filterAndSortPlayers
       _searchQuery = _searchController.text;
     });
   }
@@ -73,13 +74,12 @@ class _PlayersScreenState extends State<PlayersScreen> {
       return player.name.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
 
-    // Sort players
     filteredPlayers.sort((a, b) {
       switch (_selectedSortOption) {
         case PlayerSortOption.jerseyNumber:
           return (a.jerseyNumber ?? 999).compareTo(b.jerseyNumber ?? 999);
         case PlayerSortOption.marketValue:
-          return (b.marketValue ?? 0.0).compareTo(a.marketValue ?? 0.0); // Descending
+          return (b.marketValue ?? 0.0).compareTo(a.marketValue ?? 0.0);
         case PlayerSortOption.position:
           final positionOrder = {'FWD': 0, 'MID': 1, 'DEF': 2, 'GK': 3};
           final posA = positionOrder[a.position ?? ''] ?? 99;
@@ -113,9 +113,9 @@ class _PlayersScreenState extends State<PlayersScreen> {
       appBar: AppBar(
         title: Text(appLocalizations.players),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60.0),
+          preferredSize: const Size.fromHeight(70.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
             child: Row(
               children: [
                 Expanded(
@@ -123,35 +123,31 @@ class _PlayersScreenState extends State<PlayersScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      labelText: appLocalizations.search, // Shorter label
-                      labelStyle: const TextStyle(color: Colors.black), // Label text color
-                      prefixIcon: const Icon(Icons.search, size: 20, color: Colors.black), // Smaller icon, black color
-                      border: const OutlineInputBorder(),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0), // Smaller padding
+                      labelText: appLocalizations.search,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
                     ),
-                    style: const TextStyle(fontSize: 14.0, color: Colors.black),
+                    style: const TextStyle(fontSize: 14.0),
                   ),
                 ),
-                const SizedBox(width: 8.0),
+                const SizedBox(width: AppSpacing.s),
                 Expanded(
                   flex: 2,
                   child: DropdownButtonFormField<PlayerSortOption>(
                     value: _selectedSortOption,
                     decoration: InputDecoration(
                       labelText: appLocalizations.sort,
-                      labelStyle: const TextStyle(color: Colors.black),
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
                     ),
-                    style: const TextStyle(fontSize: 14.0, color: Colors.black),
-                    dropdownColor: Theme.of(context).cardColor,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14.0),
+                    dropdownColor: Theme.of(context).cardTheme.color,
                     items: PlayerSortOption.values.map((option) {
                       return DropdownMenuItem<PlayerSortOption>(
                         value: option,
-                        child: Text(_getSortOptionName(option, appLocalizations), style: const TextStyle(fontSize: 14.0, color: Colors.black)),
+                        child: Text(
+                          _getSortOptionName(option, appLocalizations),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                        ),
                       );
                     }).toList(),
                     onChanged: (PlayerSortOption? newValue) {
@@ -179,6 +175,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
 
           final filteredAndSortedPlayers = _filterAndSortPlayers(_allPlayers);
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
             itemCount: filteredAndSortedPlayers.length,
             itemBuilder: (context, index) {
               final player = filteredAndSortedPlayers[index];
@@ -193,38 +190,78 @@ class _PlayersScreenState extends State<PlayersScreen> {
                 }
               }
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Theme.of(context).cardColor,
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    backgroundImage: backgroundImage,
-                    child: backgroundImage == null
-                        ? Text(player.name.isNotEmpty ? player.name[0] : '?',
-                            style: const TextStyle(color: Colors.white))
-                        : null,
-                  ),
-                  title: Text(player.name,
-                      style: Theme.of(context).textTheme.titleLarge),
-                  subtitle: Text(
-                    '${player.position ?? appLocalizations.notAvailable} - #${player.jerseyNumber ?? appLocalizations.notAvailable}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  trailing: Icon(Icons.arrow_forward_ios,
-                      color: Theme.of(context).colorScheme.secondary),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+                child: CustomCard(
                   onTap: () async {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            PlayerProfileScreen(player: player),
+                        builder: (context) => PlayerProfileScreen(player: player),
                       ),
                     );
                     if (result == true) {
                       _loadPlayers();
                     }
                   },
+                  padding: EdgeInsets.zero,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+                    leading: Hero(
+                      tag: 'player_${player.id}',
+                      child: CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        backgroundImage: backgroundImage,
+                        child: backgroundImage == null
+                            ? Text(
+                                player.name.isNotEmpty ? player.name[0] : '?',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                    title: Text(
+                      player.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              player.position ?? appLocalizations.notAvailable,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '#${player.jerseyNumber ?? appLocalizations.notAvailable}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    ),
+                  ),
                 ),
               );
             },
@@ -233,7 +270,6 @@ class _PlayersScreenState extends State<PlayersScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateAndRefresh,
-        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add),
       ),
     );

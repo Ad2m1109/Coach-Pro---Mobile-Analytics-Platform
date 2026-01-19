@@ -81,9 +81,11 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> with SingleTi
             },
           ),
           title: Text(_player.name),
-          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           bottom: TabBar(
             controller: _tabController,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [
               Tab(text: appLocalizations.details),
               Tab(text: appLocalizations.statistics),
@@ -93,10 +95,7 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> with SingleTi
         body: TabBarView(
           controller: _tabController,
           children: [
-            // Details Tab
             PlayerDetailsView(player: _player, onEditImage: _pickAndUploadImage),
-
-            // Statistics Tab
             FutureBuilder<List<PlayerMatchStatistics>>(
               future: _playerStatsHistoryFuture,
               builder: (context, snapshot) {

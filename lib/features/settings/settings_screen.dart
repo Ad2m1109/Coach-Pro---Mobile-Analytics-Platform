@@ -9,6 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_service.dart';
 
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -43,17 +46,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // User must tap button!
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text(appLocalizations.confirmLogout),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(appLocalizations.areYouSureYouWantToLogout),
-              ],
-            ),
-          ),
+          content: Text(appLocalizations.areYouSureYouWantToLogout),
           actions: <Widget>[
             TextButton(
               child: Text(appLocalizations.cancel),
@@ -62,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
               child: Text(appLocalizations.logout),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
@@ -83,28 +80,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: Text(appLocalizations.settings),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60.0),
+          preferredSize: const Size.fromHeight(70.0),
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 labelText: appLocalizations.searchSettings,
-                floatingLabelStyle: const TextStyle(color: Colors.black),
                 prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
               ),
-              style: const TextStyle(fontSize: 14.0, color: Colors.black),
+              style: const TextStyle(fontSize: 14.0),
             ),
           ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.m),
         children: _buildSettingsOptions(context),
       ),
     );
@@ -115,27 +107,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final List<Map<String, dynamic>> allOptions = [
       {
         'title': appLocalizations.teamAndAccount,
-        'icon': Icons.account_circle,
+        'icon': Icons.account_circle_outlined,
         'screen': const AccountAndTeamScreen(),
       },
       {
         'title': appLocalizations.preferences,
-        'icon': Icons.settings_applications,
+        'icon': Icons.settings_outlined,
         'screen': const PreferencesScreen(),
       },
       {
         'title': appLocalizations.manageEvents,
-        'icon': Icons.event,
+        'icon': Icons.event_outlined,
         'screen': const EventsSettingsScreen(),
       },
       {
         'title': appLocalizations.advancedSettings,
-        'icon': Icons.security,
+        'icon': Icons.security_outlined,
         'screen': const AdvancedSettingsScreen(),
       },
       {
         'title': appLocalizations.about,
-        'icon': Icons.info,
+        'icon': Icons.info_outline,
         'screen': const AboutScreen(),
       },
     ];
@@ -146,30 +138,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return [
       ...filteredOptions.map((option) {
-        return Card(
-          color: Theme.of(context).cardColor,
-          margin: const EdgeInsets.only(bottom: 16.0),
-          child: ListTile(
-            leading: Icon(option['icon'], color: Theme.of(context).colorScheme.primary),
-            title: Text(option['title'], style: Theme.of(context).textTheme.titleLarge),
-            trailing: Icon(Icons.arrow_forward_ios, color: Theme.of(context).colorScheme.secondary),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s),
+          child: CustomCard(
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => option['screen']),
               );
             },
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(option['icon'], color: Theme.of(context).colorScheme.primary),
+              title: Text(option['title'], style: Theme.of(context).textTheme.titleMedium),
+              trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+            ),
           ),
         );
       }).toList(),
-      // Logout option is always visible, not filtered by search
-      Card(
-        color: Theme.of(context).cardColor,
-        margin: const EdgeInsets.only(top: 16.0),
+      const SizedBox(height: AppSpacing.m),
+      CustomCard(
+        onTap: () => _showLogoutConfirmationDialog(context),
+        padding: EdgeInsets.zero,
         child: ListTile(
-          leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.secondary),
-          title: Text(appLocalizations.logout, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.secondary)),
-          onTap: () => _showLogoutConfirmationDialog(context),
+          leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+          title: Text(
+            appLocalizations.logout,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       ),
     ];
