@@ -27,23 +27,31 @@ import 'package:frontend/core/design_system/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   String baseUrl = '';
-  const String localApiUrl = 'http://localhost:8000/api';
-  if (!kIsWeb) {
-    try {
-      await dotenv.load(fileName: ".env");
-      baseUrl = dotenv.env['BASE_URL'] ?? localApiUrl;
-    } catch (e, stack) {
-      runApp(MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Text('Startup error: $e\n$stack'),
-          ),
-        ),
-      ));
-      return;
+  
+  try {
+    await dotenv.load(fileName: ".env");
+    
+    // Use BASE_URL for mobile/production, localApiUrl for web/development
+    if (kIsWeb) {
+      baseUrl = dotenv.env['localApiUrl'] ?? dotenv.env['BASE_URL'] ?? '';
+    } else {
+      baseUrl = dotenv.env['BASE_URL'] ?? '';
     }
-  } else {
-    baseUrl = localApiUrl;
+    
+    // Optional: Add debug logging
+    if (kDebugMode) {
+      print('Running on ${kIsWeb ? 'Web' : 'Mobile'}');
+      print('Base URL: $baseUrl');
+    }
+  } catch (e, stack) {
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('Startup error: $e\n$stack'),
+        ),
+      ),
+    ));
+    return;
   }
 
   final apiClient = ApiClient(baseUrl: baseUrl, httpClient: http.Client());
@@ -121,6 +129,7 @@ Future<void> main() async {
     ),
   );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -135,7 +144,7 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           locale: localeNotifier.locale,
-          localizationsDelegates: [
+          localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
