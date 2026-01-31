@@ -72,8 +72,10 @@ class VideoAnalysisService extends ChangeNotifier {
       // Track upload progress
       final stream = await request.send();
       var uploadedBytes = 0;
+      final List<int> responseBytes = [];
 
       await for (final data in stream.stream) {
+        responseBytes.addAll(data);
         uploadedBytes += data.length;
         final progress = uploadedBytes / videoLength.toDouble();
         _updateState(
@@ -88,8 +90,8 @@ class VideoAnalysisService extends ChangeNotifier {
           status: 'Upload complete. Starting analysis...',
         );
 
-        // Get response body
-        final responseBody = await stream.stream.bytesToString();
+        // Decode response body from collected bytes
+        final responseBody = utf8.decode(responseBytes);
         final responseData = json.decode(responseBody);
         
         // Start polling for analysis status

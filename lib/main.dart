@@ -27,6 +27,7 @@ import 'package:frontend/core/design_system/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   String baseUrl = '';
+  String analysisBaseUrl = '';
   
   try {
     await dotenv.load(fileName: ".env");
@@ -34,14 +35,17 @@ Future<void> main() async {
     // Use BASE_URL for mobile/production, localApiUrl for web/development
     if (kIsWeb) {
       baseUrl = dotenv.env['localApiUrl'] ?? dotenv.env['BASE_URL'] ?? '';
+      analysisBaseUrl = dotenv.env['localAnalysisApiUrl'] ?? dotenv.env['ANALYSIS_BASE_URL'] ?? '';
     } else {
       baseUrl = dotenv.env['BASE_URL'] ?? '';
+      analysisBaseUrl = dotenv.env['ANALYSIS_BASE_URL'] ?? '';
     }
     
     // Optional: Add debug logging
     if (kDebugMode) {
       print('Running on ${kIsWeb ? 'Web' : 'Mobile'}');
       print('Base URL: $baseUrl');
+      print('Analysis Base URL: $analysisBaseUrl');
     }
   } catch (e, stack) {
     runApp(MaterialApp(
@@ -55,6 +59,7 @@ Future<void> main() async {
   }
 
   final apiClient = ApiClient(baseUrl: baseUrl, httpClient: http.Client());
+  final analysisApiClient = ApiClient(baseUrl: analysisBaseUrl, httpClient: http.Client());
   final authService = AuthService(apiClient: apiClient);
   await authService.init();
 
@@ -119,7 +124,7 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<VideoAnalysisService>(
           create: (context) => VideoAnalysisService(
-            apiClient: Provider.of<ApiClient>(context, listen: false),
+            apiClient: analysisApiClient, // Use the dedicated analysis API client
           ),
         ),
         ChangeNotifierProvider<ThemeNotifier>(create: (_) => ThemeNotifier(initialThemeMode)),
