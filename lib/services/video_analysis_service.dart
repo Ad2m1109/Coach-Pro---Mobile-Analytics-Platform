@@ -56,7 +56,7 @@ class VideoAnalysisService extends ChangeNotifier {
       );
 
       // Create multipart request for video upload
-      final uri = Uri.parse('${_apiClient.baseUrl}/api/analyze_match');
+      final uri = Uri.parse('${_apiClient.baseUrl}/analyze_match');
       final request = http.MultipartRequest('POST', uri);
       
       final videoStream = http.ByteStream(videoFile.openRead());
@@ -108,7 +108,7 @@ class VideoAnalysisService extends ChangeNotifier {
           
           try {
             final response = await http.get(
-              Uri.parse('${_apiClient.baseUrl}/api/analysis_status/$analysisId'),
+              Uri.parse('${_apiClient.baseUrl}/analysis_status/$analysisId'),
               headers: await _apiClient.getAuthHeaders(),
             );
 
