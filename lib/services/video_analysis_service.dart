@@ -13,12 +13,14 @@ class VideoAnalysisService extends ChangeNotifier {
   double _analysisProgress = 0.0;
   String _status = '';
   String? _lastError;
+  Map<String, dynamic> _liveStats = {};
   
   bool get isAnalyzing => _isAnalyzing;
   double get uploadProgress => _uploadProgress;
   double get analysisProgress => _analysisProgress;
   String get status => _status;
   String? get lastError => _lastError;
+  Map<String, dynamic> get liveStats => _liveStats;
 
   VideoAnalysisService({required ApiClient apiClient}) : _apiClient = apiClient;
 
@@ -28,12 +30,14 @@ class VideoAnalysisService extends ChangeNotifier {
     double? analysisProgress,
     String? status,
     String? error,
+    Map<String, dynamic>? liveStats,
   }) {
     if (isAnalyzing != null) _isAnalyzing = isAnalyzing;
     if (uploadProgress != null) _uploadProgress = uploadProgress;
     if (analysisProgress != null) _analysisProgress = analysisProgress;
     if (status != null) _status = status;
     if (error != null) _lastError = error;
+    if (liveStats != null) _liveStats = liveStats;
     notifyListeners();
   }
 
@@ -48,10 +52,11 @@ class VideoAnalysisService extends ChangeNotifier {
         uploadProgress: 0.0,
         analysisProgress: 0.0,
         status: 'Preparing video upload...',
+        liveStats: {},
       );
 
       // Create multipart request for video upload
-      final uri = Uri.parse('${_apiClient.baseUrl}/analyze_match');
+      final uri = Uri.parse('${_apiClient.baseUrl}/api/analyze_match');
       final request = http.MultipartRequest('POST', uri);
       
       final videoStream = http.ByteStream(videoFile.openRead());
@@ -80,14 +85,14 @@ class VideoAnalysisService extends ChangeNotifier {
         final progress = uploadedBytes / videoLength.toDouble();
         _updateState(
           uploadProgress: progress,
-          status: 'Uploading video: ${(progress * 100).toStringAsFixed(1)}%',
+          status: 'Streaming video: ${(progress * 100).toStringAsFixed(1)}%',
         );
       }
 
       if (stream.statusCode == 200 || stream.statusCode == 202) {
         _updateState(
           uploadProgress: 1.0,
-          status: 'Upload complete. Starting analysis...',
+          status: 'Upload complete. Processing stream...',
         );
 
         // Decode response body from collected bytes
@@ -96,14 +101,14 @@ class VideoAnalysisService extends ChangeNotifier {
         
         // Start polling for analysis status
         bool isComplete = false;
-        final analysisId = responseData['analysis_id'] ?? '';
+        final analysisId = responseData['analysis_id'] ?? responseData['match_id'] ?? '';
         
         while (!isComplete && _isAnalyzing) {
-          await Future.delayed(const Duration(seconds: 2));
+          await Future.delayed(const Duration(seconds: 1)); // Faster polling for real-time
           
           try {
             final response = await http.get(
-              Uri.parse('${_apiClient.baseUrl}/analyze_status/$analysisId'),
+              Uri.parse('${_apiClient.baseUrl}/api/analysis_status/$analysisId'),
               headers: await _apiClient.getAuthHeaders(),
             );
 
@@ -115,6 +120,7 @@ class VideoAnalysisService extends ChangeNotifier {
                 _updateState(
                   analysisProgress: progress,
                   status: 'Analyzing video: ${(progress * 100).toStringAsFixed(1)}%',
+                  liveStats: statusData['live_stats'] as Map<String, dynamic>?,
                 );
               }
 
@@ -132,6 +138,9 @@ class VideoAnalysisService extends ChangeNotifier {
                   throw Exception(statusData['error'] ?? 'Analysis failed');
                 case 'PENDING':
                 case 'IN_PROGRESS':
+                case 'RECEIVING':
+                case 'STREAMING':
+                case 'PROCESSING':
                   // Continue polling
                   break;
                 default:
@@ -142,9 +151,8 @@ class VideoAnalysisService extends ChangeNotifier {
             }
           } catch (e) {
             print('Error polling analysis status: $e');
-            // Only throw if we've retried a few times
-            if (!_isAnalyzing) break; // Allow cancellation
-            await Future.delayed(const Duration(seconds: 5));
+            if (!_isAnalyzing) break;
+            await Future.delayed(const Duration(seconds: 3));
           }
         }
       } else {

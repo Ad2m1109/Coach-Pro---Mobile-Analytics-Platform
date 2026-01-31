@@ -19,6 +19,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   String _statusMessage = '';
   double _uploadProgress = 0.0;
   double _analysisProgress = 0.0;
+  Map<String, dynamic> _liveStats = {};
 
   Future<void> _pickVideo() async {
     final appLocalizations = AppLocalizations.of(context)!;
@@ -51,11 +52,14 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
 
       videoAnalysisService.addListener(() {
-        setState(() {
-          _uploadProgress = videoAnalysisService.uploadProgress;
-          _analysisProgress = videoAnalysisService.analysisProgress;
-          _statusMessage = videoAnalysisService.status;
-        });
+        if (mounted) {
+          setState(() {
+            _uploadProgress = videoAnalysisService.uploadProgress;
+            _analysisProgress = videoAnalysisService.analysisProgress;
+            _statusMessage = videoAnalysisService.status;
+            _liveStats = videoAnalysisService.liveStats;
+          });
+        }
       });
 
       await videoAnalysisService.uploadAndAnalyzeVideo(
@@ -134,6 +138,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             AnalysisProgressWidget(
               uploadProgress: _uploadProgress,
               analysisProgress: _analysisProgress,
+              liveStats: _liveStats,
             ),
           ],
           const SizedBox(height: 32),
