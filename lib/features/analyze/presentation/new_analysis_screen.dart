@@ -65,32 +65,38 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       await videoAnalysisService.uploadAndAnalyzeVideo(
         videoFile: _videoFile!,
         onComplete: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(appLocalizations.videoAnalysisCompleted)),
-          );
-          setState(() {
-            _isLoading = false;
-            _statusMessage = appLocalizations.videoAnalysisCompleted;
-          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(appLocalizations.videoAnalysisCompleted)),
+            );
+            setState(() {
+              _isLoading = false;
+              _statusMessage = appLocalizations.videoAnalysisCompleted;
+            });
+          }
         },
         onError: (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(appLocalizations.videoAnalysisFailed(error))),
-          );
-          setState(() {
-            _isLoading = false;
-            _statusMessage = appLocalizations.videoAnalysisFailed(error);
-          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(appLocalizations.videoAnalysisFailed(error))),
+            );
+            setState(() {
+              _isLoading = false;
+              _statusMessage = appLocalizations.videoAnalysisFailed(error);
+            });
+          }
         },
       );
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _statusMessage = appLocalizations.errorWithMessage(e.toString());
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appLocalizations.errorWithMessage(e.toString()))),
-      );
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _statusMessage = appLocalizations.errorWithMessage(e.toString());
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(appLocalizations.errorWithMessage(e.toString()))),
+        );
+      }
     }
   }
 
@@ -139,6 +145,14 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               uploadProgress: _uploadProgress,
               analysisProgress: _analysisProgress,
               liveStats: _liveStats,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                Provider.of<VideoAnalysisService>(context, listen: false).cancelAnalysis();
+              },
+              icon: const Icon(Icons.stop, color: Colors.pink),
+              label: const Text("Stop Analysis", style: TextStyle(color: Colors.pink)),
             ),
           ],
           const SizedBox(height: 32),
