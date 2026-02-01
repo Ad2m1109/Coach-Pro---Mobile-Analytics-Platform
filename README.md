@@ -9,9 +9,10 @@ A comprehensive data-driven mobile application designed for football coaches to 
 ## Key Features
 
 ### 🎥 Video Analysis Pipeline
-- **Upload Match Videos**: Seamlessly upload full-length match recordings directly from your device
-- **Real-Time Job Tracking**: Monitor analysis progress with live status updates (Pending → Processing → Completed)
-- **Automated Processing**: Backend AI engine automatically detects players, tracks movements, and calculates performance metrics
+- **Smart Upload Tracking**: Real-time progress bar shows exactly how much of your video has been sent to the server.
+- **Detached Analysis**: Start an analysis and go back to the home screen—the process stays alive and you can return to watch the progress anytime.
+- **Immediate History Presence**: Matches appear in your history as soon as the upload finishes, tracking their live analysis status.
+- **AI Tracking**: Integrated player detection and metric calculation (distance, speed) via dedicated gRPC engine.
 
 ### 📊 Performance Metrics Dashboard
 - **Speed Analysis**: View player top speeds, average velocities, and sprint statistics in meters per second
@@ -54,9 +55,12 @@ Interface automatically adapts to device language settings with RTL support for 
 The application communicates **exclusively** with the FastAPI gateway via REST APIs. All video processing, data persistence, and business logic are handled server-side, ensuring a lightweight and responsive mobile experience.
 
 ```
-Flutter App (HTTP/REST) → FastAPI Backend → Database
-                               ↓
-                         C++ Analysis Engine
+                Flutter App
+               /           \
+        (REST:8000)     (REST:8001)
+     Classic Backend   Analysis Management
+            ↓               ↓
+        MySQL DB       C++ Inference Engine
 ```
 
 ### Technology Stack
@@ -96,12 +100,10 @@ Flutter App (HTTP/REST) → FastAPI Backend → Database
    Create a `.env` file in the project root:
    ```env
    BASE_URL=http://192.168.1.100:8000/api
+   ANALYSIS_BASE_URL=http://192.168.1.100:8001/api
    ```
    
-   Replace `192.168.1.100` with your backend server's IP address. For local development:
-   - **Android Emulator**: Use `10.0.2.2` (maps to host's localhost)
-   - **iOS Simulator**: Use `localhost` or `127.0.0.1`
-   - **Physical Device**: Use your computer's local network IP
+   Replace `192.168.1.100` with your backend server's IP address.
 
 3. **Install dependencies:**
    ```bash
