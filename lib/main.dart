@@ -60,7 +60,7 @@ Future<void> main() async {
 
   final apiClient = ApiClient(baseUrl: baseUrl, httpClient: http.Client());
   final analysisApiClient = ApiClient(baseUrl: analysisBaseUrl, httpClient: http.Client());
-  final authService = AuthService(apiClient: apiClient);
+  final authService = AuthService(apiClient: apiClient, analysisApiClient: analysisApiClient);
   await authService.init();
 
   final initialThemeMode = await ThemeNotifier.getThemeModeFromPrefs();

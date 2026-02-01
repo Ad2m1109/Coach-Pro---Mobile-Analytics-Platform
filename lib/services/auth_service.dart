@@ -5,10 +5,13 @@ import 'package:frontend/models/user.dart'; // Import User model
 
 class AuthService with ChangeNotifier {
   final ApiClient _apiClient;
+  final ApiClient? _analysisApiClient;
   String? _token;
   User? _currentUser;
 
-  AuthService({required ApiClient apiClient}) : _apiClient = apiClient;
+  AuthService({required ApiClient apiClient, ApiClient? analysisApiClient}) 
+      : _apiClient = apiClient,
+        _analysisApiClient = analysisApiClient;
 
   String? get token => _token;
   bool get isAuthenticated => _token != null;
@@ -19,6 +22,7 @@ class AuthService with ChangeNotifier {
     _token = prefs.getString('jwt_token');
     if (_token != null) {
       _apiClient.setToken(_token!);
+      _analysisApiClient?.setToken(_token!);
       await fetchCurrentUser(); // This will handle all notifications
     }
     // If token is null, initial state is correct, no notification needed.
@@ -39,6 +43,7 @@ class AuthService with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('jwt_token', _token!); // Store token
       _apiClient.setToken(_token!); // Set token in ApiClient
+      _analysisApiClient?.setToken(_token!); // Set token in Analysis ApiClient
       await fetchCurrentUser(); // Fetch user details after login
     } catch (e) {
       _token = null;
@@ -62,6 +67,7 @@ class AuthService with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('jwt_token', _token!); // Store token
       _apiClient.setToken(_token!); // Set token in ApiClient
+      _analysisApiClient?.setToken(_token!); // Set token in Analysis ApiClient
       await fetchCurrentUser(); // Fetch user details after registration
     } catch (e) {
       _token = null;
@@ -89,6 +95,7 @@ class AuthService with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token'); // Remove token
     _apiClient.removeToken(); // Remove token from ApiClient
+    _analysisApiClient?.removeToken(); // Remove token from Analysis ApiClient
     notifyListeners();
   }
 }
