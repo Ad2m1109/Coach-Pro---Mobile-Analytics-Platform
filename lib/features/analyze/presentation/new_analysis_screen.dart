@@ -15,22 +15,13 @@ class NewAnalysisScreen extends StatefulWidget {
 
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   XFile? _videoFile;
-  bool _isLoading = false;
-  String _statusMessage = '';
-  double _uploadProgress = 0.0;
-  double _analysisProgress = 0.0;
-  Map<String, dynamic> _liveStats = {};
 
   Future<void> _pickVideo() async {
-    final appLocalizations = AppLocalizations.of(context)!;
     final ImagePicker picker = ImagePicker();
     final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
 
     setState(() {
       _videoFile = video;
-      _uploadProgress = 0.0;
-      _analysisProgress = 0.0;
-      _statusMessage = _videoFile != null ? appLocalizations.selected(_videoFile!.name) : appLocalizations.noVideoSelected;
     });
   }
 
@@ -43,24 +34,8 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _statusMessage = appLocalizations.uploadingAndAnalyzingVideo;
-    });
-
     try {
       final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
-
-      videoAnalysisService.addListener(() {
-        if (mounted) {
-          setState(() {
-            _uploadProgress = videoAnalysisService.uploadProgress;
-            _analysisProgress = videoAnalysisService.analysisProgress;
-            _statusMessage = videoAnalysisService.status;
-            _liveStats = videoAnalysisService.liveStats;
-          });
-        }
-      });
 
       await videoAnalysisService.uploadAndAnalyzeVideo(
         videoFile: _videoFile!,
@@ -69,10 +44,6 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(appLocalizations.videoAnalysisCompleted)),
             );
-            setState(() {
-              _isLoading = false;
-              _statusMessage = appLocalizations.videoAnalysisCompleted;
-            });
           }
         },
         onError: (error) {
@@ -80,19 +51,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(appLocalizations.videoAnalysisFailed(error))),
             );
-            setState(() {
-              _isLoading = false;
-              _statusMessage = appLocalizations.videoAnalysisFailed(error);
-            });
           }
         },
       );
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _statusMessage = appLocalizations.errorWithMessage(e.toString());
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(appLocalizations.errorWithMessage(e.toString()))),
         );
@@ -103,77 +66,87 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            appLocalizations.newAnalysis,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _pickVideo,
-            icon: const Icon(Icons.video_library),
-            label: Text(appLocalizations.uploadVideo),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.secondary,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+    return Consumer<VideoAnalysisService>(
+      builder: (context, service, child) {
+        final isAnalyzing = service.isAnalyzing;
+        final statusMessage = service.status.isEmpty 
+          ? (_videoFile != null ? appLocalizations.selected(_videoFile!.name) : appLocalizations.noVideoSelected)
+          : service.status;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                appLocalizations.newAnalysis,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _statusMessage,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          if (_videoFile != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              appLocalizations.selected(_videoFile!.name),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-          if (_isLoading) ...[
-            const SizedBox(height: 24),
-            AnalysisProgressWidget(
-              uploadProgress: _uploadProgress,
-              analysisProgress: _analysisProgress,
-              liveStats: _liveStats,
-            ),
-            const SizedBox(height: 16),
-            TextButton.icon(
-              onPressed: () {
-                Provider.of<VideoAnalysisService>(context, listen: false).cancelAnalysis();
-              },
-              icon: const Icon(Icons.stop, color: Colors.pink),
-              label: const Text("Stop Analysis", style: TextStyle(color: Colors.pink)),
-            ),
-          ],
-          const SizedBox(height: 32),
-          _isLoading
-              ? const CircularProgressIndicator()
-              : ElevatedButton(
-                  onPressed: _uploadAndAnalyzeVideo,
+              const SizedBox(height: 24),
+              if (!isAnalyzing)
+                ElevatedButton.icon(
+                  onPressed: _pickVideo,
+                  icon: const Icon(Icons.video_library),
+                  label: Text(appLocalizations.uploadVideo),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
-                  child: Text(
-                    appLocalizations.analyze,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                  ),
                 ),
-        ],
-      ),
+              const SizedBox(height: 16),
+              Text(
+                statusMessage,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              if (_videoFile != null && !isAnalyzing) ...[
+                const SizedBox(height: 16),
+                Text(
+                  appLocalizations.selected(_videoFile!.name),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+              if (isAnalyzing) ...[
+                const SizedBox(height: 24),
+                AnalysisProgressWidget(
+                  uploadProgress: service.uploadProgress,
+                  analysisProgress: service.analysisProgress,
+                  liveStats: service.liveStats,
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: () {
+                    service.cancelAnalysis();
+                  },
+                  icon: const Icon(Icons.stop, color: Colors.pink),
+                  label: const Text("Stop Analysis", style: TextStyle(color: Colors.pink)),
+                ),
+              ],
+              const SizedBox(height: 32),
+              isAnalyzing
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _uploadAndAnalyzeVideo,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: Text(
+                        appLocalizations.analyze,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                      ),
+                    ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
