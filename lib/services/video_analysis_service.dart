@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:http/http.dart' as http;
@@ -55,48 +56,53 @@ class VideoAnalysisService extends ChangeNotifier {
         liveStats: {},
       );
 
-      // Create multipart request for video upload
       final uri = Uri.parse('${_apiClient.baseUrl}/analyze_match');
       final request = http.MultipartRequest('POST', uri);
-      
-      final videoStream = http.ByteStream(videoFile.openRead());
       final videoLength = await videoFile.length();
-      
-      final multipartFile = http.MultipartFile(
-        'file',
-        videoStream,
-        videoLength,
-        filename: videoFile.name,
-      );
-      request.files.add(multipartFile);
 
       // Add authentication headers
       final authHeaders = await _apiClient.getAuthHeaders();
       request.headers.addAll(authHeaders);
 
-      // Track upload progress
-      final stream = await request.send();
-      var uploadedBytes = 0;
-      final List<int> responseBytes = [];
+      // Wrap the video stream to track upload progress
+      int uploadedBytes = 0;
+      final totalBytes = videoLength;
+      
+      final trackedStream = videoFile.openRead().transform(
+        StreamTransformer<Uint8List, Uint8List>.fromHandlers(
+          handleData: (data, sink) {
+            uploadedBytes += data.length;
+            final progress = uploadedBytes / totalBytes.toDouble();
+            _updateState(
+              uploadProgress: progress,
+              status: 'Uploading video: ${(progress * 100).toStringAsFixed(1)}%',
+            );
+            sink.add(data);
+          },
+        ),
+      );
 
-      await for (final data in stream.stream) {
-        responseBytes.addAll(data);
-        uploadedBytes += data.length;
-        final progress = uploadedBytes / videoLength.toDouble();
-        _updateState(
-          uploadProgress: progress,
-          status: 'Streaming video: ${(progress * 100).toStringAsFixed(1)}%',
-        );
-      }
+      final multipartFile = http.MultipartFile(
+        'file',
+        trackedStream,
+        videoLength,
+        filename: videoFile.name,
+      );
+      request.files.add(multipartFile);
 
-      if (stream.statusCode == 200 || stream.statusCode == 202) {
+      // Send request
+      final streamedResponse = await request.send();
+      
+      // Collect response body
+      final responseBytes = await streamedResponse.stream.toBytes();
+      final responseBody = utf8.decode(responseBytes);
+
+      if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 202) {
         _updateState(
           uploadProgress: 1.0,
-          status: 'Upload complete. Processing stream...',
+          status: 'Upload complete! Initializing analysis...',
         );
 
-        // Decode response body from collected bytes
-        final responseBody = utf8.decode(responseBytes);
         final responseData = json.decode(responseBody);
         
         // Start polling for analysis status
@@ -156,7 +162,7 @@ class VideoAnalysisService extends ChangeNotifier {
           }
         }
       } else {
-        throw Exception('Upload failed with status code: ${stream.statusCode}');
+        throw Exception('Upload failed with status code: ${streamedResponse.statusCode}');
       }
     } catch (e) {
       final error = e.toString();
