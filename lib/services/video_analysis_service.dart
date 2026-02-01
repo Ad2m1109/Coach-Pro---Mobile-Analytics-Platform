@@ -141,16 +141,18 @@ class VideoAnalysisService extends ChangeNotifier {
                   onComplete();
                   break;
                 case 'FAILED':
-                  throw Exception(statusData['error'] ?? 'Analysis failed');
-                case 'PENDING':
-                case 'IN_PROGRESS':
-                case 'RECEIVING':
-                case 'STREAMING':
+                  throw Exception(statusData['message'] ?? statusData['error'] ?? 'Analysis failed');
+                case 'QUEUED':
+                  _updateState(status: 'Analysis queued...');
+                  break;
                 case 'PROCESSING':
-                  // Continue polling
+                case 'STREAMING':
+                case 'RECEIVING':
+                  // Standardized to PROCESSING, but keeping some legacy for safety
                   break;
                 default:
-                  throw Exception('Unknown analysis status: $status');
+                  // Carry on polling for unknown but active statuses
+                  break;
               }
             } else {
               throw Exception('Failed to get analysis status: ${response.statusCode}');
