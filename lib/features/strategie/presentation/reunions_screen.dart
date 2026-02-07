@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/reunion.dart';
 import 'package:frontend/services/reunion_service.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
 class ReunionsScreen extends StatefulWidget {
@@ -45,6 +46,8 @@ class _ReunionsScreenState extends State<ReunionsScreen> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
+    final authService = Provider.of<AuthService>(context);
+    final canEdit = authService.hasPermission('edit');
     return FutureBuilder<List<Reunion>>(
       future: _reunionsFuture,
       builder: (context, snapshot) {
@@ -62,19 +65,8 @@ class _ReunionsScreenState extends State<ReunionsScreen> {
           itemBuilder: (context, index) {
             final reunion = reunions[index];
             final isPast = reunion.date.isBefore(DateTime.now());
-            return Dismissible(
-              key: ValueKey(reunion.id),
-              direction: DismissDirection.startToEnd,
-              onDismissed: (direction) {
-                _deleteReunion(reunion.id);
-              },
-              background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: const Icon(Icons.delete, color: Colors.white),
-              ),
-              child: Card(
+            
+            final Widget card = Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: isPast ? Colors.grey.withOpacity(0.5) : Theme.of(context).cardColor,
                 child: ListTile(
@@ -101,7 +93,23 @@ class _ReunionsScreenState extends State<ReunionsScreen> {
                     ),
                   ),
                 ),
+              );
+
+            if (!canEdit) return card;
+
+            return Dismissible(
+              key: ValueKey(reunion.id),
+              direction: DismissDirection.startToEnd,
+              onDismissed: (direction) {
+                _deleteReunion(reunion.id);
+              },
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Icon(Icons.delete, color: Colors.white),
               ),
+              child: card,
             );
           },
         );

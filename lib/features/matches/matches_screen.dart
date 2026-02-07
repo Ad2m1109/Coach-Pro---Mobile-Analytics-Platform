@@ -8,8 +8,8 @@ import 'package:frontend/models/match.dart';
 import 'package:frontend/services/match_service.dart';
 import 'package:frontend/features/matches/presentation/add_event_screen.dart';
 import 'package:go_router/go_router.dart';
-import 'package:frontend/l10n/app_localizations.dart'; // New import
-
+import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
 
@@ -83,6 +83,8 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
+    final authService = Provider.of<AuthService>(context);
+    final canEdit = authService.hasPermission('edit');
 
     return Scaffold(
       appBar: AppBar(
@@ -173,10 +175,10 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: _navigateAndRefresh,
         child: const Icon(Icons.add),
-      ),
+      ) : null,
     );
   }
 

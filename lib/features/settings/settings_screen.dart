@@ -4,6 +4,7 @@ import 'package:frontend/features/settings/presentation/account_and_team_screen.
 import 'package:frontend/features/settings/presentation/advanced_settings_screen.dart';
 import 'package:frontend/features/settings/presentation/events_settings_screen.dart';
 import 'package:frontend/features/settings/presentation/preferences_screen.dart';
+import 'package:frontend/features/staff/staff_list_screen.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -119,6 +120,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'title': appLocalizations.manageEvents,
         'icon': Icons.event_outlined,
         'screen': const EventsSettingsScreen(),
+      },
+      {
+        'title': 'Manage Staff',
+        'icon': Icons.people_outline,
+        'screen': const StaffListScreen(),
       },
       {
         'title': appLocalizations.advancedSettings,

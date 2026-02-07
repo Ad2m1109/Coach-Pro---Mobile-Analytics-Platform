@@ -5,6 +5,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/player.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:frontend/services/player_service.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
 
 import 'package:frontend/widgets/custom_card.dart';
@@ -108,6 +109,8 @@ class _PlayersScreenState extends State<PlayersScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final apiClient = Provider.of<ApiClient>(context, listen: false);
+    final authService = Provider.of<AuthService>(context);
+    final canEdit = authService.hasPermission('edit');
 
     return Scaffold(
       appBar: AppBar(
@@ -268,10 +271,10 @@ class _PlayersScreenState extends State<PlayersScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: canEdit ? FloatingActionButton(
         onPressed: _navigateAndRefresh,
         child: const Icon(Icons.add),
-      ),
+      ) : null,
     );
   }
 }

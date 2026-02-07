@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/player.dart';
 import 'package:frontend/services/api_client.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
@@ -17,6 +18,8 @@ class PlayerDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final apiClient = Provider.of<ApiClient>(context, listen: false);
+    final authService = Provider.of<AuthService>(context);
+    final canEdit = authService.hasPermission('edit');
     final String? imageUrl = player.imageUrl;
     ImageProvider? backgroundImage;
 
@@ -60,6 +63,7 @@ class PlayerDetailsView extends StatelessWidget {
                         : null,
                   ),
                 ),
+                if (canEdit)
                 Positioned(
                   bottom: 0,
                   right: 0,
