@@ -118,29 +118,29 @@ class _PlayersScreenState extends State<PlayersScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.s),
             child: Row(
               children: [
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
                       labelText: appLocalizations.search,
                       prefixIcon: const Icon(Icons.search, size: 20),
-                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.s),
                     ),
                     style: const TextStyle(fontSize: 14.0),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s),
                 Expanded(
-                  flex: 2,
+                  flex: 4,
                   child: DropdownButtonFormField<PlayerSortOption>(
                     value: _selectedSortOption,
                     decoration: InputDecoration(
                       labelText: appLocalizations.sort,
-                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.s),
                     ),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14.0),
                     dropdownColor: Theme.of(context).cardTheme.color,

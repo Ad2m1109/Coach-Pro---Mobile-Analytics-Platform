@@ -394,11 +394,18 @@
     "videoAnalysisProgress": "Video Analysis Progress",
     "videoAnalysisCompleted": "Video analysis completed!",
     "videoAnalysisFailed": "Video analysis failed: {error}",
-    "@videoAnalysisFailed": {
-        "placeholders": {
-            "error": {
-                "type": "String"
-            }
-        }
-    }
+    "tacticalNotes": "Tactical Notes",
+    "addNote": "Add Note",
+    "preMatch": "Pre-Match",
+    "liveReaction": "Live Reaction",
+    "tactical": "Tactical",
+    "enterNoteContent": "Enter note content...",
+    "noteType": "Note Type",
+    "saveNote": "Save Note",
+    "noteCreatedSuccessfully": "Note created successfully!",
+    "failedToCreateNote": "Failed to create note: {error}",
+    "deleteNote": "Delete Note",
+    "confirmDeleteNote": "Are you sure you want to delete this note?",
+    "liveNotes": "Live Notes",
+    "addLiveReaction": "Add Live Reaction"
 }

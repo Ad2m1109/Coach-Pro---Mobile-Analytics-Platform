@@ -22,6 +22,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:frontend/l10n/app_localizations.dart'; 
 import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
+import 'package:frontend/services/note_service.dart';
 import 'package:frontend/core/design_system/app_theme.dart';
 
 Future<void> main() async {
@@ -128,6 +129,11 @@ Future<void> main() async {
           ),
         ),
         ChangeNotifierProvider<ThemeNotifier>(create: (_) => ThemeNotifier(initialThemeMode)),
+        Provider<NoteService>(
+          create: (context) => NoteService(
+            apiClient: Provider.of<ApiClient>(context, listen: false),
+          ),
+        ),
         ChangeNotifierProvider<LocaleNotifier>(create: (_) => LocaleNotifier(initialLocale)),
       ],
       child: const MyApp(),

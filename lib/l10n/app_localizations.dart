@@ -1520,7 +1520,91 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Video analysis failed: {error}'**
-  String videoAnalysisFailed(String error);
+  String videoAnalysisFailed(Object error);
+
+  /// No description provided for @tacticalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Tactical Notes'**
+  String get tacticalNotes;
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Note'**
+  String get addNote;
+
+  /// No description provided for @preMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-Match'**
+  String get preMatch;
+
+  /// No description provided for @liveReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Reaction'**
+  String get liveReaction;
+
+  /// No description provided for @tactical.
+  ///
+  /// In en, this message translates to:
+  /// **'Tactical'**
+  String get tactical;
+
+  /// No description provided for @enterNoteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter note content...'**
+  String get enterNoteContent;
+
+  /// No description provided for @noteType.
+  ///
+  /// In en, this message translates to:
+  /// **'Note Type'**
+  String get noteType;
+
+  /// No description provided for @saveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Note'**
+  String get saveNote;
+
+  /// No description provided for @noteCreatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Note created successfully!'**
+  String get noteCreatedSuccessfully;
+
+  /// No description provided for @failedToCreateNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create note: {error}'**
+  String failedToCreateNote(Object error);
+
+  /// No description provided for @deleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Note'**
+  String get deleteNote;
+
+  /// No description provided for @confirmDeleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this note?'**
+  String get confirmDeleteNote;
+
+  /// No description provided for @liveNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Notes'**
+  String get liveNotes;
+
+  /// No description provided for @addLiveReaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Live Reaction'**
+  String get addLiveReaction;
 }
 
 class _AppLocalizationsDelegate

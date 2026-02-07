@@ -9,11 +9,12 @@ import 'package:frontend/services/match_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/features/players/presentation/player_profile_screen.dart'; // New import
-import 'package:frontend/services/api_client.dart'; // New import
-
 import 'package:frontend/features/match_statistics/presentation/match_details_overview.dart';
 import 'package:frontend/features/match_statistics/presentation/match_lineups_page.dart';
 import 'package:frontend/features/match_statistics/presentation/match_statistics_page.dart';
+import 'package:frontend/models/match_note.dart';
+import 'package:frontend/services/note_service.dart';
+import 'package:frontend/services/api_client.dart';
 
 import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/widgets/custom_card.dart';
@@ -35,7 +36,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
   void initState() {
     super.initState();
     _detailsFuture = Provider.of<MatchService>(context, listen: false).getMatchDetails(widget.match.id);
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -59,6 +60,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
             Tab(text: appLocalizations.eventTimeline),
             Tab(text: appLocalizations.lineups),
             Tab(text: appLocalizations.statistics),
+            Tab(text: appLocalizations.notes),
           ],
         ),
       ),
@@ -94,6 +96,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
                 events: details.events,
                 showPlayerStatsDialog: _showPlayerStatsDialog,
               ),
+              _buildNotesTab(appLocalizations),
             ],
           );
         },
@@ -396,6 +399,87 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
         );
       },
     );
+  }
+
+  Widget _buildNotesTab(AppLocalizations appLocalizations) {
+    return FutureBuilder<List<MatchNote>>(
+      future: Provider.of<NoteService>(context, listen: false).getMatchNotes(widget.match.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('${appLocalizations.errorWithMessage(snapshot.error.toString())}'));
+        }
+        final notes = snapshot.data ?? [];
+        if (notes.isEmpty) {
+          return Center(child: Text(appLocalizations.noNotesAvailable));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppSpacing.m),
+          itemCount: notes.length,
+          itemBuilder: (context, index) {
+            final note = notes[index];
+            return CustomCard(
+              padding: const EdgeInsets.all(AppSpacing.m),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getNoteTypeColor(note.noteType, context).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          note.noteType.displayName,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _getNoteTypeColor(note.noteType, context),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        DateFormat.yMMMd().add_Hm().format(note.createdAt),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  Text(note.content, style: Theme.of(context).textTheme.bodyMedium),
+                  if (note.authorName != null) ...[
+                    const SizedBox(height: AppSpacing.s),
+                    Text(
+                      '${note.authorName} (${note.authorRole ?? "Staff"})',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Color _getNoteTypeColor(NoteType type, BuildContext context) {
+    switch (type) {
+      case NoteType.preMatch:
+        return Colors.blue;
+      case NoteType.liveReaction:
+        return Colors.orange;
+      case NoteType.tactical:
+        return Colors.purple;
+    }
   }
 
   Widget _buildStatRow(String label, String? value, {bool isBold = false}) {

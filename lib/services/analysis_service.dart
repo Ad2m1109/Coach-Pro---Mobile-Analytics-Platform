@@ -18,7 +18,7 @@ class AnalysisService with ChangeNotifier {
   Future<void> getAnalysisHistory() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       final dynamic responseData = await _apiClient.get('/analysis_reports');

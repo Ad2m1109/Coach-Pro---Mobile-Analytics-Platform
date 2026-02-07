@@ -774,7 +774,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoAnalysisCompleted => 'Video analysis completed!';
 
   @override
-  String videoAnalysisFailed(String error) {
+  String videoAnalysisFailed(Object error) {
     return 'Video analysis failed: $error';
   }
+
+  @override
+  String get tacticalNotes => 'Tactical Notes';
+
+  @override
+  String get addNote => 'Add Note';
+
+  @override
+  String get preMatch => 'Pre-Match';
+
+  @override
+  String get liveReaction => 'Live Reaction';
+
+  @override
+  String get tactical => 'Tactical';
+
+  @override
+  String get enterNoteContent => 'Enter note content...';
+
+  @override
+  String get noteType => 'Note Type';
+
+  @override
+  String get saveNote => 'Save Note';
+
+  @override
+  String get noteCreatedSuccessfully => 'Note created successfully!';
+
+  @override
+  String failedToCreateNote(Object error) {
+    return 'Failed to create note: $error';
+  }
+
+  @override
+  String get deleteNote => 'Delete Note';
+
+  @override
+  String get confirmDeleteNote => 'Are you sure you want to delete this note?';
+
+  @override
+  String get liveNotes => 'Live Notes';
+
+  @override
+  String get addLiveReaction => 'Add Live Reaction';
 }

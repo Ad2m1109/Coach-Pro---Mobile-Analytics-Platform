@@ -15,6 +15,7 @@ class VideoAnalysisService extends ChangeNotifier {
   String _status = '';
   String? _lastError;
   Map<String, dynamic> _liveStats = {};
+  String? _currentMatchId;
   
   bool get isAnalyzing => _isAnalyzing;
   double get uploadProgress => _uploadProgress;
@@ -22,6 +23,7 @@ class VideoAnalysisService extends ChangeNotifier {
   String get status => _status;
   String? get lastError => _lastError;
   Map<String, dynamic> get liveStats => _liveStats;
+  String? get currentMatchId => _currentMatchId;
 
   VideoAnalysisService({required ApiClient apiClient}) : _apiClient = apiClient;
 
@@ -55,6 +57,7 @@ class VideoAnalysisService extends ChangeNotifier {
         status: 'Preparing video upload...',
         liveStats: {},
       );
+      _currentMatchId = null;
 
       final uri = Uri.parse('${_apiClient.baseUrl}/analyze_match');
       final request = http.MultipartRequest('POST', uri);
@@ -104,6 +107,7 @@ class VideoAnalysisService extends ChangeNotifier {
         );
 
         final responseData = json.decode(responseBody);
+        _currentMatchId = responseData['match_id'] ?? responseData['analysis_id'];
         
         // Start polling for analysis status
         bool isComplete = false;

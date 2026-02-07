@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/features/analyze/presentation/widgets/analysis_progress.dart';
+import 'package:frontend/models/match_note.dart';
+import 'package:frontend/services/note_service.dart';
+import 'package:intl/intl.dart';
 
 class NewAnalysisScreen extends StatefulWidget {
   const NewAnalysisScreen({super.key});
@@ -143,8 +146,160 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                       ),
                     ),
+              if (isAnalyzing) ...[
+                const SizedBox(height: 32),
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      appLocalizations.liveNotes,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_comment, color: Colors.blue),
+                      onPressed: () => _showAddLiveNoteDialog(appLocalizations),
+                      tooltip: appLocalizations.addLiveReaction,
+                    ),
+                  ],
+                ),
+                _buildLiveNotesList(appLocalizations),
+              ],
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLiveNotesList(AppLocalizations appLocalizations) {
+    // Only fetch notes if we are currently analyzing a match
+    // We'll need the matchId. VideoAnalysisService should have it.
+    final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
+    final matchId = videoAnalysisService.currentMatchId;
+    
+    if (matchId == null) return const SizedBox();
+
+    return FutureBuilder<List<MatchNote>>(
+      future: Provider.of<NoteService>(context).getMatchNotes(matchId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Text(appLocalizations.noNotesAvailable, style: const TextStyle(fontStyle: FontStyle.italic)),
+          );
+        }
+        final notes = snapshot.data!.where((n) => n.noteType == NoteType.liveReaction).toList();
+        notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: notes.length,
+          itemBuilder: (context, index) {
+            final note = notes[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              child: ListTile(
+                dense: true,
+                title: Text(note.content),
+                subtitle: Text(
+                  '${note.noteType.displayName} • ${DateFormat.Hm().format(note.createdAt)}',
+                  style: const TextStyle(fontSize: 10),
+                ),
+                leading: const Icon(
+                  Icons.bolt,
+                  color: Colors.orange,
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showAddLiveNoteDialog(AppLocalizations appLocalizations) async {
+    final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
+    final matchId = videoAnalysisService.currentMatchId;
+    if (matchId == null) return;
+
+    final contentController = TextEditingController();
+    NoteType selectedType = NoteType.liveReaction;
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(appLocalizations.addLiveReaction),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<NoteType>(
+                    value: selectedType,
+                    decoration: InputDecoration(labelText: appLocalizations.noteType),
+                    items: [NoteType.liveReaction].map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.displayName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => selectedType = value);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: contentController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: appLocalizations.enterNoteContent,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(appLocalizations.cancel),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (contentController.text.isEmpty) return;
+                    
+                    final noteService = Provider.of<NoteService>(context, listen: false);
+                    try {
+                      final newNote = MatchNote(
+                        id: '',
+                        matchId: matchId,
+                        userId: '', 
+                        content: contentController.text,
+                        noteType: selectedType,
+                        videoTimestamp: 0.0,
+                        createdAt: DateTime.now(),
+                      );
+                      await noteService.createNote(newNote);
+                      if (mounted) {
+                        Navigator.pop(context);
+                        setState(() {}); // Refresh local UI
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(appLocalizations.failedToCreateNote(e.toString()))),
+                        );
+                      }
+                    }
+                  },
+                  child: Text(appLocalizations.saveNote),
+                ),
+              ],
+            );
+          },
         );
       },
     );
