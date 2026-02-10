@@ -13,6 +13,7 @@ A comprehensive data-driven mobile application designed for football coaches to 
 - **Detached Analysis**: Start an analysis and go back to the home screen—the process stays alive and you can return to watch the progress anytime.
 - **Immediate History Presence**: Matches appear in your history as soon as the upload finishes, tracking their live analysis status.
 - **AI Tracking**: Integrated player detection and metric calculation (distance, speed) via dedicated gRPC engine.
+- **Live Notes**: Add time-stamped reactions and tactical notes directly during the analysis process.
 
 ### 📊 Performance Metrics Dashboard
 - **Speed Analysis**: View player top speeds, average velocities, and sprint statistics in meters per second
@@ -20,20 +21,24 @@ A comprehensive data-driven mobile application designed for football coaches to 
 - **Heatmaps**: Visual representation of player positioning and movement patterns across the pitch
 - **Comparative Analytics**: Side-by-side player comparisons and team-level aggregations
 
-### 👥 Team Management
-- **Player Profiles**: Comprehensive player information including positions, jersey numbers, and historical stats
-- **Roster Management**: Add, edit, and organize your squad with intuitive interfaces
-- **Team Organization**: Create and manage multiple teams with separate rosters
+### 👥 Team & Staff Management
+- **Player Profiles**: Comprehensive player information including positions, jersey numbers, and historical stats.
+- **Roster Management**: Add, edit, and organize your squad with intuitive interfaces.
+- **Team Customization**: Personalize your team with a custom logo and primary/secondary colors.
+- **Staff Roles**: Add and manage coaching staff (Assistant Coach, Analyst, Physio) with specific roles.
+- **Permission Control**: Assign permission levels (Full Access, View Only, Notes Only) to staff members.
 
-### 📅 Match Scheduling & History
-- **Upcoming Matches**: Schedule future matches with opponent details, venue, and kickoff times
-- **Match Results**: Review past match outcomes with detailed statistics and video replays
-- **Season Overview**: Track team performance trends across multiple matches
+### 📅 Match & Event Management
+- **Event Creation**: Create and manage competitions or seasons.
+- **Upcoming Matches**: Schedule future matches with opponent details, venue, and kickoff times.
+- **Match Results**: Review past match outcomes with detailed statistics and video replays.
+- **Season Overview**: Track team performance trends across multiple matches by filtering by event.
 
 ### 🎯 Tactical Planning
-- **Formation Editor**: Visually design and save team formations (4-4-2, 4-3-3, 3-5-2, etc.)
-- **Lineup Builder**: Assign players to positions and manage substitutions
-- **Training Sessions**: Plan and log training activities with session notes
+- **Formation Editor**: Visually design and save team formations (4-4-2, 4-3-3, 3-5-2, etc.).
+- **Lineup Builder**: Assign players to positions and manage substitutions for each match.
+- **Training Sessions**: Plan and log training activities with specific focus points.
+- **Reunions**: Schedule and keep track of important team meetings and events.
 
 ### 🌍 Multilingual Support
 Full localization for:
@@ -44,10 +49,10 @@ Full localization for:
 Interface automatically adapts to device language settings with RTL support for Arabic.
 
 ### 🎨 Modern UI/UX
-- **Clean Design**: Material Design 3 principles with custom theme support
-- **Responsive Layouts**: Optimized for phones and tablets
-- **Interactive Charts**: Touch-enabled graphs and visualizations using fl_chart
-- **Smooth Animations**: Fluid transitions and micro-interactions for enhanced user experience
+- **Clean Design**: Material Design 3 principles with custom theme support.
+- **Responsive Layouts**: Optimized for phones and tablets.
+- **Interactive Charts**: Touch-enabled graphs and visualizations using fl_chart.
+- **Smooth Animations**: Fluid transitions and micro-interactions for enhanced user experience.
 
 ## Technical Architecture
 
