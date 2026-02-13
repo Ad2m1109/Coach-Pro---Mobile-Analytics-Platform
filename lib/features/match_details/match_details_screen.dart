@@ -14,8 +14,11 @@ import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/models/match_note.dart';
 import 'package:frontend/services/note_service.dart';
-import 'package:frontend/services/auth_service.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/features/match_details/video_upload_widget.dart';
+import 'package:frontend/features/match_details/analysis_progress_widget.dart'
+    as analysis_widgets;
+import 'package:frontend/features/match_details/analysis_results_widget.dart';
 
 // Data for preset formations
 class FormationPresets {
@@ -231,7 +234,6 @@ class FormationPresets {
   };
 }
 
-
 class MatchDetailsScreen extends StatefulWidget {
   final Match match;
 
@@ -241,13 +243,16 @@ class MatchDetailsScreen extends StatefulWidget {
   State<MatchDetailsScreen> createState() => _MatchDetailsScreenState();
 }
 
-class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTickerProviderStateMixin {
+class _MatchDetailsScreenState extends State<MatchDetailsScreen>
+    with SingleTickerProviderStateMixin {
   late Future<List<Player>> _playersFuture;
   late Future<List<model.Formation>> _formationsFuture;
   late Future<List<MatchLineup>> _lineupFuture;
   late Future<List<MatchNote>> _notesFuture;
   late TabController _tabController;
   bool _isInitialSetupDone = false;
+  String? _analysisJobId;
+  bool _analysisCompleted = false;
 
   final Map<int, Player> _assignedPlayers = {};
   model.Formation? _selectedFormation;
@@ -256,11 +261,23 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
   @override
   void initState() {
     super.initState();
-    _playersFuture = Provider.of<PlayerService>(context, listen: false).getPlayers();
-    _formationsFuture = Provider.of<FormationService>(context, listen: false).getFormations();
-    _lineupFuture = Provider.of<MatchLineupService>(context, listen: false).getLineups(matchId: widget.match.id);
-    _notesFuture = Provider.of<NoteService>(context, listen: false).getMatchNotes(widget.match.id);
-    _tabController = TabController(length: 2, vsync: this);
+    _playersFuture = Provider.of<PlayerService>(
+      context,
+      listen: false,
+    ).getPlayers();
+    _formationsFuture = Provider.of<FormationService>(
+      context,
+      listen: false,
+    ).getFormations();
+    _lineupFuture = Provider.of<MatchLineupService>(
+      context,
+      listen: false,
+    ).getLineups(matchId: widget.match.id);
+    _notesFuture = Provider.of<NoteService>(
+      context,
+      listen: false,
+    ).getMatchNotes(widget.match.id);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -271,7 +288,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
 
   void _refreshNotes() {
     setState(() {
-      _notesFuture = Provider.of<NoteService>(context, listen: false).getMatchNotes(widget.match.id);
+      _notesFuture = Provider.of<NoteService>(
+        context,
+        listen: false,
+      ).getMatchNotes(widget.match.id);
     });
   }
 
@@ -280,12 +300,16 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
     try {
       await Provider.of<NoteService>(context, listen: false).deleteNote(id);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appLocalizations.noteCreatedSuccessfully)), // Note: Using created successfully as a placeholder, might need a generic success string
+        SnackBar(
+          content: Text(appLocalizations.noteCreatedSuccessfully),
+        ), // Note: Using created successfully as a placeholder, might need a generic success string
       );
       _refreshNotes();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${appLocalizations.failedToCreateNote(e.toString())}')),
+        SnackBar(
+          content: Text('${appLocalizations.failedToCreateNote(e.toString())}'),
+        ),
       );
     }
   }
@@ -305,26 +329,42 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
     });
   }
 
-  void _setupInitialState(List<Player> allPlayers, List<model.Formation> formations, List<MatchLineup> savedLineups) {
+  void _setupInitialState(
+    List<Player> allPlayers,
+    List<model.Formation> formations,
+    List<MatchLineup> savedLineups,
+  ) {
     if (savedLineups.isEmpty) return;
 
     final formationId = savedLineups.first.formationId;
-    final initialFormation = formations.firstWhereOrNull((f) => f.id == formationId);
+    final initialFormation = formations.firstWhereOrNull(
+      (f) => f.id == formationId,
+    );
 
     if (initialFormation != null) {
       _selectedFormation = initialFormation;
-      _currentFormationOffsets = FormationPresets.presets[initialFormation.name] ?? [];
+      _currentFormationOffsets =
+          FormationPresets.presets[initialFormation.name] ?? [];
 
       for (final lineupEntry in savedLineups) {
-        final player = allPlayers.firstWhereOrNull((p) => p.id == lineupEntry.playerId);
+        final player = allPlayers.firstWhereOrNull(
+          (p) => p.id == lineupEntry.playerId,
+        );
         if (player == null || lineupEntry.positionInFormation == null) continue;
 
         final posParts = lineupEntry.positionInFormation!.split(',');
         if (posParts.length != 2) continue;
 
-        final offset = Offset(double.parse(posParts[0]), double.parse(posParts[1]));
+        final offset = Offset(
+          double.parse(posParts[0]),
+          double.parse(posParts[1]),
+        );
 
-        final index = _currentFormationOffsets.indexWhere((presetOffset) => (presetOffset.dx - offset.dx).abs() < 0.001 && (presetOffset.dy - offset.dy).abs() < 0.001);
+        final index = _currentFormationOffsets.indexWhere(
+          (presetOffset) =>
+              (presetOffset.dx - offset.dx).abs() < 0.001 &&
+              (presetOffset.dy - offset.dy).abs() < 0.001,
+        );
 
         if (index != -1) {
           _assignedPlayers[index] = player;
@@ -349,13 +389,20 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
       return;
     }
 
-    final matchLineupService = Provider.of<MatchLineupService>(context, listen: false);
+    final matchLineupService = Provider.of<MatchLineupService>(
+      context,
+      listen: false,
+    );
     final teamId = widget.match.homeTeamId;
     bool success = true;
 
     try {
-      final existingLineups = await matchLineupService.getLineups(matchId: widget.match.id);
-      final lineupsToDelete = existingLineups.where((lu) => lu.teamId == teamId).toList();
+      final existingLineups = await matchLineupService.getLineups(
+        matchId: widget.match.id,
+      );
+      final lineupsToDelete = existingLineups
+          .where((lu) => lu.teamId == teamId)
+          .toList();
       for (final lineup in lineupsToDelete) {
         await matchLineupService.deleteLineup(lineup.id);
       }
@@ -373,7 +420,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
           formationId: _selectedFormation!.id,
           isStarting: true,
           playerId: player.id,
-          positionInFormation: '${position.dx.toStringAsFixed(4)},${position.dy.toStringAsFixed(4)}',
+          positionInFormation:
+              '${position.dx.toStringAsFixed(4)},${position.dy.toStringAsFixed(4)}',
         );
 
         await matchLineupService.createLineup(newMatchLineup);
@@ -381,7 +429,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
     } catch (e) {
       success = false;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${appLocalizations.failedToSaveFormation(e.toString())}')),
+        SnackBar(
+          content: Text(
+            '${appLocalizations.failedToSaveFormation(e.toString())}',
+          ),
+        ),
       );
     }
 
@@ -397,12 +449,15 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.match.homeTeam} ${appLocalizations.vs} ${widget.match.awayTeam}'),
+        title: Text(
+          '${widget.match.homeTeam} ${appLocalizations.vs} ${widget.match.awayTeam}',
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: [
             Tab(text: appLocalizations.lineups),
             Tab(text: appLocalizations.tacticalNotes),
+            const Tab(text: 'Analysis'),
           ],
         ),
         actions: [
@@ -418,136 +473,222 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
         children: [
           _buildFormationTab(appLocalizations),
           _buildNotesTab(appLocalizations),
+          _buildAnalysisTab(),
         ],
       ),
     );
   }
 
+  Widget _buildAnalysisTab() {
+    if (_analysisJobId == null) {
+      return ListView(
+        padding: const EdgeInsets.all(AppSpacing.m),
+        children: [
+          VideoUploadWidget(
+            matchId: widget.match.id,
+            onUploadStart: (jobId) {
+              setState(() {
+                _analysisJobId = jobId;
+                _analysisCompleted = false;
+              });
+            },
+          ),
+          const SizedBox(height: AppSpacing.m),
+          AnalysisResultsWidget(matchId: widget.match.id),
+        ],
+      );
+    }
+
+    if (!_analysisCompleted) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.m),
+        child: analysis_widgets.AnalysisProgressWidget(
+          jobId: _analysisJobId!,
+          onComplete: () {
+            if (!mounted) return;
+            setState(() {
+              _analysisCompleted = true;
+            });
+          },
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.m),
+      children: [
+        AnalysisResultsWidget(matchId: widget.match.id),
+        const SizedBox(height: AppSpacing.m),
+        OutlinedButton.icon(
+          onPressed: () {
+            setState(() {
+              _analysisJobId = null;
+              _analysisCompleted = false;
+            });
+          },
+          icon: const Icon(Icons.restart_alt),
+          label: const Text('Run Another Analysis'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFormationTab(AppLocalizations appLocalizations) {
     return FutureBuilder<List<dynamic>>(
-        future: Future.wait([_playersFuture, _formationsFuture, _lineupFuture]),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('${appLocalizations.errorWithMessage(snapshot.error.toString())}'));
-          }
-          if (!snapshot.hasData) {
-            return Center(child: Text(appLocalizations.noDataFound));
-          }
-
-          final allPlayers = snapshot.data![0] as List<Player>;
-          final formations = snapshot.data![1] as List<model.Formation>;
-          final savedLineups = snapshot.data![2] as List<MatchLineup>;
-
-          if (!_isInitialSetupDone) {
-            _setupInitialState(allPlayers, formations, savedLineups);
-          }
-
-          final availablePlayers = allPlayers.where((p) => !_assignedPlayers.containsValue(p)).toList();
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.m),
-                child: DropdownButtonFormField<model.Formation>(
-                  decoration: InputDecoration(
-                    labelText: appLocalizations.selectFormation,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
-                  ),
-                  value: _selectedFormation,
-                  onChanged: _onFormationChanged,
-                  items: formations.where((f) => FormationPresets.presets.containsKey(f.name)).map<DropdownMenuItem<model.Formation>>((f) {
-                    return DropdownMenuItem<model.Formation>(
-                      value: f,
-                      child: Text(f.name),
-                    );
-                  }).toList(),
-                ),
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final fieldSize = Size(constraints.maxWidth, constraints.maxHeight);
-                    return Stack(
-                      children: [
-                        CustomPaint(
-                          size: fieldSize,
-                          painter: SoccerFieldPainter(
-                            lineColor: Theme.of(context).brightness == Brightness.dark ? Colors.white54 : Colors.black54,
-                          ),
-                        ),
-                        ...List.generate(_currentFormationOffsets.length, (index) {
-                          final position = _currentFormationOffsets[index];
-                          final assignedPlayer = _assignedPlayers[index];
-                          final pixelPosition = Offset(position.dx * fieldSize.width, position.dy * fieldSize.height);
-
-                          return Positioned(
-                            left: pixelPosition.dx - 25,
-                            top: pixelPosition.dy - 25,
-                            child: DragTarget<Player>(
-                              builder: (context, candidateData, rejectedData) {
-                                return assignedPlayer != null
-                                    ? _buildPlayerMarker(assignedPlayer, () {
-                                        setState(() {
-                                          _assignedPlayers.remove(index);
-                                        });
-                                      })
-                                    : _buildPlaceholder(index);
-                              },
-                              onWillAcceptWithDetails: (details) {
-                                bool isGkSpot = index == 0;
-                                bool isPlayerGk = details.data.position == 'GK';
-                                return isGkSpot == isPlayerGk;
-                              },
-                              onAcceptWithDetails: (details) {
-                                setState(() {
-                                  _assignedPlayers.removeWhere((key, value) => value.id == details.data.id);
-                                  _assignedPlayers[index] = details.data;
-                                });
-                              },
-                            ),
-                          );
-                        }),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              Container(
-                height: 110,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
-                  itemCount: availablePlayers.length,
-                  itemBuilder: (context, index) {
-                    final player = availablePlayers[index];
-                    final playerMarker = _buildDraggablePlayer(player);
-                    return Draggable<Player>(
-                      data: player,
-                      feedback: Material(color: Colors.transparent, child: playerMarker),
-                      childWhenDragging: Opacity(opacity: 0.3, child: playerMarker),
-                      child: playerMarker,
-                    );
-                  },
-                ),
-              ),
-            ],
+      future: Future.wait([_playersFuture, _formationsFuture, _lineupFuture]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              '${appLocalizations.errorWithMessage(snapshot.error.toString())}',
+            ),
           );
-        },
-      );
+        }
+        if (!snapshot.hasData) {
+          return Center(child: Text(appLocalizations.noDataFound));
+        }
+
+        final allPlayers = snapshot.data![0] as List<Player>;
+        final formations = snapshot.data![1] as List<model.Formation>;
+        final savedLineups = snapshot.data![2] as List<MatchLineup>;
+
+        if (!_isInitialSetupDone) {
+          _setupInitialState(allPlayers, formations, savedLineups);
+        }
+
+        final availablePlayers = allPlayers
+            .where((p) => !_assignedPlayers.containsValue(p))
+            .toList();
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.m),
+              child: DropdownButtonFormField<model.Formation>(
+                decoration: InputDecoration(
+                  labelText: appLocalizations.selectFormation,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.m,
+                    vertical: AppSpacing.s,
+                  ),
+                ),
+                value: _selectedFormation,
+                onChanged: _onFormationChanged,
+                items: formations
+                    .where((f) => FormationPresets.presets.containsKey(f.name))
+                    .map<DropdownMenuItem<model.Formation>>((f) {
+                      return DropdownMenuItem<model.Formation>(
+                        value: f,
+                        child: Text(f.name),
+                      );
+                    })
+                    .toList(),
+              ),
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final fieldSize = Size(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
+                  return Stack(
+                    children: [
+                      CustomPaint(
+                        size: fieldSize,
+                        painter: SoccerFieldPainter(
+                          lineColor:
+                              Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white54
+                              : Colors.black54,
+                        ),
+                      ),
+                      ...List.generate(_currentFormationOffsets.length, (
+                        index,
+                      ) {
+                        final position = _currentFormationOffsets[index];
+                        final assignedPlayer = _assignedPlayers[index];
+                        final pixelPosition = Offset(
+                          position.dx * fieldSize.width,
+                          position.dy * fieldSize.height,
+                        );
+
+                        return Positioned(
+                          left: pixelPosition.dx - 25,
+                          top: pixelPosition.dy - 25,
+                          child: DragTarget<Player>(
+                            builder: (context, candidateData, rejectedData) {
+                              return assignedPlayer != null
+                                  ? _buildPlayerMarker(assignedPlayer, () {
+                                      setState(() {
+                                        _assignedPlayers.remove(index);
+                                      });
+                                    })
+                                  : _buildPlaceholder(index);
+                            },
+                            onWillAcceptWithDetails: (details) {
+                              bool isGkSpot = index == 0;
+                              bool isPlayerGk = details.data.position == 'GK';
+                              return isGkSpot == isPlayerGk;
+                            },
+                            onAcceptWithDetails: (details) {
+                              setState(() {
+                                _assignedPlayers.removeWhere(
+                                  (key, value) => value.id == details.data.id,
+                                );
+                                _assignedPlayers[index] = details.data;
+                              });
+                            },
+                          ),
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+            ),
+            Container(
+              height: 110,
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                itemCount: availablePlayers.length,
+                itemBuilder: (context, index) {
+                  final player = availablePlayers[index];
+                  final playerMarker = _buildDraggablePlayer(player);
+                  return Draggable<Player>(
+                    data: player,
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: playerMarker,
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: playerMarker,
+                    ),
+                    child: playerMarker,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildNotesTab(AppLocalizations appLocalizations) {
@@ -561,7 +702,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(child: Text('${appLocalizations.errorWithMessage(snapshot.error.toString())}'));
+                return Center(
+                  child: Text(
+                    '${appLocalizations.errorWithMessage(snapshot.error.toString())}',
+                  ),
+                );
               }
               final notes = snapshot.data ?? [];
               if (notes.isEmpty) {
@@ -593,9 +738,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primaryContainer,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -603,25 +753,35 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
                                   ),
                                 ),
                               ),
                               Text(
-                                DateFormat.yMMMd().add_Hm().format(note.createdAt),
+                                DateFormat.yMMMd().add_Hm().format(
+                                  note.createdAt,
+                                ),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
                           const SizedBox(height: AppSpacing.s),
-                          Text(note.content, style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            note.content,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           if (note.authorName != null) ...[
                             const SizedBox(height: AppSpacing.s),
                             Text(
                               '${note.authorName} (${note.authorRole ?? "Staff"})',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
                                     fontStyle: FontStyle.italic,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                             ),
                           ],
@@ -662,7 +822,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                 children: [
                   DropdownButtonFormField<NoteType>(
                     value: selectedType,
-                    decoration: InputDecoration(labelText: appLocalizations.noteType),
+                    decoration: InputDecoration(
+                      labelText: appLocalizations.noteType,
+                    ),
                     items: NoteType.values.map((type) {
                       return DropdownMenuItem(
                         value: type,
@@ -670,7 +832,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                       );
                     }).toList(),
                     onChanged: (value) {
-                      if (value != null) setDialogState(() => selectedType = value);
+                      if (value != null)
+                        setDialogState(() => selectedType = value);
                     },
                   ),
                   const SizedBox(height: AppSpacing.m),
@@ -692,8 +855,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                 ElevatedButton(
                   onPressed: () async {
                     if (contentController.text.isEmpty) return;
-                    
-                    final noteService = Provider.of<NoteService>(context, listen: false);
+
+                    final noteService = Provider.of<NoteService>(
+                      context,
+                      listen: false,
+                    );
                     try {
                       final newNoteSource = MatchNote(
                         id: '',
@@ -709,13 +875,21 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
                         Navigator.pop(context);
                         _refreshNotes();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(appLocalizations.noteCreatedSuccessfully)),
+                          SnackBar(
+                            content: Text(
+                              appLocalizations.noteCreatedSuccessfully,
+                            ),
+                          ),
                         );
                       }
                     } catch (e) {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(appLocalizations.failedToCreateNote(e.toString()))),
+                          SnackBar(
+                            content: Text(
+                              appLocalizations.failedToCreateNote(e.toString()),
+                            ),
+                          ),
                         );
                       }
                     }
@@ -739,7 +913,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: player.position == 'GK' ? Colors.orange.shade700 : Theme.of(context).colorScheme.primary,
+              color: player.position == 'GK'
+                  ? Colors.orange.shade700
+                  : Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
@@ -753,7 +929,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
             child: Center(
               child: Text(
                 player.jerseyNumber?.toString() ?? '?',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
@@ -766,7 +946,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
             ),
             child: Text(
               player.name,
-              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -779,9 +963,15 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: (index == 0 ? Colors.orange.shade900 : Colors.black).withOpacity(0.3),
+        color: (index == 0 ? Colors.orange.shade900 : Colors.black).withOpacity(
+          0.3,
+        ),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white54, width: 2, style: BorderStyle.solid),
+        border: Border.all(
+          color: Colors.white54,
+          width: 2,
+          style: BorderStyle.solid,
+        ),
       ),
       child: Center(
         child: Icon(
@@ -801,10 +991,15 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: player.position == 'GK' ? Colors.orange.shade700 : Theme.of(context).colorScheme.secondary,
+            backgroundColor: player.position == 'GK'
+                ? Colors.orange.shade700
+                : Theme.of(context).colorScheme.secondary,
             child: Text(
               player.jerseyNumber?.toString() ?? '?',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -812,7 +1007,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> with SingleTick
             width: 60,
             child: Text(
               player.name,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontSize: 10),
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
             ),

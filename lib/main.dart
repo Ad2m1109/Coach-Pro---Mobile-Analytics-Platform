@@ -74,7 +74,7 @@ Future<void> main() async {
         ChangeNotifierProvider<AuthService>(create: (_) => authService),
         ChangeNotifierProvider<AnalysisService>(
           create: (context) => AnalysisService(
-            apiClient: Provider.of<ApiClient>(context, listen: false),
+            apiClient: analysisApiClient,
           ),
         ),
         Provider<TeamService>(

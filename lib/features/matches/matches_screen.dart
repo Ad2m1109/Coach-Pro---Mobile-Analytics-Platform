@@ -6,12 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/models/match.dart';
 import 'package:frontend/services/match_service.dart';
-import 'package:frontend/features/matches/presentation/add_event_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/services/api_client.dart';
 
 class MatchesScreen extends StatefulWidget {
   const MatchesScreen({super.key});
@@ -20,12 +20,14 @@ class MatchesScreen extends StatefulWidget {
   State<MatchesScreen> createState() => _MatchesScreenState();
 }
 
-class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProviderStateMixin {
+class _MatchesScreenState extends State<MatchesScreen>
+    with SingleTickerProviderStateMixin {
   late Future<List<Event>> _eventsFuture;
   late Future<List<Match>> _matchesFuture;
   Event? _selectedEvent;
   late TabController _tabController;
   Event? _allEventsFilter;
+  final Map<String, Future<Map<String, dynamic>?>> _analysisStatusFutures = {};
 
   @override
   void initState() {
@@ -36,7 +38,10 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        _allEventsFilter = Event(id: 'all', name: AppLocalizations.of(context)!.allMatches);
+        _allEventsFilter = Event(
+          id: 'all',
+          name: AppLocalizations.of(context)!.allMatches,
+        );
         if (_selectedEvent == null) {
           _selectedEvent = _allEventsFilter;
         }
@@ -63,10 +68,46 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   void _loadMatches() {
     final matchService = Provider.of<MatchService>(context, listen: false);
     setState(() {
+      _analysisStatusFutures.clear();
       _matchesFuture = matchService.getMatches(
-        eventId: (_selectedEvent?.id == _allEventsFilter!.id) ? null : _selectedEvent?.id,
+        eventId: (_selectedEvent?.id == _allEventsFilter!.id)
+            ? null
+            : _selectedEvent?.id,
       );
     });
+  }
+
+  Future<Map<String, dynamic>?> _loadAnalysisForMatch(String matchId) async {
+    final apiClient = Provider.of<ApiClient>(context, listen: false);
+    final response =
+        await apiClient.get('/matches/$matchId/analysis')
+            as Map<String, dynamic>;
+    if ((response['status'] ?? '').toString().toUpperCase() == 'NO_ANALYSIS') {
+      return null;
+    }
+    return response;
+  }
+
+  Future<Map<String, dynamic>?> _analysisFutureForMatch(String matchId) {
+    return _analysisStatusFutures.putIfAbsent(
+      matchId,
+      () => _loadAnalysisForMatch(matchId),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return Colors.grey;
+      case 'PROCESSING':
+        return Colors.blue;
+      case 'COMPLETED':
+        return Colors.green;
+      case 'FAILED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
   void _navigateAndRefresh() async {
@@ -113,7 +154,11 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                   );
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('${appLocalizations.errorLoadingEvents} ${snapshot.error}'));
+                  return Center(
+                    child: Text(
+                      '${appLocalizations.errorLoadingEvents} ${snapshot.error}',
+                    ),
+                  );
                 }
 
                 final events = [_allEventsFilter!, ...?snapshot.data];
@@ -123,12 +168,18 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: appLocalizations.filterByEvent,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.m,
+                        vertical: AppSpacing.s,
+                      ),
                     ),
                     value: _selectedEvent?.id,
                     onChanged: (String? newValue) {
                       setState(() {
-                        _selectedEvent = events.firstWhere((e) => e.id == newValue, orElse: () => _allEventsFilter!);
+                        _selectedEvent = events.firstWhere(
+                          (e) => e.id == newValue,
+                          orElse: () => _allEventsFilter!,
+                        );
                         _loadMatches();
                       });
                     },
@@ -158,8 +209,12 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
 
                   final matches = snapshot.data!;
                   final now = DateTime.now();
-                  final upcomingMatches = matches.where((m) => m.date.isAfter(now)).toList();
-                  final pastMatches = matches.where((m) => !m.date.isAfter(now)).toList();
+                  final upcomingMatches = matches
+                      .where((m) => m.date.isAfter(now))
+                      .toList();
+                  final pastMatches = matches
+                      .where((m) => !m.date.isAfter(now))
+                      .toList();
                   pastMatches.sort((a, b) => b.date.compareTo(a.date));
 
                   return TabBarView(
@@ -175,10 +230,12 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
           ],
         ),
       ),
-      floatingActionButton: canEdit ? FloatingActionButton(
-        onPressed: _navigateAndRefresh,
-        child: const Icon(Icons.add),
-      ) : null,
+      floatingActionButton: canEdit
+          ? FloatingActionButton(
+              onPressed: _navigateAndRefresh,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
@@ -193,7 +250,10 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
       itemBuilder: (context, index) {
         final match = matches[index];
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.xs),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.m,
+            vertical: AppSpacing.xs,
+          ),
           child: CustomCard(
             onTap: () {
               if (match.status == 'upcoming') {
@@ -204,7 +264,10 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
             },
             padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.m,
+                vertical: AppSpacing.s,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(AppSpacing.s),
                 decoration: BoxDecoration(
@@ -227,13 +290,15 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s,
+                    ),
                     child: Text(
                       '${match.homeScore} - ${match.awayScore}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Theme.of(context).colorScheme.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(
@@ -253,7 +318,11 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           DateFormat.yMd().add_jm().format(match.date),
@@ -265,15 +334,50 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.sports_soccer, size: 14, color: Colors.grey),
+                          const Icon(
+                            Icons.sports_soccer,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             '${appLocalizations.event} ${match.eventName}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontStyle: FontStyle.italic),
                           ),
                         ],
                       ),
                     ],
+                    const SizedBox(height: 6),
+                    FutureBuilder<Map<String, dynamic>?>(
+                      future: _analysisFutureForMatch(match.id),
+                      builder: (context, analysisSnapshot) {
+                        if (!analysisSnapshot.hasData ||
+                            analysisSnapshot.data == null) {
+                          return const SizedBox.shrink();
+                        }
+                        final analysis = analysisSnapshot.data!;
+                        final status = (analysis['status'] ?? '').toString();
+                        final progress = ((analysis['progress'] ?? 0) as num)
+                            .toDouble();
+
+                        return Row(
+                          children: [
+                            Chip(
+                              label: Text(status),
+                              backgroundColor: _getStatusColor(
+                                status,
+                              ).withOpacity(0.12),
+                              side: BorderSide(color: _getStatusColor(status)),
+                            ),
+                            if (progress > 0 && progress < 1) ...[
+                              const SizedBox(width: AppSpacing.s),
+                              Text('${(progress * 100).toStringAsFixed(0)}%'),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

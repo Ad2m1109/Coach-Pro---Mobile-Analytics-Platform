@@ -14,6 +14,22 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  Future<void> _deleteRun(String id) async {
+    final appLocalizations = AppLocalizations.of(context)!;
+    try {
+      await Provider.of<AnalysisService>(context, listen: false).deleteAnalysisRun(id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Analysis item deleted')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(appLocalizations.errorWithMessage(e.toString()))),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +55,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
           itemCount: reports.length,
           itemBuilder: (context, index) {
             final report = reports[index];
-            return AnalysisReportCard(report: report); // Use the new widget
+            final isFailed = report.status.toUpperCase() == 'FAILED';
+            final card = AnalysisReportCard(report: report);
+
+            if (!isFailed) {
+              return card;
+            }
+
+            return Dismissible(
+              key: ValueKey(report.id),
+              direction: DismissDirection.startToEnd,
+              onDismissed: (_) => _deleteRun(report.id),
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              child: card,
+            );
           },
         );
       },
