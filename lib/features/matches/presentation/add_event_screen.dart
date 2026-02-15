@@ -16,6 +16,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _eventNameController = TextEditingController();
   bool _isLoading = false;
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void dispose() {
     _eventNameController.dispose();
@@ -29,23 +34,22 @@ class _AddEventScreenState extends State<AddEventScreen> {
         _isLoading = true;
       });
 
-      final eventService = Provider.of<EventService>(context, listen: false);
-      final newEvent = EventCreate(name: _eventNameController.text);
+      final eventService = context.read<EventService>();
+      final newEvent = EventCreate(name: _eventNameController.text.trim());
 
       try {
         await eventService.createEvent(newEvent);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appLocalizations.eventCreatedSuccessfully)),
-        );
+        _showMessage(appLocalizations.eventCreatedSuccessfully);
+        if (!mounted) return;
         Navigator.of(context).pop(true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${appLocalizations.failedToCreateEvent(e.toString())}')),
-        );
+        _showMessage(appLocalizations.failedToCreateEvent(e.toString()));
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -67,7 +71,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 controller: _eventNameController,
                 decoration: InputDecoration(labelText: appLocalizations.eventName),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return appLocalizations.pleaseEnterAnEventName;
                   }
                   return null;

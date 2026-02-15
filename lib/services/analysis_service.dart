@@ -39,7 +39,16 @@ class AnalysisService with ChangeNotifier {
 
   String fileUrl(String relativePath) {
     final encodedPath = Uri.encodeQueryComponent(relativePath);
-    return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath';
+    final token = _apiClient.token;
+    final encodedToken = token != null ? Uri.encodeQueryComponent(token) : '';
+    return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath&access_token=$encodedToken';
+  }
+
+  String streamUrl(String relativePath) {
+    final encodedPath = Uri.encodeQueryComponent(relativePath);
+    final token = _apiClient.token;
+    final encodedToken = token != null ? Uri.encodeQueryComponent(token) : '';
+    return '${_apiClient.baseUrl}/analysis/stream?path=$encodedPath&access_token=$encodedToken';
   }
 
   Map<String, String> fileHeaders() {
@@ -50,7 +59,9 @@ class AnalysisService with ChangeNotifier {
 
   Future<dynamic> fetchJsonPreview(String relativePath) async {
     final encodedPath = Uri.encodeQueryComponent(relativePath);
-    return _apiClient.get('/analysis/files/json?path=$encodedPath');
+    final token = _apiClient.token;
+    final encodedToken = token != null ? Uri.encodeQueryComponent(token) : '';
+    return _apiClient.get('/analysis/files/json?path=$encodedPath&access_token=$encodedToken');
   }
 
   String prettyJson(dynamic data) {

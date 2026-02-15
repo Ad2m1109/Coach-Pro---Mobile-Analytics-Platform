@@ -1,10 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
-import 'package:frontend/models/analysis_report.dart';
 import 'package:frontend/services/analysis_service.dart';
 import 'package:provider/provider.dart';
-import 'package:frontend/widgets/analysis_report_card.dart'; // Import the new widget
+import 'package:frontend/widgets/analysis_report_card.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -14,10 +12,12 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  late final AnalysisService _analysisService;
+
   Future<void> _deleteRun(String id) async {
     final appLocalizations = AppLocalizations.of(context)!;
     try {
-      await Provider.of<AnalysisService>(context, listen: false).deleteAnalysisRun(id);
+      await _analysisService.deleteAnalysisRun(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Analysis item deleted')),
@@ -33,8 +33,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Trigger data fetch when the screen initializes
-    Provider.of<AnalysisService>(context, listen: false).getAnalysisHistory();
+    _analysisService = context.read<AnalysisService>();
+    _analysisService.getAnalysisHistory();
   }
 
   @override
@@ -44,9 +44,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
       builder: (context, analysisService, child) {
         if (analysisService.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        } else if (analysisService.errorMessage != null) {
-          return Center(child: Text('${appLocalizations.errorWithMessage(analysisService.errorMessage!)}'));
-        } else if (analysisService.reports.isEmpty) {
+        }
+        if (analysisService.errorMessage != null) {
+          return Center(
+            child: Text(
+              appLocalizations.errorWithMessage(analysisService.errorMessage!),
+            ),
+          );
+        }
+        if (analysisService.reports.isEmpty) {
           return Center(child: Text(appLocalizations.noAnalysisHistoryFound));
         }
 

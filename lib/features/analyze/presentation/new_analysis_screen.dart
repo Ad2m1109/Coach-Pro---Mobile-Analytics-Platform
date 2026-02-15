@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:frontend/services/api_client.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/video_analysis_service.dart';
@@ -17,52 +16,50 @@ class NewAnalysisScreen extends StatefulWidget {
 }
 
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
+  static const _pagePadding = EdgeInsets.all(16);
+  static const _buttonPadding = EdgeInsets.symmetric(
+    horizontal: 30,
+    vertical: 15,
+  );
+
   XFile? _videoFile;
 
   Future<void> _pickVideo() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+    final picker = ImagePicker();
+    final video = await picker.pickVideo(source: ImageSource.gallery);
 
-    setState(() {
-      _videoFile = video;
-    });
+    if (!mounted) return;
+    setState(() => _videoFile = video);
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _uploadAndAnalyzeVideo() async {
     final appLocalizations = AppLocalizations.of(context)!;
     if (_videoFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(appLocalizations.selectVideoFirst)),
-      );
+      _showMessage(appLocalizations.selectVideoFirst);
       return;
     }
 
     try {
-      final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
+      final videoAnalysisService = context.read<VideoAnalysisService>();
 
       await videoAnalysisService.uploadAndAnalyzeVideo(
         videoFile: _videoFile!,
         onComplete: () {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(appLocalizations.videoAnalysisCompleted)),
-            );
-          }
+          _showMessage(appLocalizations.videoAnalysisCompleted);
         },
         onError: (error) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(appLocalizations.videoAnalysisFailed(error))),
-            );
-          }
+          _showMessage(appLocalizations.videoAnalysisFailed(error));
         },
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appLocalizations.errorWithMessage(e.toString()))),
-        );
-      }
+      _showMessage(appLocalizations.errorWithMessage(e.toString()));
     }
   }
 
@@ -72,12 +69,14 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     return Consumer<VideoAnalysisService>(
       builder: (context, service, child) {
         final isAnalyzing = service.isAnalyzing;
-        final statusMessage = service.status.isEmpty 
-          ? (_videoFile != null ? appLocalizations.selected(_videoFile!.name) : appLocalizations.noVideoSelected)
-          : service.status;
+        final statusMessage = service.status.isEmpty
+            ? (_videoFile != null
+                ? appLocalizations.selected(_videoFile!.name)
+                : appLocalizations.noVideoSelected)
+            : service.status;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: _pagePadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -93,7 +92,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                   label: Text(appLocalizations.uploadVideo),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondary,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding: _buttonPadding,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -110,7 +109,9 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 Text(
                   appLocalizations.selected(_videoFile!.name),
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
               if (isAnalyzing) ...[
@@ -122,11 +123,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextButton.icon(
-                  onPressed: () {
-                    service.cancelAnalysis();
-                  },
+                  onPressed: service.cancelAnalysis,
                   icon: const Icon(Icons.stop, color: Colors.pink),
-                  label: const Text("Stop Analysis", style: TextStyle(color: Colors.pink)),
+                  label: const Text(
+                    'Stop Analysis',
+                    style: TextStyle(color: Colors.pink),
+                  ),
                 ),
               ],
               const SizedBox(height: 32),
@@ -136,7 +138,10 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                       onPressed: _uploadAndAnalyzeVideo,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 15,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
@@ -155,7 +160,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                   children: [
                     Text(
                       appLocalizations.liveNotes,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_comment, color: Colors.blue),
@@ -174,23 +183,26 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   }
 
   Widget _buildLiveNotesList(AppLocalizations appLocalizations) {
-    // Only fetch notes if we are currently analyzing a match
-    // We'll need the matchId. VideoAnalysisService should have it.
-    final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
+    final videoAnalysisService = context.read<VideoAnalysisService>();
     final matchId = videoAnalysisService.currentMatchId;
-    
+
     if (matchId == null) return const SizedBox();
 
     return FutureBuilder<List<MatchNote>>(
-      future: Provider.of<NoteService>(context).getMatchNotes(matchId),
+      future: context.read<NoteService>().getMatchNotes(matchId),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Text(appLocalizations.noNotesAvailable, style: const TextStyle(fontStyle: FontStyle.italic)),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              appLocalizations.noNotesAvailable,
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
           );
         }
-        final notes = snapshot.data!.where((n) => n.noteType == NoteType.liveReaction).toList();
+        final notes = snapshot.data!
+            .where((n) => n.noteType == NoteType.liveReaction)
+            .toList();
         notes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         return ListView.builder(
@@ -221,87 +233,57 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   }
 
   Future<void> _showAddLiveNoteDialog(AppLocalizations appLocalizations) async {
-    final videoAnalysisService = Provider.of<VideoAnalysisService>(context, listen: false);
+    final videoAnalysisService = context.read<VideoAnalysisService>();
     final matchId = videoAnalysisService.currentMatchId;
     if (matchId == null) return;
 
     final contentController = TextEditingController();
-    NoteType selectedType = NoteType.liveReaction;
-
-    return showDialog(
+    await showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(appLocalizations.addLiveReaction),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<NoteType>(
-                    value: selectedType,
-                    decoration: InputDecoration(labelText: appLocalizations.noteType),
-                    items: [NoteType.liveReaction].map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) setDialogState(() => selectedType = value);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: contentController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: appLocalizations.enterNoteContent,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(appLocalizations.cancel),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (contentController.text.isEmpty) return;
-                    
-                    final noteService = Provider.of<NoteService>(context, listen: false);
-                    try {
-                      final newNote = MatchNote(
-                        id: '',
-                        matchId: matchId,
-                        userId: '', 
-                        content: contentController.text,
-                        noteType: selectedType,
-                        videoTimestamp: 0.0,
-                        createdAt: DateTime.now(),
-                      );
-                      await noteService.createNote(newNote);
-                      if (mounted) {
-                        Navigator.pop(context);
-                        setState(() {}); // Refresh local UI
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(appLocalizations.failedToCreateNote(e.toString()))),
-                        );
-                      }
-                    }
-                  },
-                  child: Text(appLocalizations.saveNote),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (dialogContext) => AlertDialog(
+        title: Text(appLocalizations.addLiveReaction),
+        content: TextField(
+          controller: contentController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: appLocalizations.enterNoteContent,
+            border: const OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(appLocalizations.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (contentController.text.trim().isEmpty) return;
+
+              final noteService = context.read<NoteService>();
+              try {
+                final newNote = MatchNote(
+                  id: '',
+                  matchId: matchId,
+                  userId: '',
+                  content: contentController.text.trim(),
+                  noteType: NoteType.liveReaction,
+                  videoTimestamp: 0.0,
+                  createdAt: DateTime.now(),
+                );
+                await noteService.createNote(newNote);
+                if (!mounted) return;
+                Navigator.pop(dialogContext);
+                setState(() {});
+              } catch (e) {
+                _showMessage(appLocalizations.failedToCreateNote(e.toString()));
+              }
+            },
+            child: Text(appLocalizations.saveNote),
+          ),
+        ],
+      ),
     );
+    contentController.dispose();
   }
 }

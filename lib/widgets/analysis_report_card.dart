@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/models/analysis_report.dart';
 import 'package:frontend/services/analysis_service.dart';
 import 'package:provider/provider.dart';
@@ -12,14 +13,27 @@ class AnalysisReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final outputs = report.outputs ?? const <String, dynamic>{};
-    final trackingVideo = outputs['tracking_video_path']?.toString();
-    final heatmapVideo = outputs['heatmap_video_path']?.toString();
-    final backlineVideo = outputs['backline_video_path']?.toString();
-    final animationVideo = outputs['animation_video_path']?.toString();
-    final possessionJson = outputs['possession_analysis_path']?.toString();
-    final heatmapImage = outputs['heatmap_image_path']?.toString();
-    final movementTrailImage = outputs['movement_trail_image_path']?.toString();
-    final analysisService = Provider.of<AnalysisService>(context, listen: false);
+    final trackingVideo = _outputValue(outputs, 'tracking_video_path');
+    final heatmapVideo = _outputValue(outputs, 'heatmap_video_path');
+    final backlineVideo = _outputValue(outputs, 'backline_video_path');
+    final animationVideo = _outputValue(outputs, 'animation_video_path');
+    final trackingPreview = _outputValue(outputs, 'tracking_video_preview_path');
+    final heatmapPreview = _outputValue(outputs, 'heatmap_video_preview_path');
+    final backlinePreview = _outputValue(outputs, 'backline_video_preview_path');
+    final animationPreview = _outputValue(outputs, 'animation_video_preview_path');
+    final possessionJson = _outputValue(outputs, 'possession_analysis_path');
+    final heatmapImage = _outputValue(outputs, 'heatmap_image_path');
+    final movementTrailImage = _outputValue(outputs, 'movement_trail_image_path');
+    final allPlayersGridImage = _outputValue(
+      outputs,
+      'all_players_grid_image_path',
+    );
+    final possessionChartImage = _outputValue(
+      outputs,
+      'possession_chart_image_path',
+    );
+    final analysisService = context.read<AnalysisService>();
+    final headers = analysisService.fileHeaders();
 
     Color statusColor;
     switch (report.status.toUpperCase()) {
@@ -87,8 +101,11 @@ class AnalysisReportCard extends StatelessWidget {
                       onPressed: () => _showVideoPreview(
                         context,
                         title: 'Tracking Video',
-                        url: analysisService.fileUrl(trackingVideo),
-                        headers: analysisService.fileHeaders(),
+                        streamUrl: analysisService.streamUrl(
+                          trackingPreview ?? trackingVideo,
+                        ),
+                        fallbackUrl: analysisService.fileUrl(trackingVideo),
+                        headers: headers,
                       ),
                     ),
                   if (heatmapVideo != null && heatmapVideo.isNotEmpty)
@@ -98,8 +115,9 @@ class AnalysisReportCard extends StatelessWidget {
                       onPressed: () => _showVideoPreview(
                         context,
                         title: 'Heatmap Video',
-                        url: analysisService.fileUrl(heatmapVideo),
-                        headers: analysisService.fileHeaders(),
+                        streamUrl: analysisService.streamUrl(heatmapPreview ?? heatmapVideo),
+                        fallbackUrl: analysisService.fileUrl(heatmapVideo),
+                        headers: headers,
                       ),
                     ),
                   if (backlineVideo != null && backlineVideo.isNotEmpty)
@@ -109,8 +127,9 @@ class AnalysisReportCard extends StatelessWidget {
                       onPressed: () => _showVideoPreview(
                         context,
                         title: 'Backline Video',
-                        url: analysisService.fileUrl(backlineVideo),
-                        headers: analysisService.fileHeaders(),
+                        streamUrl: analysisService.streamUrl(backlinePreview ?? backlineVideo),
+                        fallbackUrl: analysisService.fileUrl(backlineVideo),
+                        headers: headers,
                       ),
                     ),
                   if (animationVideo != null && animationVideo.isNotEmpty)
@@ -120,30 +139,9 @@ class AnalysisReportCard extends StatelessWidget {
                       onPressed: () => _showVideoPreview(
                         context,
                         title: 'Animation Video',
-                        url: analysisService.fileUrl(animationVideo),
-                        headers: analysisService.fileHeaders(),
-                      ),
-                    ),
-                  if (heatmapImage != null && heatmapImage.isNotEmpty)
-                    _PreviewButton(
-                      icon: Icons.image,
-                      label: 'Heatmap Image',
-                      onPressed: () => _showImagePreview(
-                        context,
-                        title: 'Heatmap Image',
-                        url: analysisService.fileUrl(heatmapImage),
-                        headers: analysisService.fileHeaders(),
-                      ),
-                    ),
-                  if (movementTrailImage != null && movementTrailImage.isNotEmpty)
-                    _PreviewButton(
-                      icon: Icons.image,
-                      label: 'Movement Trail',
-                      onPressed: () => _showImagePreview(
-                        context,
-                        title: 'Movement Trail',
-                        url: analysisService.fileUrl(movementTrailImage),
-                        headers: analysisService.fileHeaders(),
+                        streamUrl: analysisService.streamUrl(animationPreview ?? animationVideo),
+                        fallbackUrl: analysisService.fileUrl(animationVideo),
+                        headers: headers,
                       ),
                     ),
                   if (possessionJson != null && possessionJson.isNotEmpty)
@@ -157,6 +155,61 @@ class AnalysisReportCard extends StatelessWidget {
                     ),
                 ],
               ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (heatmapImage != null && heatmapImage.isNotEmpty)
+                    _ImageThumb(
+                      label: 'Heatmap',
+                      url: analysisService.fileUrl(heatmapImage),
+                      headers: headers,
+                      onTap: () => _showImagePreview(
+                        context,
+                        title: 'Heatmap Image',
+                        url: analysisService.fileUrl(heatmapImage),
+                        headers: headers,
+                      ),
+                    ),
+                  if (movementTrailImage != null && movementTrailImage.isNotEmpty)
+                    _ImageThumb(
+                      label: 'Movement Trail',
+                      url: analysisService.fileUrl(movementTrailImage),
+                      headers: headers,
+                      onTap: () => _showImagePreview(
+                        context,
+                        title: 'Movement Trail',
+                        url: analysisService.fileUrl(movementTrailImage),
+                        headers: headers,
+                      ),
+                    ),
+                  if (allPlayersGridImage != null && allPlayersGridImage.isNotEmpty)
+                    _ImageThumb(
+                      label: 'Players Grid',
+                      url: analysisService.fileUrl(allPlayersGridImage),
+                      headers: headers,
+                      onTap: () => _showImagePreview(
+                        context,
+                        title: 'All Players Grid',
+                        url: analysisService.fileUrl(allPlayersGridImage),
+                        headers: headers,
+                      ),
+                    ),
+                  if (possessionChartImage != null && possessionChartImage.isNotEmpty)
+                    _ImageThumb(
+                      label: 'Possession Chart',
+                      url: analysisService.fileUrl(possessionChartImage),
+                      headers: headers,
+                      onTap: () => _showImagePreview(
+                        context,
+                        title: 'Possession Chart',
+                        url: analysisService.fileUrl(possessionChartImage),
+                        headers: headers,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ],
         ),
@@ -164,18 +217,24 @@ class AnalysisReportCard extends StatelessWidget {
     );
   }
 
+  String? _outputValue(Map<String, dynamic> outputs, String key) {
+    return outputs[key]?.toString();
+  }
+
   Future<void> _showVideoPreview(
     BuildContext context, {
     required String title,
-    required String url,
+    required String streamUrl,
+    required String fallbackUrl,
     required Map<String, String> headers,
   }) async {
-    await showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: _VideoPreviewPlayer(title: title, url: url, headers: headers),
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => _FullscreenVideoPage(
+          title: title,
+          streamUrl: streamUrl,
+          fallbackUrl: fallbackUrl,
+          headers: headers,
         ),
       ),
     );
@@ -187,24 +246,12 @@ class AnalysisReportCard extends StatelessWidget {
     required String url,
     required Map<String, String> headers,
   }) async {
-    await showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Flexible(
-                child: InteractiveViewer(
-                  child: Image.network(url, fit: BoxFit.contain, headers: headers),
-                ),
-              ),
-            ],
-          ),
+    await Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => _FullscreenImagePage(
+          title: title,
+          url: url,
+          headers: headers,
         ),
       ),
     );
@@ -227,21 +274,7 @@ class AnalysisReportCard extends StatelessWidget {
           height: 500,
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Possession JSON', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: SelectableText(
-                      pretty,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _JsonSummaryView(data: data, rawJson: pretty),
           ),
         ),
       ),
@@ -270,14 +303,146 @@ class _PreviewButton extends StatelessWidget {
   }
 }
 
+class _ImageThumb extends StatelessWidget {
+  final String label;
+  final String url;
+  final Map<String, String> headers;
+  final VoidCallback onTap;
+
+  const _ImageThumb({
+    required this.label,
+    required this.url,
+    required this.headers,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 120,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                url,
+                headers: headers,
+                height: 72,
+                width: 120,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JsonSummaryView extends StatelessWidget {
+  final dynamic data;
+  final String rawJson;
+
+  const _JsonSummaryView({
+    required this.data,
+    required this.rawJson,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final map = data is Map<String, dynamic> ? data : <String, dynamic>{};
+    final stats = (map['statistics'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    final possession = (map['possession_percentage'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    final events = (map['events'] as List?)?.cast<dynamic>() ?? <dynamic>[];
+
+    String asPct(dynamic value) => value is num ? '${value.toStringAsFixed(1)}%' : '-';
+    String asNum(dynamic value) => value is num ? value.toString() : '-';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Possession Summary', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _MetricChip(label: 'Team A', value: asPct(possession['team_a'])),
+            _MetricChip(label: 'Team B', value: asPct(possession['team_b'])),
+            _MetricChip(label: 'Ball Detection', value: asPct(stats['ball_detection_rate'])),
+            _MetricChip(label: 'Events', value: asNum(stats['total_events'])),
+            _MetricChip(label: 'Interceptions', value: asNum(stats['interceptions'])),
+            _MetricChip(label: 'Tackles', value: asNum(stats['tackles'])),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text('Key Events', style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 6),
+        Expanded(
+          child: ListView(
+            children: [
+              ...events.take(8).map((event) {
+                final e = event is Map ? event.cast<String, dynamic>() : <String, dynamic>{};
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('${e['event_type'] ?? '-'}: ${e['from_team'] ?? '-'} -> ${e['to_team'] ?? '-'}'),
+                  subtitle: Text('t=${e['timestamp'] ?? '-'}s  distance=${e['distance'] ?? '-'}'),
+                );
+              }),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                title: const Text('Raw JSON'),
+                children: [
+                  SelectableText(
+                    rawJson,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MetricChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+      ),
+      child: Text('$label: $value', style: Theme.of(context).textTheme.bodySmall),
+    );
+  }
+}
+
 class _VideoPreviewPlayer extends StatefulWidget {
   final String title;
-  final String url;
+  final String streamUrl;
+  final String fallbackUrl;
   final Map<String, String> headers;
 
   const _VideoPreviewPlayer({
     required this.title,
-    required this.url,
+    required this.streamUrl,
+    required this.fallbackUrl,
     required this.headers,
   });
 
@@ -285,19 +450,115 @@ class _VideoPreviewPlayer extends StatefulWidget {
   State<_VideoPreviewPlayer> createState() => _VideoPreviewPlayerState();
 }
 
+class _FullscreenVideoPage extends StatelessWidget {
+  final String title;
+  final String streamUrl;
+  final String fallbackUrl;
+  final Map<String, String> headers;
+
+  const _FullscreenVideoPage({
+    required this.title,
+    required this.streamUrl,
+    required this.fallbackUrl,
+    required this.headers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: _VideoPreviewPlayer(
+            title: title,
+            streamUrl: streamUrl,
+            fallbackUrl: fallbackUrl,
+            headers: headers,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FullscreenImagePage extends StatelessWidget {
+  final String title;
+  final String url;
+  final Map<String, String> headers;
+
+  const _FullscreenImagePage({
+    required this.title,
+    required this.url,
+    required this.headers,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.black,
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5.0,
+            child: Center(
+              child: Image.network(
+                url,
+                headers: headers,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _VideoPreviewPlayerState extends State<_VideoPreviewPlayer> {
   VideoPlayerController? _controller;
+  String? _error;
+  bool _usedFallback = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.url),
+    _initializeWithUrl(widget.streamUrl);
+  }
+
+  Future<void> _initializeWithUrl(String url) async {
+    _controller?.dispose();
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(url),
       httpHeaders: widget.headers,
-    )
-      ..initialize().then((_) {
-        if (mounted) setState(() {});
+    );
+
+    try {
+      await controller.initialize();
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() {
+        _controller = controller;
+        _error = null;
       });
+    } catch (e) {
+      await controller.dispose();
+      if (!_usedFallback) {
+        _usedFallback = true;
+        await _initializeWithUrl(widget.fallbackUrl);
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    }
   }
 
   @override
@@ -315,7 +576,18 @@ class _VideoPreviewPlayerState extends State<_VideoPreviewPlayer> {
       children: [
         Text(widget.title, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        if (c == null || !c.value.isInitialized)
+        if (_error != null)
+          SizedBox(
+            height: 200,
+            child: Center(
+              child: Text(
+                'Video preview failed.\n$_error',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          )
+        else if (c == null || !c.value.isInitialized)
           const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()))
         else
           AspectRatio(
@@ -343,9 +615,168 @@ class _VideoPreviewPlayerState extends State<_VideoPreviewPlayer> {
               },
               icon: const Icon(Icons.replay),
             ),
+            const Spacer(),
+            IconButton(
+              onPressed: (c == null || !c.value.isInitialized)
+                  ? null
+                  : () async {
+                      final currentPosition = c.value.position;
+                      final wasPlaying = c.value.isPlaying;
+                      if (wasPlaying) {
+                        await c.pause();
+                      }
+                      if (!mounted) return;
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => _ImmersiveVideoPage(
+                            title: widget.title,
+                            streamUrl: widget.streamUrl,
+                            fallbackUrl: widget.fallbackUrl,
+                            headers: widget.headers,
+                            initialPosition: currentPosition,
+                            autoPlay: wasPlaying,
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.fullscreen),
+              tooltip: 'Fullscreen',
+            ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _ImmersiveVideoPage extends StatefulWidget {
+  final String title;
+  final String streamUrl;
+  final String fallbackUrl;
+  final Map<String, String> headers;
+  final Duration initialPosition;
+  final bool autoPlay;
+
+  const _ImmersiveVideoPage({
+    required this.title,
+    required this.streamUrl,
+    required this.fallbackUrl,
+    required this.headers,
+    required this.initialPosition,
+    required this.autoPlay,
+  });
+
+  @override
+  State<_ImmersiveVideoPage> createState() => _ImmersiveVideoPageState();
+}
+
+class _ImmersiveVideoPageState extends State<_ImmersiveVideoPage> {
+  VideoPlayerController? _controller;
+  String? _error;
+  bool _usedFallback = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    _initializeWithUrl(widget.streamUrl);
+  }
+
+  Future<void> _initializeWithUrl(String url) async {
+    _controller?.dispose();
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      httpHeaders: widget.headers,
+    );
+
+    try {
+      await controller.initialize();
+      await controller.seekTo(widget.initialPosition);
+      if (widget.autoPlay) {
+        await controller.play();
+      }
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      setState(() {
+        _controller = controller;
+        _error = null;
+      });
+    } catch (e) {
+      await controller.dispose();
+      if (!_usedFallback) {
+        _usedFallback = true;
+        await _initializeWithUrl(widget.fallbackUrl);
+        return;
+      }
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _controller;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Center(
+            child: _error != null
+                ? Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Video preview failed.\n$_error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  )
+                : (c == null || !c.value.isInitialized)
+                    ? const CircularProgressIndicator()
+                    : GestureDetector(
+                        onTap: () async {
+                          if (c.value.isPlaying) {
+                            await c.pause();
+                          } else {
+                            await c.play();
+                          }
+                          if (mounted) setState(() {});
+                        },
+                        child: AspectRatio(
+                          aspectRatio: c.value.aspectRatio,
+                          child: VideoPlayer(c),
+                        ),
+                      ),
+          ),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close, color: Colors.white),
+              tooltip: 'Close',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -22,11 +22,13 @@ class MatchesScreen extends StatefulWidget {
 
 class _MatchesScreenState extends State<MatchesScreen>
     with SingleTickerProviderStateMixin {
+  static const String _allEventId = 'all';
+
   late Future<List<Event>> _eventsFuture;
   late Future<List<Match>> _matchesFuture;
+  late Event _allEventsFilter;
   Event? _selectedEvent;
   late TabController _tabController;
-  Event? _allEventsFilter;
   final Map<String, Future<Map<String, dynamic>?>> _analysisStatusFutures = {};
 
   @override
@@ -37,16 +39,12 @@ class _MatchesScreenState extends State<MatchesScreen>
     _matchesFuture = Future.value([]);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _allEventsFilter = Event(
-          id: 'all',
-          name: AppLocalizations.of(context)!.allMatches,
-        );
-        if (_selectedEvent == null) {
-          _selectedEvent = _allEventsFilter;
-        }
-        _loadEventsAndMatches();
-      });
+      _allEventsFilter = Event(
+        id: _allEventId,
+        name: AppLocalizations.of(context)!.allMatches,
+      );
+      _selectedEvent ??= _allEventsFilter;
+      _loadEventsAndMatches();
     });
   }
 
@@ -57,20 +55,18 @@ class _MatchesScreenState extends State<MatchesScreen>
   }
 
   void _loadEventsAndMatches() {
-    final eventService = Provider.of<EventService>(context, listen: false);
+    final eventService = context.read<EventService>();
     _eventsFuture = eventService.getEvents();
-    setState(() {
-      _selectedEvent = _allEventsFilter;
-      _loadMatches();
-    });
+    _selectedEvent = _allEventsFilter;
+    _loadMatches();
   }
 
   void _loadMatches() {
-    final matchService = Provider.of<MatchService>(context, listen: false);
+    final matchService = context.read<MatchService>();
     setState(() {
       _analysisStatusFutures.clear();
       _matchesFuture = matchService.getMatches(
-        eventId: (_selectedEvent?.id == _allEventsFilter!.id)
+        eventId: (_selectedEvent?.id == _allEventsFilter.id)
             ? null
             : _selectedEvent?.id,
       );
@@ -78,7 +74,7 @@ class _MatchesScreenState extends State<MatchesScreen>
   }
 
   Future<Map<String, dynamic>?> _loadAnalysisForMatch(String matchId) async {
-    final apiClient = Provider.of<ApiClient>(context, listen: false);
+    final apiClient = context.read<ApiClient>();
     final response =
         await apiClient.get('/matches/$matchId/analysis')
             as Map<String, dynamic>;
@@ -161,7 +157,7 @@ class _MatchesScreenState extends State<MatchesScreen>
                   );
                 }
 
-                final events = [_allEventsFilter!, ...?snapshot.data];
+                final events = [_allEventsFilter, ...?snapshot.data];
 
                 return Padding(
                   padding: const EdgeInsets.all(AppSpacing.m),
@@ -178,10 +174,10 @@ class _MatchesScreenState extends State<MatchesScreen>
                       setState(() {
                         _selectedEvent = events.firstWhere(
                           (e) => e.id == newValue,
-                          orElse: () => _allEventsFilter!,
+                          orElse: () => _allEventsFilter,
                         );
-                        _loadMatches();
                       });
+                      _loadMatches();
                     },
                     items: events.map<DropdownMenuItem<String>>((Event event) {
                       return DropdownMenuItem<String>(
@@ -357,19 +353,19 @@ class _MatchesScreenState extends State<MatchesScreen>
                           return const SizedBox.shrink();
                         }
                         final analysis = analysisSnapshot.data!;
-                        final status = (analysis['status'] ?? '').toString();
+                        final status = (analysis['status'] ?? '')
+                            .toString()
+                            .trim();
+                        if (status.isEmpty ||
+                            status.toUpperCase() == 'NO_ANALYSIS') {
+                          return const SizedBox.shrink();
+                        }
                         final progress = ((analysis['progress'] ?? 0) as num)
                             .toDouble();
 
                         return Row(
                           children: [
-                            Chip(
-                              label: Text(status),
-                              backgroundColor: _getStatusColor(
-                                status,
-                              ).withOpacity(0.12),
-                              side: BorderSide(color: _getStatusColor(status)),
-                            ),
+                            _buildStatusChip(status),
                             if (progress > 0 && progress < 1) ...[
                               const SizedBox(width: AppSpacing.s),
                               Text('${(progress * 100).toStringAsFixed(0)}%'),
@@ -385,6 +381,15 @@ class _MatchesScreenState extends State<MatchesScreen>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    final statusColor = _getStatusColor(status);
+    return Chip(
+      label: Text(status),
+      backgroundColor: statusColor.withOpacity(0.12),
+      side: BorderSide(color: statusColor),
     );
   }
 }

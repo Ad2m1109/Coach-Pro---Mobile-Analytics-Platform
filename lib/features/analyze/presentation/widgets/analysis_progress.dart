@@ -16,6 +16,7 @@ class AnalysisProgressWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
+    final stats = liveStats ?? const <String, dynamic>{};
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -39,19 +40,19 @@ class AnalysisProgressWidget extends StatelessWidget {
             _buildProgressSection(
               context: context,
               title: appLocalizations.uploadVideo,
-              progress: uploadProgress,
+              progress: _clampProgress(uploadProgress),
               icon: Icons.upload_file,
             ),
             const SizedBox(height: 16),
             _buildProgressSection(
               context: context,
               title: appLocalizations.analyze,
-              progress: analysisProgress,
+              progress: _clampProgress(analysisProgress),
               icon: Icons.analytics,
             ),
-            if (liveStats != null && liveStats!.isNotEmpty) ...[
+            if (stats.isNotEmpty) ...[
               const Divider(height: 32),
-              _buildLiveStats(context),
+              _buildLiveStats(context, stats),
             ],
           ],
         ),
@@ -59,7 +60,12 @@ class AnalysisProgressWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLiveStats(BuildContext context) {
+  double _clampProgress(double progress) {
+    if (progress.isNaN) return 0;
+    return progress.clamp(0, 1);
+  }
+
+  Widget _buildLiveStats(BuildContext context, Map<String, dynamic> stats) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,20 +84,26 @@ class AnalysisProgressWidget extends StatelessWidget {
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: liveStats!.length,
+            itemCount: stats.length,
             itemBuilder: (context, index) {
-              final playerId = liveStats!.keys.elementAt(index);
-              final stats = liveStats![playerId];
-              final distance = stats['distance'] ?? 0.0;
-              
+              final playerId = stats.keys.elementAt(index);
+              final playerStats =
+                  stats[playerId] as Map<String, dynamic>? ??
+                  const <String, dynamic>{};
+              final distance = (playerStats['distance'] as num?)?.toDouble();
+
               return Container(
                 width: 120,
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -102,11 +114,13 @@ class AnalysisProgressWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "${distance}m",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
+                      '${distance?.toStringAsFixed(1) ?? '0.0'}m',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                     Text(
-                      "Distance",
+                      'Distance',
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ],

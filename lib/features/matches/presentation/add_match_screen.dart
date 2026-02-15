@@ -24,10 +24,15 @@ class _AddMatchScreenState extends State<AddMatchScreen> {
   bool _isLoading = false;
   late Future<List<Event>> _eventsFuture;
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void initState() {
     super.initState();
-    _eventsFuture = Provider.of<EventService>(context, listen: false).getEvents();
+    _eventsFuture = context.read<EventService>().getEvents();
   }
 
   @override
@@ -76,9 +81,8 @@ class _AddMatchScreenState extends State<AddMatchScreen> {
         _isLoading = true;
       });
 
-      final matchService = Provider.of<MatchService>(context, listen: false);
+      final matchService = context.read<MatchService>();
 
-      // Combine date and time
       final finalDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -89,23 +93,22 @@ class _AddMatchScreenState extends State<AddMatchScreen> {
 
       try {
         await matchService.createMatch(
-          opponentName: _opponentNameController.text,
-          date: finalDateTime, // Use the combined DateTime
+          opponentName: _opponentNameController.text.trim(),
+          date: finalDateTime,
           isHome: _isHome,
           eventId: _selectedEvent!.id,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appLocalizations.matchCreatedSuccessfully)),
-        );
+        _showMessage(appLocalizations.matchCreatedSuccessfully);
+        if (!mounted) return;
         Navigator.of(context).pop(true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${appLocalizations.failedToCreateMatch(e.toString())}')),
-        );
+        _showMessage(appLocalizations.failedToCreateMatch(e.toString()));
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -127,7 +130,7 @@ class _AddMatchScreenState extends State<AddMatchScreen> {
                 controller: _opponentNameController,
                 decoration: InputDecoration(labelText: appLocalizations.opponentTeamName),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return appLocalizations.pleaseEnterOpponentTeamName;
                   }
                   return null;
