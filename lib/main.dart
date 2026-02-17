@@ -17,9 +17,9 @@ import 'package:frontend/services/match_lineup_service.dart';
 import 'package:frontend/services/formation_service.dart';
 import 'package:frontend/services/player_match_statistics_service.dart';
 import 'package:frontend/services/auth_service.dart';
-import 'package:frontend/services/theme_notifier.dart'; 
+import 'package:frontend/services/theme_notifier.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:frontend/l10n/app_localizations.dart'; 
+import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/services/note_service.dart';
@@ -29,19 +29,22 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   String baseUrl = '';
   String analysisBaseUrl = '';
-  
+
   try {
     await dotenv.load(fileName: ".env");
-    
+
     // Use BASE_URL for mobile/production, localApiUrl for web/development
     if (kIsWeb) {
       baseUrl = dotenv.env['localApiUrl'] ?? dotenv.env['BASE_URL'] ?? '';
-      analysisBaseUrl = dotenv.env['localAnalysisApiUrl'] ?? dotenv.env['ANALYSIS_BASE_URL'] ?? '';
+      analysisBaseUrl =
+          dotenv.env['localAnalysisApiUrl'] ??
+          dotenv.env['ANALYSIS_BASE_URL'] ??
+          '';
     } else {
       baseUrl = dotenv.env['BASE_URL'] ?? '';
       analysisBaseUrl = dotenv.env['ANALYSIS_BASE_URL'] ?? '';
     }
-    
+
     // Optional: Add debug logging
     if (kDebugMode) {
       print('Running on ${kIsWeb ? 'Web' : 'Mobile'}');
@@ -49,19 +52,23 @@ Future<void> main() async {
       print('Analysis Base URL: $analysisBaseUrl');
     }
   } catch (e, stack) {
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Startup error: $e\n$stack'),
-        ),
+    runApp(
+      MaterialApp(
+        home: Scaffold(body: Center(child: Text('Startup error: $e\n$stack'))),
       ),
-    ));
+    );
     return;
   }
 
   final apiClient = ApiClient(baseUrl: baseUrl, httpClient: http.Client());
-  final analysisApiClient = ApiClient(baseUrl: analysisBaseUrl, httpClient: http.Client());
-  final authService = AuthService(apiClient: apiClient, analysisApiClient: analysisApiClient);
+  final analysisApiClient = ApiClient(
+    baseUrl: analysisBaseUrl,
+    httpClient: http.Client(),
+  );
+  final authService = AuthService(
+    apiClient: apiClient,
+    analysisApiClient: analysisApiClient,
+  );
   await authService.init();
 
   final initialThemeMode = await ThemeNotifier.getThemeModeFromPrefs();
@@ -73,9 +80,7 @@ Future<void> main() async {
         Provider<ApiClient>(create: (_) => apiClient),
         ChangeNotifierProvider<AuthService>(create: (_) => authService),
         ChangeNotifierProvider<AnalysisService>(
-          create: (context) => AnalysisService(
-            apiClient: analysisApiClient,
-          ),
+          create: (context) => AnalysisService(apiClient: analysisApiClient),
         ),
         Provider<TeamService>(
           create: (context) => TeamService(
@@ -125,24 +130,81 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<VideoAnalysisService>(
           create: (context) => VideoAnalysisService(
-            apiClient: analysisApiClient, // Use the dedicated analysis API client
+            apiClient:
+                analysisApiClient, // Use the dedicated analysis API client
           ),
         ),
-        ChangeNotifierProvider<ThemeNotifier>(create: (_) => ThemeNotifier(initialThemeMode)),
+        ChangeNotifierProvider<ThemeNotifier>(
+          create: (_) => ThemeNotifier(initialThemeMode),
+        ),
         Provider<NoteService>(
           create: (context) => NoteService(
             apiClient: Provider.of<ApiClient>(context, listen: false),
           ),
         ),
-        ChangeNotifierProvider<LocaleNotifier>(create: (_) => LocaleNotifier(initialLocale)),
+        ChangeNotifierProvider<LocaleNotifier>(
+          create: (_) => LocaleNotifier(initialLocale),
+        ),
       ],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
+  late final AnimationController _splashController;
+  late final Animation<double> _splashOpacity;
+  late final Animation<double> _splashScale;
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _splashController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    _splashOpacity = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 20,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 55),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 25,
+      ),
+    ]).animate(_splashController);
+    _splashScale = Tween<double>(begin: 1.08, end: 1.0).animate(
+      CurvedAnimation(parent: _splashController, curve: Curves.easeOut),
+    );
+
+    _splashController.forward().whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _showSplash = false;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _splashController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +229,33 @@ class MyApp extends StatelessWidget {
             Locale('fr', ''), // French
           ],
           routerConfig: buildAppRouter(context),
+          builder: (context, child) {
+            return Stack(
+              children: [
+                child ?? const SizedBox.shrink(),
+                if (_showSplash)
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: const Color(0xFF00051C),
+                      child: AbsorbPointer(
+                        absorbing: true,
+                        child: FadeTransition(
+                          opacity: _splashOpacity,
+                          child: ScaleTransition(
+                            scale: _splashScale,
+                            child: Image.asset(
+                              'assets/mainframe.png',
+                              width: MediaQuery.of(context).size.width,
+                              fit: BoxFit.fitWidth,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         );
       },
     );

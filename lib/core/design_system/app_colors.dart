@@ -20,8 +20,8 @@ class AppColors {
   static const Color textGreyLight = Color(0xFF757575);
 
   // Neutral Colors (Dark Theme)
-  static const Color backgroundDark = Color(0xFF1A1A2E);
-  static const Color surfaceDark = Color(0xFF16213E);
+  static const Color backgroundDark = Color(0xFF00122D);
+  static const Color surfaceDark = Color(0xFF001630);
   static const Color onBackgroundDark = Colors.white;
   static const Color onSurfaceDark = Colors.white;
   static const Color greyDark = Color(0xFF2C3E50);

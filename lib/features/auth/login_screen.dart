@@ -63,7 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
           } else if (e.message.toLowerCase().contains('incorrect password')) {
             _passwordApiError = e.message;
           } else {
-            _passwordApiError = e.message; // Show other errors under password field
+            _passwordApiError =
+                e.message; // Show other errors under password field
           }
         });
       } catch (e) {
@@ -83,9 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.login),
-      ),
+      appBar: AppBar(title: Text(appLocalizations.login)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),
@@ -110,7 +109,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_emailApiError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: Text(_emailApiError!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+                    child: Text(
+                      _emailApiError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 const SizedBox(height: AppSpacing.m),
                 CustomTextField(
@@ -120,7 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   isPassword: !_isPasswordVisible,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -139,7 +146,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (_passwordApiError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: AppSpacing.xs),
-                    child: Text(_passwordApiError!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+                    child: Text(
+                      _passwordApiError!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 const SizedBox(height: AppSpacing.xl),
                 CustomButton(

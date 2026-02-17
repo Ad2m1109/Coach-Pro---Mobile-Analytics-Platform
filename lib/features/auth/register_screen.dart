@@ -50,14 +50,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(appLocalizations.registrationSuccessful)),
         );
-        context.goNamed(AppRouteConstants.strategieRouteName); // Navigate to main app after successful registration and login
+        context.goNamed(
+          AppRouteConstants.strategieRouteName,
+        ); // Navigate to main app after successful registration and login
       } on ApiException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${appLocalizations.registrationFailed(e.message)}')),
+          SnackBar(
+            content: Text('${appLocalizations.registrationFailed(e.message)}'),
+          ),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${appLocalizations.anUnexpectedErrorOccurredWithMessage(e.toString())}')),
+          SnackBar(
+            content: Text(
+              '${appLocalizations.anUnexpectedErrorOccurredWithMessage(e.toString())}',
+            ),
+          ),
         );
       } finally {
         setState(() {
@@ -71,9 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.register),
-      ),
+      appBar: AppBar(title: Text(appLocalizations.register)),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),
@@ -92,7 +98,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       return appLocalizations.pleaseEnterYourEmail;
                     }
                     // Basic email validation
-                    if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
+                    if (!RegExp(
+                      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+                    ).hasMatch(value)) {
                       return appLocalizations.pleaseEnterAValidEmailAddress;
                     }
                     return null;
@@ -106,7 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   isPassword: !_isPasswordVisible,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
