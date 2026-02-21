@@ -25,6 +25,9 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -64,6 +67,9 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
     final authService = Provider.of<AuthService>(context);
     final appLocalizations = AppLocalizations.of(context)!;
     final userEmail = authService.currentUser?.email ?? appLocalizations.guest;
+    final canAddTraining = authService.hasPermission('edit');
+    final canAddReunions = authService.canManageReunions;
+    final canShowFab = _tabController.index == 0 ? canAddTraining : canAddReunions;
 
     return Scaffold(
       appBar: AppBar(
@@ -95,10 +101,12 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
           ReunionsScreen(key: _reunionsKey),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateAndRefresh,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: canShowFab
+          ? FloatingActionButton(
+              onPressed: _navigateAndRefresh,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

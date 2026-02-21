@@ -112,7 +112,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final isOwner = authService.userType == 'owner';
+    final canManageAccounts = authService.canManageAccounts;
 
     return Scaffold(
       appBar: AppBar(
@@ -153,7 +153,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                             'No staff members yet',
                             style: TextStyle(fontSize: 18, color: Colors.grey),
                           ),
-                          if (isOwner) ...[
+                          if (canManageAccounts) ...[
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () async {
@@ -215,7 +215,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                                 _buildPermissionBadge(staff.permissionLevel),
                               ],
                             ),
-                            trailing: isOwner
+                            trailing: canManageAccounts
                                 ? IconButton(
                                     icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () {
@@ -252,7 +252,7 @@ class _StaffListScreenState extends State<StaffListScreen> {
                         );
                       },
                     ),
-      floatingActionButton: isOwner
+      floatingActionButton: canManageAccounts
           ? FloatingActionButton.extended(
               onPressed: () async {
                 await Navigator.push(

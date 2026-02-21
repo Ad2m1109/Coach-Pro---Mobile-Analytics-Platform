@@ -47,7 +47,7 @@ class _ReunionsScreenState extends State<ReunionsScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final authService = Provider.of<AuthService>(context);
-    final canEdit = authService.hasPermission('edit');
+    final canEdit = authService.canManageReunions;
     return FutureBuilder<List<Reunion>>(
       future: _reunionsFuture,
       builder: (context, snapshot) {

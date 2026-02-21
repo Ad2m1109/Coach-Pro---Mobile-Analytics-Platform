@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/team.dart';
 import 'package:frontend/services/api_client.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/services/team_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -197,6 +198,7 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
     required String label,
     required TextEditingController controller,
     required bool isPrimary,
+    required bool canEdit,
   }) {
     final appLocalizations = AppLocalizations.of(context)!;
     Color currentColor;
@@ -226,7 +228,7 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
             child: Text(controller.text, style: Theme.of(context).textTheme.bodyLarge),
           ),
           TextButton(
-            onPressed: () => _showColorPickerDialog(context, isPrimary: isPrimary),
+            onPressed: canEdit ? () => _showColorPickerDialog(context, isPrimary: isPrimary) : null,
             child: Text(appLocalizations.change),
           ),
         ],
@@ -238,6 +240,8 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final apiClient = Provider.of<ApiClient>(context, listen: false);
+    final authService = Provider.of<AuthService>(context);
+    final canEditTeam = authService.canManageTeam;
 
     return Scaffold(
       appBar: AppBar(
@@ -288,7 +292,7 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
                           backgroundColor: Theme.of(context).cardColor,
                           child: IconButton(
                             icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 20),
-                            onPressed: _pickAndUploadLogo,
+                            onPressed: canEditTeam ? _pickAndUploadLogo : null,
                           ),
                         ),
                       ),
@@ -299,7 +303,8 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
                     controller: _teamNameController,
                     decoration: InputDecoration(labelText: appLocalizations.teamName),
                     validator: (value) => (value == null || value.isEmpty) ? appLocalizations.pleaseEnterTeamName : null,
-                    onEditingComplete: _triggerSaveChanges,
+                    readOnly: !canEditTeam,
+                    onEditingComplete: canEditTeam ? _triggerSaveChanges : null,
                   ),
                   const SizedBox(height: 24),
                   _buildColorSelector(
@@ -307,12 +312,14 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
                     label: appLocalizations.primaryColor,
                     controller: _primaryColorController,
                     isPrimary: true,
+                    canEdit: canEditTeam,
                   ),
                   _buildColorSelector(
                     context: context,
                     label: appLocalizations.secondaryColor,
                     controller: _secondaryColorController,
                     isPrimary: false,
+                    canEdit: canEditTeam,
                   ),
                 ],
               ),

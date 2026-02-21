@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/models/team.dart';
+import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/services/team_service.dart';
 
 class TeamSettingsScreen extends StatefulWidget {
@@ -99,6 +100,8 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
+    final authService = Provider.of<AuthService>(context);
+    final canEditTeam = authService.canManageTeam;
     return Scaffold(
       appBar: AppBar(
         title: Text(appLocalizations.teamSettings),
@@ -123,14 +126,16 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
                 child: DropdownButtonFormField<Team>(
                   decoration: InputDecoration(labelText: appLocalizations.selectTeam),
                   value: _selectedTeam,
-                  onChanged: (Team? newValue) {
-                    setState(() {
-                      _selectedTeam = newValue;
-                      if (newValue != null) {
-                        _populateControllers(newValue);
-                      }
-                    });
-                  },
+                  onChanged: canEditTeam
+                      ? (Team? newValue) {
+                          setState(() {
+                            _selectedTeam = newValue;
+                            if (newValue != null) {
+                              _populateControllers(newValue);
+                            }
+                          });
+                        }
+                      : null,
                   items: snapshot.data!.map<DropdownMenuItem<Team>>((Team team) {
                     return DropdownMenuItem<Team>(
                       value: team,
@@ -159,6 +164,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
           children: <Widget>[
             TextFormField(
               controller: _teamNameController,
+              readOnly: !canEditTeam,
               decoration: InputDecoration(
                 labelText: appLocalizations.teamName,
                 border: const OutlineInputBorder(),
@@ -173,6 +179,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
             const SizedBox(height: 16.0),
             TextFormField(
               controller: _primaryColorController,
+              readOnly: !canEditTeam,
               decoration: InputDecoration(
                 labelText: appLocalizations.primaryColorHex,
                 border: const OutlineInputBorder(),
@@ -190,6 +197,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
             const SizedBox(height: 16.0),
             TextFormField(
               controller: _secondaryColorController,
+              readOnly: !canEditTeam,
               decoration: InputDecoration(
                 labelText: appLocalizations.secondaryColorHex,
                 border: const OutlineInputBorder(),
@@ -206,6 +214,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
             const SizedBox(height: 16.0),
             TextFormField(
               controller: _logoUrlController,
+              readOnly: !canEditTeam,
               decoration: InputDecoration(
                 labelText: appLocalizations.logoUrl,
                 border: const OutlineInputBorder(),
@@ -223,7 +232,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
             ),
             const SizedBox(height: 24.0),
             ElevatedButton(
-              onPressed: _saveTeamSettings,
+              onPressed: canEditTeam ? _saveTeamSettings : null,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
               ),

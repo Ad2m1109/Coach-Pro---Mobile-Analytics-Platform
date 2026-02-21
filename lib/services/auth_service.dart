@@ -16,6 +16,8 @@ class AuthService with ChangeNotifier {
   String? _staffId;
   String? _permissionLevel;
   String? _teamId;
+  String? _appRole;
+  List<String> _appPermissions = [];
 
   AuthService({required ApiClient apiClient, ApiClient? analysisApiClient}) 
       : _apiClient = apiClient,
@@ -32,21 +34,37 @@ class AuthService with ChangeNotifier {
   String? get staffId => _staffId;
   String? get permissionLevel => _permissionLevel;
   String? get teamId => _teamId;
+  String? get appRole => _appRole;
+  List<String> get appPermissions => List.unmodifiable(_appPermissions);
   
-  bool get isOwner => _userType == 'owner';
+  bool get isOwner => _appRole == 'account_manager' || _userType == 'owner';
   bool get isStaff => _userType == 'staff';
+  bool get canManageAccounts => _appRole == 'account_manager';
+  bool get canManagePlayers => _appRole == 'account_manager' || hasPermission('edit');
+  bool get canManageReunions => _appRole == 'account_manager' || hasPermission('edit');
+  bool get canManageTeam => _appRole == 'account_manager';
   
   bool hasPermission(String permission) {
-    if (isOwner) return true; // Owners have all permissions
+    if (_appPermissions.isNotEmpty) {
+      if (_appPermissions.contains(permission)) return true;
+      const aliasMap = {
+        'edit': 'football.write',
+        'view': 'football.read',
+        'notes': 'notes.write',
+      };
+      final mapped = aliasMap[permission];
+      return mapped != null && _appPermissions.contains(mapped);
+    }
+    if (isOwner) return true;
     if (_permissionLevel == null) return false;
-    
-    final permissions = {
+
+    final legacyPermissions = {
       'full_access': ['edit', 'view', 'notes'],
       'view_only': ['view'],
       'notes_only': ['notes'],
     };
-    
-    return permissions[_permissionLevel]?.contains(permission) ?? false;
+
+    return legacyPermissions[_permissionLevel]?.contains(permission) ?? false;
   }
 
   Future<void> init() async {
@@ -131,6 +149,8 @@ class AuthService with ChangeNotifier {
     _staffId = null;
     _permissionLevel = null;
     _teamId = null;
+    _appRole = null;
+    _appPermissions = [];
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token'); // Remove token
     _apiClient.removeToken(); // Remove token from ApiClient
@@ -152,6 +172,13 @@ class AuthService with ChangeNotifier {
       _staffId = claims['staff_id'] as String?;
       _permissionLevel = claims['permission_level'] as String?;
       _teamId = claims['team_id'] as String?;
+      _appRole = claims['app_role'] as String?;
+      final rawPermissions = claims['app_permissions'];
+      if (rawPermissions is List) {
+        _appPermissions = rawPermissions.map((p) => p.toString()).toList();
+      } else {
+        _appPermissions = [];
+      }
     } catch (e) {
       print('Error parsing JWT claims: $e');
     }

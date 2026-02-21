@@ -110,7 +110,7 @@ class _PlayersScreenState extends State<PlayersScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
     final apiClient = Provider.of<ApiClient>(context, listen: false);
     final authService = Provider.of<AuthService>(context);
-    final canEdit = authService.hasPermission('edit');
+    final canEdit = authService.canManagePlayers;
 
     return Scaffold(
       appBar: AppBar(

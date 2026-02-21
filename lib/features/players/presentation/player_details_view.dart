@@ -19,7 +19,7 @@ class PlayerDetailsView extends StatelessWidget {
     final appLocalizations = AppLocalizations.of(context)!;
     final apiClient = Provider.of<ApiClient>(context, listen: false);
     final authService = Provider.of<AuthService>(context);
-    final canEdit = authService.hasPermission('edit');
+    final canEdit = authService.canManagePlayers;
     final String? imageUrl = player.imageUrl;
     ImageProvider? backgroundImage;
 
