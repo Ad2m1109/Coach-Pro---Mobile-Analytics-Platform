@@ -20,7 +20,8 @@ enum StaffRole {
   headCoach('head_coach', 'Head Coach'),
   assistantCoach('assistant_coach', 'Assistant Coach'),
   physio('physio', 'Physio'),
-  analyst('analyst', 'Analyst');
+  analyst('analyst', 'Analyst'),
+  player('player', 'Player');
 
   final String value;
   final String displayName;
@@ -85,7 +86,6 @@ class StaffCreateRequest {
   final String teamId;
   final String name;
   final StaffRole role;
-  final PermissionLevel permissionLevel;
   final String email;
   final String password;
 
@@ -93,7 +93,6 @@ class StaffCreateRequest {
     required this.teamId,
     required this.name,
     required this.role,
-    required this.permissionLevel,
     required this.email,
     required this.password,
   });
@@ -103,7 +102,6 @@ class StaffCreateRequest {
       'team_id': teamId,
       'name': name,
       'role': role.value,
-      'permission_level': permissionLevel.value,
       'email': email,
       'password': password,
     };

@@ -24,7 +24,6 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   late final TeamService _teamService;
 
   StaffRole _selectedRole = StaffRole.assistantCoach;
-  PermissionLevel _selectedPermission = PermissionLevel.viewOnly;
   String? _selectedTeamId;
   List<Team> _teams = [];
   bool _isLoading = false;
@@ -41,7 +40,6 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
       _nameController.text = widget.staff!.name;
       _emailController.text = widget.staff!.email ?? '';
       _selectedRole = widget.staff!.role ?? StaffRole.assistantCoach;
-      _selectedPermission = widget.staff!.permissionLevel;
       _selectedTeamId = widget.staff!.teamId;
     }
     
@@ -96,7 +94,6 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
           teamId: _selectedTeamId!,
           name: _nameController.text.trim(),
           role: _selectedRole,
-          permissionLevel: _selectedPermission,
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -108,7 +105,6 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
           teamId: _selectedTeamId!,
           name: _nameController.text.trim(),
           role: _selectedRole,
-          permissionLevel: _selectedPermission,
           email: _emailController.text.trim(),
           userId: widget.staff!.userId,
         );
@@ -274,62 +270,6 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Permission Level Dropdown
-                    DropdownButtonFormField<PermissionLevel>(
-                      value: _selectedPermission,
-                      decoration: const InputDecoration(
-                        labelText: 'Permission Level',
-                        prefixIcon: Icon(Icons.security),
-                        border: OutlineInputBorder(),
-                      ),
-                      items: PermissionLevel.values.map((level) {
-                        return DropdownMenuItem(
-                          value: level,
-                          child: Row(
-                            children: [
-                              Icon(
-                                level == PermissionLevel.fullAccess
-                                    ? Icons.admin_panel_settings
-                                    : level == PermissionLevel.viewOnly
-                                        ? Icons.visibility
-                                        : Icons.edit_note,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(level.displayName),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedPermission = value);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Permission Description
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline, size: 20, color: Colors.blue),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _getPermissionDescription(_selectedPermission),
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 24),
 
                     // Create Button
@@ -356,14 +296,4 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
     );
   }
 
-  String _getPermissionDescription(PermissionLevel level) {
-    switch (level) {
-      case PermissionLevel.fullAccess:
-        return 'Can edit players, matches, formations, and all data';
-      case PermissionLevel.viewOnly:
-        return 'Can only view data, no editing allowed';
-      case PermissionLevel.notesOnly:
-        return 'Can only write and edit notes on matches and players';
-    }
-  }
 }
