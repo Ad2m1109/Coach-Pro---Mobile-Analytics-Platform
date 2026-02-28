@@ -7,6 +7,8 @@ import 'package:frontend/models/match_team_statistics.dart';
 import 'package:frontend/models/player_match_statistics.dart';
 import 'package:frontend/models/player.dart'; // New import
 import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/features/match_statistics/widgets/pass_network_visualizer.dart';
+import 'package:frontend/features/match_statistics/widgets/pitch_division_widget.dart';
 
 class MatchStatisticsPage extends StatelessWidget {
   final List<MatchTeamStatistics> teamStats;
@@ -62,7 +64,18 @@ class MatchStatisticsPage extends StatelessWidget {
           _buildStatRowWithPercentage(context, appLocalizations.expectedGoalsXG, homeStats.expectedGoals ?? 0.0, awayStats.expectedGoals ?? 0.0, home, away, isPercentage: true), // xG is typically a decimal
           _buildStatRowWithPercentage(context, appLocalizations.pressures, homeStats.pressures ?? 0, awayStats.pressures ?? 0, home, away),
           _buildStatRowWithPercentage(context, appLocalizations.final3rdPasses, homeStats.finalThirdPasses ?? 0, awayStats.finalThirdPasses ?? 0, home, away),
-          // Add more metrics as needed, e.g., from JSON data if parsed
+          const SizedBox(height: AppSpacing.m),
+          if (homeStats.passNetworkData != null) ...[
+            Text("Pass Network", style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            PassNetworkVisualizer(passNetworkData: homeStats.passNetworkData!),
+            const SizedBox(height: AppSpacing.m),
+          ],
+          if (homeStats.zoneAnalysisData != null) ...[
+            Text("Pitch Division Power Analysis", style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            PitchDivisionWidget(zoneData: homeStats.zoneAnalysisData!),
+          ],
         ],
       ),
     );

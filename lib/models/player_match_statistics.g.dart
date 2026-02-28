@@ -32,6 +32,10 @@ PlayerMatchStatistics _$PlayerMatchStatisticsFromJson(
   defensiveCoverageKm: _toDouble(json['defensive_coverage_km']),
   notes: json['notes'] as String?,
   rating: (json['rating'] as num?)?.toDouble(),
+  sprintCount: (json['sprint_count'] as num?)?.toInt(),
+  sprintDistanceM: _toDouble(json['sprint_distance_m']),
+  avgSpeedKmh: _toDouble(json['avg_speed_kmh']),
+  maxSpeedKmh: _toDouble(json['max_speed_kmh']),
 );
 
 Map<String, dynamic> _$PlayerMatchStatisticsToJson(
@@ -58,6 +62,10 @@ Map<String, dynamic> _$PlayerMatchStatisticsToJson(
   'progressive_carries': instance.progressiveCarries,
   'press_resistance_success_rate': instance.pressResistanceSuccessRate,
   'defensive_coverage_km': instance.defensiveCoverageKm,
+  'sprint_count': instance.sprintCount,
+  'sprint_distance_m': instance.sprintDistanceM,
+  'avg_speed_kmh': instance.avgSpeedKmh,
+  'max_speed_kmh': instance.maxSpeedKmh,
   'notes': instance.notes,
   'rating': instance.rating,
 };

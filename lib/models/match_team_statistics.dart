@@ -37,6 +37,12 @@ class MatchTeamStatistics {
   final Map<String, dynamic>? buildUpPatterns;
   @JsonKey(name: 'defensive_block_patterns')
   final Map<String, dynamic>? defensiveBlockPatterns;
+  @JsonKey(name: 'pass_network_data')
+  final Map<String, dynamic>? passNetworkData;
+  @JsonKey(name: 'zone_analysis_data')
+  final Map<String, dynamic>? zoneAnalysisData;
+  @JsonKey(name: 'tactical_weakness_data')
+  final Map<String, dynamic>? tacticalWeaknessData;
 
   MatchTeamStatistics({
     required this.id,
@@ -53,6 +59,9 @@ class MatchTeamStatistics {
     this.transitionSpeedData,
     this.buildUpPatterns,
     this.defensiveBlockPatterns,
+    this.passNetworkData,
+    this.zoneAnalysisData,
+    this.tacticalWeaknessData,
   });
 
   factory MatchTeamStatistics.fromJson(Map<String, dynamic> json) =>

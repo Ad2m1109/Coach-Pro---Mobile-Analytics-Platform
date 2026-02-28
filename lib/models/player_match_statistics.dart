@@ -48,6 +48,14 @@ class PlayerMatchStatistics {
   final double? pressResistanceSuccessRate;
   @JsonKey(name: 'defensive_coverage_km', fromJson: _toDouble)
   final double? defensiveCoverageKm;
+  @JsonKey(name: 'sprint_count')
+  final int? sprintCount;
+  @JsonKey(name: 'sprint_distance_m', fromJson: _toDouble)
+  final double? sprintDistanceM;
+  @JsonKey(name: 'avg_speed_kmh', fromJson: _toDouble)
+  final double? avgSpeedKmh;
+  @JsonKey(name: 'max_speed_kmh', fromJson: _toDouble)
+  final double? maxSpeedKmh;
   final String? notes;
   final double? rating;
 
@@ -73,6 +81,10 @@ class PlayerMatchStatistics {
     this.progressiveCarries,
     this.pressResistanceSuccessRate,
     this.defensiveCoverageKm,
+    this.sprintCount,
+    this.sprintDistanceM,
+    this.avgSpeedKmh,
+    this.maxSpeedKmh,
     this.notes,
     this.rating,
   });

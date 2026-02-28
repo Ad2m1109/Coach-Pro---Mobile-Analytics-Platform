@@ -26,6 +26,10 @@ MatchTeamStatistics _$MatchTeamStatisticsFromJson(Map<String, dynamic> json) =>
       buildUpPatterns: json['build_up_patterns'] as Map<String, dynamic>?,
       defensiveBlockPatterns:
           json['defensive_block_patterns'] as Map<String, dynamic>?,
+      passNetworkData: json['pass_network_data'] as Map<String, dynamic>?,
+      zoneAnalysisData: json['zone_analysis_data'] as Map<String, dynamic>?,
+      tacticalWeaknessData:
+          json['tactical_weakness_data'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$MatchTeamStatisticsToJson(
@@ -45,4 +49,7 @@ Map<String, dynamic> _$MatchTeamStatisticsToJson(
   'transition_speed_data': instance.transitionSpeedData,
   'build_up_patterns': instance.buildUpPatterns,
   'defensive_block_patterns': instance.defensiveBlockPatterns,
+  'pass_network_data': instance.passNetworkData,
+  'zone_analysis_data': instance.zoneAnalysisData,
+  'tactical_weakness_data': instance.tacticalWeaknessData,
 };
