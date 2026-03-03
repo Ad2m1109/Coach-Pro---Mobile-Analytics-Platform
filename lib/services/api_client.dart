@@ -42,10 +42,24 @@ class ApiClient {
     return _getHeaders();
   }
 
-  Future<dynamic> get(String path) async {
+  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
+    final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
+    
+    // Many endpoints (like /analysis/files/json) expect access_token in query params
+    if (_token != null && !params.containsKey('access_token')) {
+      params['access_token'] = _token!;
+    }
+
     final uri = Uri.parse('$baseUrl$path');
+    
+    // Merge existing query parameters from the URI with the new ones
+    final Map<String, dynamic> allParams = Map<String, dynamic>.from(uri.queryParameters);
+    allParams.addAll(params);
+    
+    final finalUri = uri.replace(queryParameters: allParams.isNotEmpty ? allParams.map((k, v) => MapEntry(k, v.toString())) : null);
+    
     try {
-      final response = await _httpClient.get(uri, headers: _getHeaders());
+      final response = await _httpClient.get(finalUri, headers: _getHeaders());
       return _handleResponse(response);
     } on http.ClientException catch (e) {
       throw ApiException('Network error: ${e.message}');
