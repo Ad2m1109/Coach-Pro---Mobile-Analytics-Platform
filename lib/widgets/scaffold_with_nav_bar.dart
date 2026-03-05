@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:frontend/routes/app_router.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/widgets/floating_chat_bubble.dart';
 import 'package:provider/provider.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
@@ -48,7 +49,13 @@ class ScaffoldWithNavBar extends StatelessWidget {
     ];
 
     return Scaffold(
-      body: child,
+      body: Stack(
+        children: [
+          child,
+          // Floating AI chat bubble on every page
+          const FloatingChatBubble(),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: navItems,

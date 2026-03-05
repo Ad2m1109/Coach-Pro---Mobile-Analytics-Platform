@@ -23,6 +23,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/services/note_service.dart';
+import 'package:frontend/services/chat_bubble_notifier.dart';
 import 'package:frontend/core/design_system/app_theme.dart';
 
 Future<void> main() async {
@@ -73,6 +74,7 @@ Future<void> main() async {
 
   final initialThemeMode = await ThemeNotifier.getThemeModeFromPrefs();
   final initialLocale = await LocaleNotifier.getLocaleFromPrefs();
+  final initialChatBubbleVisible = await ChatBubbleNotifier.getVisibilityFromPrefs();
 
   runApp(
     MultiProvider(
@@ -144,6 +146,9 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<LocaleNotifier>(
           create: (_) => LocaleNotifier(initialLocale),
+        ),
+        ChangeNotifierProvider<ChatBubbleNotifier>(
+          create: (_) => ChatBubbleNotifier(initialChatBubbleVisible),
         ),
       ],
       child: const MyApp(),

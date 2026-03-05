@@ -20,6 +20,7 @@ class AppRouteConstants {
   static const String matchesRouteName = 'matches';
   static const String playersRouteName = 'players';
   static const String analyzeRouteName = 'analyze';
+  static const String chatAssistantRouteName = 'chat-assistant';
   static const String settingsRouteName = 'settings';
   static const String loginRouteName = 'login';
   static const String registerRouteName = 'register';

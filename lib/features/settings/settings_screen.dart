@@ -9,6 +9,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/services/chat_bubble_notifier.dart';
 
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
@@ -162,6 +163,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       }).toList(),
+      const SizedBox(height: AppSpacing.m),
+      // ── AI Assistant Bubble Toggle ──
+      Consumer<ChatBubbleNotifier>(
+        builder: (context, chatNotifier, _) {
+          return CustomCard(
+            padding: EdgeInsets.zero,
+            child: SwitchListTile(
+              secondary: Icon(
+                Icons.smart_toy_rounded,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              title: Text(
+                'AI Assistant',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              subtitle: Text(
+                chatNotifier.isVisible
+                    ? 'Floating bubble is visible'
+                    : 'Tap to show the assistant',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              value: chatNotifier.isVisible,
+              onChanged: (_) => chatNotifier.toggle(),
+              activeColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        },
+      ),
       const SizedBox(height: AppSpacing.m),
       CustomCard(
         onTap: () => _showLogoutConfirmationDialog(context),
