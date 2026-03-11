@@ -68,11 +68,26 @@ class ApiClient {
     }
   }
 
-  Future<dynamic> post(String path, {Map<String, dynamic>? data, bool isAuth = false, String contentType = 'application/json'}) async {
+  Future<dynamic> post(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+    bool isAuth = false,
+    String contentType = 'application/json',
+  }) async {
+    final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
+    if (_token != null && !params.containsKey('access_token')) {
+      params['access_token'] = _token!;
+    }
     final uri = Uri.parse('$baseUrl$path');
+    final Map<String, dynamic> allParams = Map<String, dynamic>.from(uri.queryParameters);
+    allParams.addAll(params);
+    final finalUri = uri.replace(
+      queryParameters: allParams.isNotEmpty ? allParams.map((k, v) => MapEntry(k, v.toString())) : null,
+    );
     try {
       final response = await _httpClient.post(
-        uri,
+        finalUri,
         headers: _getHeaders(isAuth: isAuth, contentType: contentType),
         body: contentType == 'application/json' ? jsonEncode(data) : (data != null ? Uri(queryParameters: data.map((key, value) => MapEntry(key, value.toString()))).query : null),
       );

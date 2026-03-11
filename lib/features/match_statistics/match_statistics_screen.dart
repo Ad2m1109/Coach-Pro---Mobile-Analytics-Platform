@@ -9,12 +9,12 @@ import 'package:frontend/services/match_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/features/players/presentation/player_profile_screen.dart'; // New import
-import 'package:frontend/features/match_statistics/presentation/match_details_overview.dart';
 import 'package:frontend/features/match_statistics/presentation/match_lineups_page.dart';
 import 'package:frontend/features/match_statistics/presentation/match_statistics_page.dart';
 import 'package:frontend/models/match_note.dart';
 import 'package:frontend/services/note_service.dart';
 import 'package:frontend/services/api_client.dart';
+import 'package:frontend/features/match_statistics/presentation/tactical_dashboard_page.dart';
 
 import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/widgets/custom_card.dart';
@@ -36,7 +36,13 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
   void initState() {
     super.initState();
     _detailsFuture = Provider.of<MatchService>(context, listen: false).getMatchDetails(widget.match.id);
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  void _refreshMatchDetails() {
+    setState(() {
+      _detailsFuture = Provider.of<MatchService>(context, listen: false).getMatchDetails(widget.match.id);
+    });
   }
 
   @override
@@ -61,6 +67,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
             Tab(text: appLocalizations.lineups),
             Tab(text: appLocalizations.statistics),
             Tab(text: appLocalizations.notes),
+            const Tab(text: "Tactical"),
           ],
         ),
       ),
@@ -80,7 +87,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildEventTimeline(details.events, details.homeLineup, details.awayLineup),
+              _buildEventTimeline(details.matchInfo, details.events, details.homeLineup, details.awayLineup),
               MatchLineupsPage(
                 homeLineup: details.homeLineup,
                 awayLineup: details.awayLineup,
@@ -97,6 +104,9 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
                 showPlayerStatsDialog: _showPlayerStatsDialog,
               ),
               _buildNotesTab(appLocalizations),
+              TacticalDashboardPage(
+                match: widget.match,
+              ),
             ],
           );
         },
@@ -184,7 +194,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
     );
   }
 
-  Widget _buildEventTimeline(List<MatchEvent> events, TeamLineup home, TeamLineup away) {
+  Widget _buildEventTimeline(Match matchInfo, List<MatchEvent> events, TeamLineup home, TeamLineup away) {
     final appLocalizations = AppLocalizations.of(context)!;
     String getPlayerName(String? playerId) {
       if (playerId == null) return appLocalizations.notAvailable;
@@ -195,7 +205,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.m),
       children: [
-        _buildHeader(widget.match),
+        _buildHeader(matchInfo),
         const SizedBox(height: AppSpacing.m),
         Text(
           appLocalizations.eventTimeline,

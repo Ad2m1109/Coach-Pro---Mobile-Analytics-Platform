@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class Match {
   final String id;
   final String homeTeam;
@@ -13,6 +11,7 @@ class Match {
   final String? eventId;
   final String? eventName;
   final String? venue;
+  final int? videoAnchorSeconds;
 
   Match({
     required this.id,
@@ -27,6 +26,7 @@ class Match {
     this.eventId,
     this.eventName,
     this.venue,
+    this.videoAnchorSeconds,
   });
 
   factory Match.fromJson(Map<String, dynamic> json) {
@@ -43,6 +43,7 @@ class Match {
       eventId: json['event_id'],
       eventName: json['event_name'],
       venue: json['venue'],
+      videoAnchorSeconds: json['video_anchor_seconds'],
     );
   }
 
@@ -59,5 +60,6 @@ class Match {
         'event_id': eventId,
         'event_name': eventName,
         'venue': venue,
+        'video_anchor_seconds': videoAnchorSeconds,
       };
 }

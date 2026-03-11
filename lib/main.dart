@@ -24,6 +24,7 @@ import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/services/note_service.dart';
 import 'package:frontend/services/chat_bubble_notifier.dart';
+import 'package:frontend/services/tactical_alert_service.dart';
 import 'package:frontend/core/design_system/app_theme.dart';
 
 Future<void> main() async {
@@ -149,6 +150,11 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider<ChatBubbleNotifier>(
           create: (_) => ChatBubbleNotifier(initialChatBubbleVisible),
+        ),
+        ChangeNotifierProvider<TacticalAlertService>(
+          create: (context) => TacticalAlertService(
+            Provider.of<ApiClient>(context, listen: false),
+          ),
         ),
       ],
       child: const MyApp(),

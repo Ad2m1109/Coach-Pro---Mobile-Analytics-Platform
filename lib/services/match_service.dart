@@ -36,6 +36,16 @@ class MatchService {
     }
   }
 
+  Future<Match> getMatchById(String matchId) async {
+    try {
+      final responseData = await _apiClient.get('/matches/$matchId');
+      return Match.fromJson(responseData as Map<String, dynamic>);
+    } catch (e) {
+      print('Error fetching match: $e');
+      throw Exception('Failed to load match');
+    }
+  }
+
   Future<Match> createMatch({
     required String opponentName,
     required DateTime date,
@@ -85,6 +95,33 @@ class MatchService {
     } catch (e) {
       print('Error fetching match details: $e');
       throw Exception('Failed to load match details');
+    }
+  }
+
+  Future<int> setVideoAnchor(
+    String matchId, {
+    required int videoAnchorSeconds,
+    bool force = false,
+  }) async {
+    try {
+      final dynamic response = await _apiClient.post(
+        '/matches/$matchId/video-anchor',
+        queryParameters: {'force': force},
+        data: {'video_anchor_seconds': videoAnchorSeconds},
+      );
+      return (response['video_anchor_seconds'] as num).toInt();
+    } catch (e) {
+      print('Error setting video anchor: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> resetVideoAnchor(String matchId) async {
+    try {
+      await _apiClient.post('/matches/$matchId/video-anchor/reset');
+    } catch (e) {
+      print('Error resetting video anchor: $e');
+      rethrow;
     }
   }
 }
