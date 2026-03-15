@@ -74,4 +74,28 @@ class AnalysisService with ChangeNotifier {
     _reports.removeWhere((r) => r.id == analysisId);
     notifyListeners();
   }
+
+  Future<List<dynamic>> getSegmentsForMatch(String matchId) async {
+    try {
+      final response = await _apiClient.get('/matches/$matchId/segments');
+      if (response is Map<String, dynamic> && response['segments'] is List) {
+        return (response['segments'] as List).cast<dynamic>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getSegmentsForAnalysis(String analysisId) async {
+    try {
+      final response = await _apiClient.get('/analysis/$analysisId/segments');
+      if (response is Map<String, dynamic> && response['segments'] is List) {
+        return (response['segments'] as List).cast<dynamic>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 }

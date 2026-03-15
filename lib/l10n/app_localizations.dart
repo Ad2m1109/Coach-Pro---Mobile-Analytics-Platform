@@ -1605,6 +1605,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Live Reaction'**
   String get addLiveReaction;
+
+  /// No description provided for @analysisSegments.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis Segments'**
+  String get analysisSegments;
+
+  /// No description provided for @playFromStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Play from Start'**
+  String get playFromStart;
+
+  /// No description provided for @recommendation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommendation'**
+  String get recommendation;
+
+  /// No description provided for @severity.
+  ///
+  /// In en, this message translates to:
+  /// **'Severity'**
+  String get severity;
+
+  /// No description provided for @detailedAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed Analysis'**
+  String get detailedAnalysis;
+
+  /// No description provided for @noSegmentsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No analysis segments generated yet.'**
+  String get noSegmentsYet;
 }
 
 class _AppLocalizationsDelegate

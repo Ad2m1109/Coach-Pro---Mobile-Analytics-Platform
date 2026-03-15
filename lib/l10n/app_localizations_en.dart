@@ -821,4 +821,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addLiveReaction => 'Add Live Reaction';
+
+  @override
+  String get analysisSegments => 'Analysis Segments';
+
+  @override
+  String get playFromStart => 'Play from Start';
+
+  @override
+  String get recommendation => 'Recommendation';
+
+  @override
+  String get severity => 'Severity';
+
+  @override
+  String get detailedAnalysis => 'Detailed Analysis';
+
+  @override
+  String get noSegmentsYet => 'No analysis segments generated yet.';
 }

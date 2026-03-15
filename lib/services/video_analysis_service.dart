@@ -1,34 +1,50 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:frontend/models/analysis_segment.dart';
 
 class VideoAnalysisService extends ChangeNotifier {
   final ApiClient _apiClient;
   
   bool _isAnalyzing = false;
+  bool _analysisCompleted = false;
   double _uploadProgress = 0.0;
   double _analysisProgress = 0.0;
   String _status = '';
   String? _lastError;
+  bool _backendHealthy = true;
   Map<String, dynamic> _liveStats = {};
   String? _currentMatchId;
+  String? _analysisId;
+  String? _originalVideoUrl;
+  bool _isCanceling = false;
+  bool _isRetrying = false;
+  List<AnalysisSegment> _segments = [];
+  StreamSubscription? _sseSubscription;
   
   bool get isAnalyzing => _isAnalyzing;
+  bool get analysisCompleted => _analysisCompleted;
+  bool get isCanceling => _isCanceling;
+  bool get isRetrying => _isRetrying;
+  bool get backendHealthy => _backendHealthy;
   double get uploadProgress => _uploadProgress;
   double get analysisProgress => _analysisProgress;
   String get status => _status;
   String? get lastError => _lastError;
   Map<String, dynamic> get liveStats => _liveStats;
   String? get currentMatchId => _currentMatchId;
+  String? get analysisId => _analysisId;
+  String? get originalVideoUrl => _originalVideoUrl;
+  List<AnalysisSegment> get segments => _segments;
 
   VideoAnalysisService({required ApiClient apiClient}) : _apiClient = apiClient;
 
   void _updateState({
     bool? isAnalyzing,
+    bool? analysisCompleted,
     double? uploadProgress,
     double? analysisProgress,
     String? status,
@@ -36,6 +52,7 @@ class VideoAnalysisService extends ChangeNotifier {
     Map<String, dynamic>? liveStats,
   }) {
     if (isAnalyzing != null) _isAnalyzing = isAnalyzing;
+    if (analysisCompleted != null) _analysisCompleted = analysisCompleted;
     if (uploadProgress != null) _uploadProgress = uploadProgress;
     if (analysisProgress != null) _analysisProgress = analysisProgress;
     if (status != null) _status = status;
@@ -87,7 +104,7 @@ class VideoAnalysisService extends ChangeNotifier {
 
       final multipartFile = http.MultipartFile(
         'file',
-        trackedStream,
+        trackedStream.cast<List<int>>(),
         videoLength,
         filename: videoFile.name,
       );
@@ -107,66 +124,21 @@ class VideoAnalysisService extends ChangeNotifier {
         );
 
         final responseData = json.decode(responseBody);
-        _currentMatchId = responseData['match_id'] ?? responseData['analysis_id'];
-        
-        // Start polling for analysis status
-        bool isComplete = false;
         final analysisId = responseData['analysis_id'] ?? responseData['match_id'] ?? '';
+        _analysisId = analysisId;
+        _currentMatchId = responseData['match_id'] ?? analysisId;
+        _originalVideoUrl = responseData['video_path'] != null 
+            ? '${_apiClient.baseUrl}/analysis/files?path=${Uri.encodeQueryComponent(responseData['video_path'])}&access_token=${_apiClient.token}'
+            : null;
         
-        while (!isComplete && _isAnalyzing) {
-          await Future.delayed(const Duration(seconds: 1)); // Faster polling for real-time
-          
-          try {
-            final response = await http.get(
-              Uri.parse('${_apiClient.baseUrl}/analysis_status/$analysisId'),
-              headers: await _apiClient.getAuthHeaders(),
-            );
+        _segments = [];
+        notifyListeners();
 
-            if (response.statusCode == 200) {
-              final statusData = json.decode(response.body);
-              
-              if (statusData['progress'] != null) {
-                final progress = (statusData['progress'] as num).toDouble();
-                _updateState(
-                  analysisProgress: progress,
-                  status: 'Analyzing video: ${(progress * 100).toStringAsFixed(1)}%',
-                  liveStats: statusData['live_stats'] as Map<String, dynamic>?,
-                );
-              }
-
-              final status = statusData['status'] as String? ?? '';
-              switch (status.toUpperCase()) {
-                case 'COMPLETED':
-                  isComplete = true;
-                  _updateState(
-                    analysisProgress: 1.0,
-                    status: 'Analysis complete',
-                  );
-                  onComplete();
-                  break;
-                case 'FAILED':
-                  throw Exception(statusData['message'] ?? statusData['error'] ?? 'Analysis failed');
-                case 'QUEUED':
-                  _updateState(status: 'Analysis queued...');
-                  break;
-                case 'PROCESSING':
-                case 'STREAMING':
-                case 'RECEIVING':
-                  // Standardized to PROCESSING, but keeping some legacy for safety
-                  break;
-                default:
-                  // Carry on polling for unknown but active statuses
-                  break;
-              }
-            } else {
-              throw Exception('Failed to get analysis status: ${response.statusCode}');
-            }
-          } catch (e) {
-            print('Error polling analysis status: $e');
-            if (!_isAnalyzing) break;
-            await Future.delayed(const Duration(seconds: 3));
-          }
+        if (analysisId.isNotEmpty) {
+          _startSseListenerForAnalysis(analysisId);
         }
+
+        await _runAnalysisStatusLoop(analysisId);
       } else {
         throw Exception('Upload failed with status code: ${streamedResponse.statusCode}');
       }
@@ -181,13 +153,218 @@ class VideoAnalysisService extends ChangeNotifier {
       return;
     }
     
+    _stopSseListener();
     _updateState(isAnalyzing: false);
   }
 
-  void cancelAnalysis() {
-    _updateState(
-      isAnalyzing: false,
-      status: 'Analysis cancelled',
+  Future<void> _runAnalysisStatusLoop(String analysisId) async {
+    bool isComplete = false;
+    while (!isComplete && _isAnalyzing) {
+      await Future.delayed(const Duration(seconds: 1));
+
+      try {
+        final response = await http.get(
+          Uri.parse('${_apiClient.baseUrl}/analysis_status/$analysisId'),
+          headers: await _apiClient.getAuthHeaders(),
+        );
+
+        if (response.statusCode == 200) {
+          final statusData = json.decode(response.body);
+
+          if (statusData['progress'] != null) {
+            final progress = (statusData['progress'] as num).toDouble();
+            _updateState(
+              analysisProgress: progress,
+              status: 'Analyzing video: ${(progress * 100).toStringAsFixed(1)}%',
+              liveStats: (statusData['live_stats'] as Map<String, dynamic>?) ?? _liveStats,
+            );
+          }
+
+          final status = (statusData['status'] as String? ?? '').toUpperCase();
+          switch (status) {
+            case 'COMPLETED':
+              isComplete = true;
+              _updateState(
+                analysisCompleted: true,
+                analysisProgress: 1.0,
+                status: 'Analysis complete',
+              );
+              break;
+            case 'FAILED':
+              throw Exception(statusData['message'] ?? statusData['error'] ?? 'Analysis failed');
+            case 'QUEUED':
+            case 'PENDING':
+              _updateState(status: 'Analysis queued...');
+              break;
+            case 'PROCESSING':
+            case 'STREAMING':
+            case 'RECEIVING':
+              _updateState(status: 'Analyzing video...');
+              break;
+            default:
+              break;
+          }
+        } else {
+          throw Exception('Failed to get analysis status: ${response.statusCode}');
+        }
+      } catch (e) {
+        if (!_isAnalyzing) break;
+        print('Error polling analysis status: $e');
+        _backendHealthy = false;
+        notifyListeners();
+        await Future.delayed(const Duration(seconds: 3));
+      }
+    }
+  }
+
+  void _startSseListenerForAnalysis(String analysisId) async {
+    _stopSseListener();
+
+    final uri = Uri.parse(
+      '${_apiClient.baseUrl}/analysis/$analysisId/segments/stream?access_token=${_apiClient.token}',
     );
+
+    try {
+      final request = http.Request('GET', uri);
+      request.headers['Accept'] = 'text/event-stream';
+      request.headers['Cache-Control'] = 'no-cache';
+
+      final client = http.Client();
+      final response = await client.send(request);
+
+      if (response.statusCode != 200) {
+        print('SSE Connection failed: ${response.statusCode}');
+        return;
+      }
+
+      _sseSubscription = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (line.startsWith('data: ')) {
+          final data = line.substring(6);
+          try {
+            final payload = json.decode(data);
+            if (payload['type'] == 'segment' || payload['status'] == 'SEGMENT_DONE') {
+              final segment = AnalysisSegment.fromJson(payload);
+              _segments.insert(0, segment); // Newest first
+              notifyListeners();
+            }
+          } catch (e) {
+            print('Error parsing SSE segment: $e');
+          }
+        } else if (line.startsWith('event: done')) {
+          _updateState(
+            analysisCompleted: true,
+            status: 'Analysis complete',
+          );
+          _stopSseListener();
+        }
+      }, onError: (e) {
+        print('SSE Error: $e');
+        _stopSseListener();
+      }, onDone: () {
+        _stopSseListener();
+      });
+    } catch (e) {
+      print('Error starting SSE: $e');
+    }
+  }
+
+  void _stopSseListener() {
+    _sseSubscription?.cancel();
+    _sseSubscription = null;
+  }
+
+  Future<void> fetchMatchSegments(String matchId) async {
+    try {
+      final response = await _apiClient.get('/matches/$matchId/segments');
+      if (response != null && response['segments'] != null) {
+        _segments = (response['segments'] as List)
+            .map((s) => AnalysisSegment.fromJson(s))
+            .toList()
+            .reversed // Newest first
+            .toList();
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error fetching segments: $e');
+    }
+  }
+
+  Future<void> cancelAnalysis() async {
+    if (_analysisId == null || _analysisId!.isEmpty) {
+      _updateState(status: 'No analysis to cancel.');
+      return;
+    }
+
+    _isCanceling = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiClient.post(
+        '/analysis/${_analysisId!}/cancel',
+        data: {},
+      );
+      if (response != null && response['status'] == 'cancelled') {
+        _updateState(
+          isAnalyzing: false,
+          status: 'Analysis cancelled',
+          analysisCompleted: false,
+        );
+      } else {
+        _updateState(status: 'Cancel request failed.');
+      }
+    } catch (e) {
+      _updateState(status: 'Cancel failed: ${e.toString()}');
+    } finally {
+      _isCanceling = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> retryAnalysis({required VoidCallback onComplete, required void Function(String) onError}) async {
+    if (_analysisId == null || _analysisId!.isEmpty) {
+      onError('No previous analysis to retry.');
+      return;
+    }
+
+    _isRetrying = true;
+    _updateState(
+      isAnalyzing: true,
+      analysisCompleted: false,
+      analysisProgress: 0.0,
+      status: 'Retrying analysis...',
+      liveStats: {},
+    );
+
+    try {
+      final response = await _apiClient.post('/analysis/${_analysisId!}/retry', data: {});
+      if (response == null || response['analysis_id'] == null) {
+        throw Exception('Retry response missing analysis_id');
+      }
+
+      final newAnalysisId = response['analysis_id'] as String;
+      final matchId = response['match_id'] as String? ?? _currentMatchId;
+      _analysisId = newAnalysisId;
+      _currentMatchId = matchId;
+      _segments = [];
+      notifyListeners();
+
+      _startSseListenerForAnalysis(newAnalysisId);
+
+      await _runAnalysisStatusLoop(newAnalysisId);
+      if (_analysisCompleted) onComplete();
+    } catch (e) {
+      final errorMsg = e.toString();
+      _updateState(
+        isAnalyzing: false,
+        status: 'Retry failed: $errorMsg',
+      );
+      onError(errorMsg);
+    } finally {
+      _isRetrying = false;
+      notifyListeners();
+    }
   }
 }
