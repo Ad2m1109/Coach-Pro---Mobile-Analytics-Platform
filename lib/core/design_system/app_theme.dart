@@ -73,6 +73,18 @@ class AppTheme {
         labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textGreyLight),
         hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textGreyLight.withOpacity(0.6)),
       ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.primary,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.white70,
+        indicatorColor: Colors.white,
+      ),
     );
   }
 
