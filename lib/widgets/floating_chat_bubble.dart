@@ -17,7 +17,8 @@ class _FloatingChatBubbleState extends State<FloatingChatBubble>
     with SingleTickerProviderStateMixin {
   // Position of the bubble (bottom-right by default)
   double _xPos = -1; // sentinel: -1 means "not initialized"
-  double _yPos = -1;
+	  double _yPos = -1;
+	  bool _isDragging = false;
 
   late final AnimationController _pulseController;
   late final Animation<double> _pulseAnimation;
@@ -64,60 +65,69 @@ class _FloatingChatBubbleState extends State<FloatingChatBubble>
         if (notifier.isChatOpen) _buildChatOverlay(context, notifier),
 
         // ── Draggable Bubble ──
-        if (!notifier.isChatOpen)
-          Positioned(
-            left: _xPos,
-            top: _yPos,
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _xPos = (_xPos + details.delta.dx)
-                      .clamp(0.0, screenSize.width - _bubbleSize);
-                  _yPos = (_yPos + details.delta.dy)
-                      .clamp(0.0, screenSize.height - _bubbleSize - 60);
-                });
-              },
-              onPanEnd: (_) {
-                // Snap to nearest edge
-                setState(() {
-                  final midX = screenSize.width / 2;
-                  _xPos = _xPos < midX ? 8.0 : screenSize.width - _bubbleSize - 8;
-                });
-              },
-              onTap: () => notifier.openChat(),
-              child: ScaleTransition(
-                scale: _pulseAnimation,
-                child: Container(
-                  width: _bubbleSize,
-                  height: _bubbleSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary,
-                        AppColors.primaryDark,
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.smart_toy_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ),
-            ),
-          ),
+	        if (!notifier.isChatOpen)
+	          AnimatedPositioned(
+	            duration: _isDragging ? Duration.zero : const Duration(milliseconds: 400),
+	            curve: Curves.elasticOut,
+	            left: _xPos,
+	            top: _yPos,
+	            child: GestureDetector(
+	              onPanStart: (_) {
+	                setState(() {
+	                  _isDragging = true;
+	                });
+	              },
+	              onPanUpdate: (details) {
+	                setState(() {
+	                  _xPos = (_xPos + details.delta.dx)
+	                      .clamp(0.0, screenSize.width - _bubbleSize);
+	                  _yPos = (_yPos + details.delta.dy)
+	                      .clamp(0.0, screenSize.height - _bubbleSize - 100);
+	                });
+	              },
+	              onPanEnd: (_) {
+	                // Snap to nearest edge
+	                setState(() {
+	                  _isDragging = false;
+	                  final midX = screenSize.width / 2;
+	                  // Snap to left or right edge with 16px margin
+	                  _xPos = _xPos < midX ? 16.0 : screenSize.width - _bubbleSize - 16;
+	                });
+	              },
+	              onTap: () => notifier.openChat(),
+	              child: ScaleTransition(
+	                scale: _pulseAnimation,
+	                child: Container(
+	                  width: _bubbleSize,
+	                  height: _bubbleSize,
+	                  decoration: BoxDecoration(
+	                    shape: BoxShape.circle,
+	                    gradient: const LinearGradient(
+	                      begin: Alignment.topLeft,
+	                      end: Alignment.bottomRight,
+	                      colors: [
+	                        AppColors.primary,
+	                        AppColors.primaryDark,
+	                      ],
+	                    ),
+	                    boxShadow: [
+	                      BoxShadow(
+	                        color: AppColors.primary.withOpacity(0.4),
+	                        blurRadius: 12,
+	                        spreadRadius: 2,
+	                        offset: const Offset(0, 4),
+	                      ),
+	                    ],
+	                  ),
+	                  child: const Icon(
+	                    Icons.smart_toy_rounded,
+	                    color: Colors.white,
+	                    size: 28,
+	                  ),
+	                ),
+	              ),
+	            ),
+	          ),
       ],
     );
   }
