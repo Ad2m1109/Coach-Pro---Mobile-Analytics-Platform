@@ -189,7 +189,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newAnalysis => 'Nouvelle Analyse';
 
   @override
-  String get history => 'Historique';
+  String get history => 'Aperçus d\'Analyse';
 
   @override
   String get noAnalysisHistoryFound => 'Aucun historique d\'analyse trouvé.';

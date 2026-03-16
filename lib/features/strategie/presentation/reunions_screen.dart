@@ -100,6 +100,26 @@ class _ReunionsScreenState extends State<ReunionsScreen> {
             return Dismissible(
               key: ValueKey(reunion.id),
               direction: DismissDirection.startToEnd,
+              confirmDismiss: (direction) async {
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(appLocalizations.confirmDeletion),
+                    content: Text(appLocalizations.thisActionCannotBeUndone),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(appLocalizations.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: Text(appLocalizations.delete),
+                      ),
+                    ],
+                  ),
+                );
+              },
               onDismissed: (direction) {
                 _deleteReunion(reunion.id);
               },

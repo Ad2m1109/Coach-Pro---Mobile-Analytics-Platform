@@ -187,7 +187,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newAnalysis => 'New Analysis';
 
   @override
-  String get history => 'History';
+  String get history => 'Analysis Highlights';
 
   @override
   String get noAnalysisHistoryFound => 'No analysis history found.';

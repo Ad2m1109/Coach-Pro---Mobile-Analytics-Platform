@@ -129,105 +129,123 @@ class _HistoryScreenState extends State<HistoryScreen> {
             final highSeverityCount = segmentList.where((s) => s.severityLabel.toUpperCase() == 'HIGH' || s.severityLabel.toUpperCase() == 'CRITICAL').length;
             final segmentCount = segmentList.length;
 
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Column(
-                children: [
-	                  ListTile(
-	                    title: Text(report.inputVideoName ?? 'Analysis ${report.id.substring(0, 6)}'),
-	                    subtitle: Text(
-	                      'Created: ${report.submittedAt != null ? report.submittedAt!.toLocal().toString().split('.')[0] : 'unknown'}',
-	                    ),
-	                    trailing: Row(
-	                      mainAxisSize: MainAxisSize.min,
-	                      children: [
-	                        Chip(
-	                          label: Text(report.status.toUpperCase()),
-	                          backgroundColor: report.status.toUpperCase() == 'COMPLETED'
-	                              ? Colors.green[100]
-	                              : report.status.toUpperCase() == 'FAILED'
-	                                  ? Colors.red[100]
-	                                  : Colors.orange[100],
-	                        ),
-	                        IconButton(
-	                          tooltip: expanded ? 'Collapse' : 'Expand',
-	                          icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
-	                          onPressed: () async {
-	                            setState(() {
-	                              _expanded[report.id] = !expanded;
-	                            });
-	                            if (!_runSegments.containsKey(report.id) && !expanded) {
-	                              await _ensureSegments(report.id);
-	                            }
-	                          },
-	                        ),
-	                      ],
-	                    ),
-	                    onTap: () {
-	                      Navigator.of(context).push(
-	                        MaterialPageRoute(
-	                          builder: (_) => AnalysisPreviewScreen(report: report),
-	                        ),
-	                      );
-	                    },
-	                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Row(
-                      children: [
-                        Text('Segments: ${report.outputs?['segments_count'] ?? segmentCount}'),
-                        const SizedBox(width: 16),
-                        Text('High Alerts: $highSeverityCount'),
-                        const Spacer(),
-                        Text('Progress: ${(report.progress * 100).toStringAsFixed(0)}%'),
-                      ],
+            return Dismissible(
+              key: ValueKey(report.id),
+              direction: DismissDirection.startToEnd,
+              confirmDismiss: (direction) async {
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(appLocalizations.confirmDeletion),
+                    content: Text(appLocalizations.thisActionCannotBeUndone),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(appLocalizations.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: Text(appLocalizations.delete),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              onDismissed: (_) => _deleteRun(report.id),
+              background: Container(
+                color: Colors.red,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: const Icon(Icons.delete, color: Colors.white),
+              ),
+              child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(report.inputVideoName ?? 'Analysis ${report.id.substring(0, 6)}'),
+                      subtitle: Text(
+                        'Created: ${report.submittedAt != null ? report.submittedAt!.toLocal().toString().split('.')[0] : 'unknown'}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Chip(
+                            label: Text(report.status.toUpperCase()),
+                            backgroundColor: report.status.toUpperCase() == 'COMPLETED'
+                                ? Colors.green[100]
+                                : report.status.toUpperCase() == 'FAILED'
+                                    ? Colors.red[100]
+                                    : Colors.orange[100],
+                          ),
+                          IconButton(
+                            tooltip: expanded ? 'Collapse' : 'Expand',
+                            icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                            onPressed: () async {
+                              setState(() {
+                                _expanded[report.id] = !expanded;
+                              });
+                              if (!_runSegments.containsKey(report.id) && !expanded) {
+                                await _ensureSegments(report.id);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => AnalysisPreviewScreen(report: report),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: _buildMiniTimeline(segmentList),
-                  ),
-                  if (expanded) ...[
-                    const Divider(),
-                    if (_segmentsLoading[report.id] ?? false)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (segmentList.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Text('No segment details available yet.'),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                        child: Column(
-                          children: segmentList.map((segment) {
-                            return SegmentCard(
-                              segment: segment,
-                              onPlay: () {},
-                            );
-                          }).toList(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: Row(
+                        children: [
+                          Text('Segments: ${report.outputs?['segments_count'] ?? segmentCount}'),
+                          const SizedBox(width: 16),
+                          Text('High Alerts: $highSeverityCount'),
+                          const Spacer(),
+                          Text('Progress: ${(report.progress * 100).toStringAsFixed(0)}%'),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: _buildMiniTimeline(segmentList),
+                    ),
+                    if (expanded) ...[
+                      const Divider(),
+                      if (_segmentsLoading[report.id] ?? false)
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (segmentList.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text('No segment details available yet.'),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                          child: Column(
+                            children: segmentList.map((segment) {
+                              return SegmentCard(
+                                segment: segment,
+                                onPlay: () {},
+                              );
+                            }).toList(),
+                          ),
                         ),
-                      ),
+                    ],
                   ],
-                  if (isFailed)
-                    Dismissible(
-                      key: ValueKey('${report.id}-delete'),
-                      direction: DismissDirection.startToEnd,
-                      onDismissed: (_) => _deleteRun(report.id),
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      child: const SizedBox.shrink(),
-                    ),
-                ],
+                ),
               ),
             );
           },

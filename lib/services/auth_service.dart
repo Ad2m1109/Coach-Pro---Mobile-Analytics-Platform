@@ -41,10 +41,13 @@ class AuthService with ChangeNotifier {
   bool get isStaff => _userType == 'staff';
   bool get canManageAccounts => _appRole == 'account_manager';
   bool get canManagePlayers => _appRole == 'account_manager' || hasPermission('edit');
-  bool get canManageReunions => _appRole == 'account_manager' || hasPermission('edit');
-  bool get canManageTeam => _appRole == 'account_manager';
+  bool get canManageReunions => isOwner || hasPermission('edit');
+  bool get canManageTrainingSessions => isOwner || hasPermission('edit');
+  bool get canManageTeam => isOwner;
   
   bool hasPermission(String permission) {
+    if (isOwner) return true;
+    
     if (_appPermissions.isNotEmpty) {
       if (_appPermissions.contains(permission)) return true;
       const aliasMap = {

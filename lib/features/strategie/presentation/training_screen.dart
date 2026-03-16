@@ -46,7 +46,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final authService = Provider.of<AuthService>(context);
-    final canEdit = authService.hasPermission('edit');
+    final canEdit = authService.canManageTrainingSessions;
     return FutureBuilder<List<TrainingSession>>(
       future: _sessionsFuture,
       builder: (context, snapshot) {
@@ -99,6 +99,26 @@ class _TrainingScreenState extends State<TrainingScreen> {
             return Dismissible(
               key: ValueKey(session.id),
               direction: DismissDirection.startToEnd,
+              confirmDismiss: (direction) async {
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(appLocalizations.confirmDeletion),
+                    content: Text(appLocalizations.thisActionCannotBeUndone),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(appLocalizations.cancel),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        child: Text(appLocalizations.delete),
+                      ),
+                    ],
+                  ),
+                );
+              },
               onDismissed: (direction) {
                 _deleteTrainingSession(session.id);
               },

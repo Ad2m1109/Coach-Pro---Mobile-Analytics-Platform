@@ -187,7 +187,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newAnalysis => 'تحليل جديد';
 
   @override
-  String get history => 'السجل';
+  String get history => 'معاينات التحليل';
 
   @override
   String get noAnalysisHistoryFound => 'لم يتم العثور على سجل تحليل.';
