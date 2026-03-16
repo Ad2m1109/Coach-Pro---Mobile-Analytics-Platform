@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/formation.dart';
 import 'package:frontend/services/api_client.dart';
 
@@ -14,7 +15,7 @@ class FormationService {
           .toList();
       return formations;
     } catch (e) {
-      print('Error fetching formations: $e');
+      debugPrint('Error fetching formations: $e');
       throw Exception('Failed to load formations');
     }
   }

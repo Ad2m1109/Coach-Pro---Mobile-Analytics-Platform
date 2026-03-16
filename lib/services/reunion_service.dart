@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/reunion.dart';
 import 'package:frontend/services/api_client.dart';
 
@@ -14,7 +15,7 @@ class ReunionService {
           .toList();
       return reunions;
     } catch (e) {
-      print('Error fetching reunions: $e');
+      debugPrint('Error fetching reunions: $e');
       throw Exception('Failed to load reunions');
     }
   }
@@ -30,7 +31,7 @@ class ReunionService {
       final responseData = await _apiClient.post('/reunions', data: data);
       return Reunion.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating reunion: $e');
+      debugPrint('Error creating reunion: $e');
       throw Exception('Failed to create reunion');
     }
   }
@@ -39,7 +40,7 @@ class ReunionService {
     try {
       await _apiClient.delete('/reunions/$id');
     } catch (e) {
-      print('Error deleting reunion: $e');
+      debugPrint('Error deleting reunion: $e');
       throw Exception('Failed to delete reunion');
     }
   }

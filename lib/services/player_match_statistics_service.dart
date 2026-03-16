@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/player_match_statistics.dart';
 import 'package:frontend/services/api_client.dart';
 
@@ -18,7 +19,7 @@ class PlayerMatchStatisticsService {
           .toList();
       return stats;
     } catch (e) {
-      print('Error fetching player match statistics: $e');
+      debugPrint('Error fetching player match statistics: $e');
       throw Exception('Failed to load player match statistics');
     }
   }
@@ -31,7 +32,7 @@ class PlayerMatchStatisticsService {
           .toList();
       return stats;
     } catch (e) {
-      print('Error fetching player match statistics for player $playerId: $e');
+      debugPrint('Error fetching player match statistics for player $playerId: $e');
       throw Exception('Failed to load player match statistics for player $playerId');
     }
   }

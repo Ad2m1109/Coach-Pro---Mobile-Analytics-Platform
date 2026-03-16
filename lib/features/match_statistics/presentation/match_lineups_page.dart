@@ -468,7 +468,7 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
         return Offset(normalizedDx * fieldSize.width, normalizedDy * fieldSize.height);
       }
     } catch (e) {
-      print('Error parsing normalized coordinates: $e');
+      debugPrint('Error parsing normalized coordinates: $e');
     }
     // Fallback to center if parsing fails
     return Offset(fieldSize.width / 2, fieldSize.height / 2);

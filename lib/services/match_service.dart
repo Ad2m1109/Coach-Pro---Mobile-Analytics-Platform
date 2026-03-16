@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/match.dart';
 import 'package:frontend/models/match_details.dart';
 import 'package:frontend/models/team.dart';
@@ -23,7 +24,7 @@ class MatchService {
         queryParameters['event_id'] = eventId;
       }
       if (queryParameters.isNotEmpty) {
-        queryString += '?' + Uri(queryParameters: queryParameters).query;
+        queryString = '$queryString?${Uri(queryParameters: queryParameters).query}';
       }
       final responseData = await _apiClient.get(queryString);
       final List<Match> matches = (responseData as List)
@@ -31,7 +32,7 @@ class MatchService {
           .toList();
       return matches;
     } catch (e) {
-      print('Error fetching matches: $e');
+      debugPrint('Error fetching matches: $e');
       throw Exception('Failed to load matches');
     }
   }
@@ -41,7 +42,7 @@ class MatchService {
       final responseData = await _apiClient.get('/matches/$matchId');
       return Match.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching match: $e');
+      debugPrint('Error fetching match: $e');
       throw Exception('Failed to load match');
     }
   }
@@ -83,7 +84,7 @@ class MatchService {
       final responseData = await _apiClient.post('/matches', data: matchData);
       return Match.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating match: $e');
+      debugPrint('Error creating match: $e');
       throw Exception('Failed to create match');
     }
   }
@@ -93,7 +94,7 @@ class MatchService {
       final responseData = await _apiClient.get('/matches/$matchId/details');
       return MatchDetails.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching match details: $e');
+      debugPrint('Error fetching match details: $e');
       throw Exception('Failed to load match details');
     }
   }
@@ -111,7 +112,7 @@ class MatchService {
       );
       return (response['video_anchor_seconds'] as num).toInt();
     } catch (e) {
-      print('Error setting video anchor: $e');
+      debugPrint('Error setting video anchor: $e');
       rethrow;
     }
   }
@@ -120,7 +121,7 @@ class MatchService {
     try {
       await _apiClient.post('/matches/$matchId/video-anchor/reset');
     } catch (e) {
-      print('Error resetting video anchor: $e');
+      debugPrint('Error resetting video anchor: $e');
       rethrow;
     }
   }

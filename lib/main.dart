@@ -49,9 +49,9 @@ Future<void> main() async {
 
     // Optional: Add debug logging
     if (kDebugMode) {
-      print('Running on ${kIsWeb ? 'Web' : 'Mobile'}');
-      print('Base URL: $baseUrl');
-      print('Analysis Base URL: $analysisBaseUrl');
+      debugPrint('Running on ${kIsWeb ? 'Web' : 'Mobile'}');
+      debugPrint('Base URL: $baseUrl');
+      debugPrint('Analysis Base URL: $analysisBaseUrl');
     }
   } catch (e, stack) {
     runApp(

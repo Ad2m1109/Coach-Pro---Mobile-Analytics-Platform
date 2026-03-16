@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/training_session.dart';
 import 'package:frontend/services/api_client.dart';
 
@@ -14,7 +15,7 @@ class TrainingSessionService {
           .toList();
       return sessions;
     } catch (e) {
-      print('Error fetching training sessions: $e');
+      debugPrint('Error fetching training sessions: $e');
       throw Exception('Failed to load training sessions');
     }
   }
@@ -30,7 +31,7 @@ class TrainingSessionService {
       final responseData = await _apiClient.post('/training_sessions', data: data);
       return TrainingSession.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating training session: $e');
+      debugPrint('Error creating training session: $e');
       throw Exception('Failed to create training session');
     }
   }
@@ -39,7 +40,7 @@ class TrainingSessionService {
     try {
       await _apiClient.delete('/training_sessions/$id');
     } catch (e) {
-      print('Error deleting training session: $e');
+      debugPrint('Error deleting training session: $e');
       throw Exception('Failed to delete training session');
     }
   }

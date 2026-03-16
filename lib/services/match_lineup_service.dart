@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/match_lineup.dart';
 import 'package:frontend/services/api_client.dart';
 
@@ -18,7 +19,7 @@ class MatchLineupService {
           .toList();
       return lineups;
     } catch (e) {
-      print('Error fetching lineups: $e');
+      debugPrint('Error fetching lineups: $e');
       throw Exception('Failed to load lineups');
     }
   }
@@ -28,7 +29,7 @@ class MatchLineupService {
       final responseData = await _apiClient.post('/match_lineups', data: lineup.toJson());
       return MatchLineup.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating lineup: $e');
+      debugPrint('Error creating lineup: $e');
       throw Exception('Failed to create lineup');
     }
   }
@@ -37,7 +38,7 @@ class MatchLineupService {
     try {
       await _apiClient.delete('/match_lineups/$id');
     } catch (e) {
-      print('Error deleting lineup: $e');
+      debugPrint('Error deleting lineup: $e');
       throw Exception('Failed to delete lineup');
     }
   }

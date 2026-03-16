@@ -82,7 +82,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
       if (relativeVideoPath != null && relativeVideoPath.isNotEmpty) {
         final url = analysisService.streamUrl(relativeVideoPath);
-        _controller = VideoPlayerController.networkUrl(Uri.parse(url));
+        _controller = VideoPlayerController.networkUrl(
+          Uri.parse(url),
+          httpHeaders: analysisService.fileHeaders(),
+        );
         _initVideoFuture = _controller!.initialize();
       }
 

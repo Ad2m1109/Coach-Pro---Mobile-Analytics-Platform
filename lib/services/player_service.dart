@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/player.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +18,7 @@ class PlayerService {
           .toList();
       return players;
     } catch (e) {
-      print('Error fetching players: $e');
+      debugPrint('Error fetching players: $e');
       throw Exception('Failed to load players');
     }
   }
@@ -31,7 +32,7 @@ class PlayerService {
       final responseData = await _apiClient.post('/players', data: playerData);
       return Player.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating player: $e');
+      debugPrint('Error creating player: $e');
       throw Exception('Failed to create player');
     }
   }
@@ -41,7 +42,7 @@ class PlayerService {
       final responseData = await _apiClient.put('/players/${player.id}', data: player.toJson());
       return Player.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error updating player: $e');
+      debugPrint('Error updating player: $e');
       throw Exception('Failed to update player');
     }
   }
@@ -69,7 +70,7 @@ class PlayerService {
         throw ApiException('Failed to upload image: ${response.statusCode} - $errorBody', statusCode: response.statusCode);
       }
     } catch (e) {
-      print('Error uploading player image: $e');
+      debugPrint('Error uploading player image: $e');
       throw Exception('Failed to upload player image');
     }
   }

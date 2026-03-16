@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:frontend/models/team.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +18,7 @@ class TeamService {
           .toList();
       return teams;
     } catch (e) {
-      print('Error fetching teams: $e');
+      debugPrint('Error fetching teams: $e');
       throw Exception('Failed to load teams');
     }
   }
@@ -27,7 +28,7 @@ class TeamService {
       final responseData = await _apiClient.get('/teams/$id');
       return Team.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching team: $e');
+      debugPrint('Error fetching team: $e');
       throw Exception('Failed to load team');
     }
   }
@@ -37,7 +38,7 @@ class TeamService {
       final responseData = await _apiClient.get('/teams/by_name/$name');
       return Team.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error fetching team by name: $e');
+      debugPrint('Error fetching team by name: $e');
       throw Exception('Failed to load team by name');
     }
   }
@@ -54,7 +55,7 @@ class TeamService {
       final responseData = await _apiClient.post('/teams', data: teamData);
       return Team.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error creating team: $e');
+      debugPrint('Error creating team: $e');
       throw Exception('Failed to create team');
     }
   }
@@ -64,7 +65,7 @@ class TeamService {
       final responseData = await _apiClient.put('/teams/$teamId', data: teamData.toJson());
       return Team.fromJson(responseData as Map<String, dynamic>);
     } catch (e) {
-      print('Error updating team: $e');
+      debugPrint('Error updating team: $e');
       throw Exception('Failed to update team');
     }
   }
@@ -92,7 +93,7 @@ class TeamService {
         throw ApiException('Failed to upload logo: ${response.statusCode} - $errorBody', statusCode: response.statusCode);
       }
     } catch (e) {
-      print('Error uploading team logo: $e');
+      debugPrint('Error uploading team logo: $e');
       throw Exception('Failed to upload team logo');
     }
   }

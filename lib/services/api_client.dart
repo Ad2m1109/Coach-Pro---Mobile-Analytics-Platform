@@ -30,7 +30,7 @@ class ApiClient {
 
   Map<String, String> _getHeaders({bool isAuth = false, String contentType = 'application/json'}) {
     final Map<String, String> headers = {
-      'Content-Type': contentType + '; charset=UTF-8',
+      'Content-Type': '$contentType; charset=UTF-8',
     };
     if (_token != null && !isAuth) { // Don't send token for auth endpoints
       headers['Authorization'] = 'Bearer $_token';
@@ -44,11 +44,6 @@ class ApiClient {
 
   Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
     final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
-    
-    // Many endpoints (like /analysis/files/json) expect access_token in query params
-    if (_token != null && !params.containsKey('access_token')) {
-      params['access_token'] = _token!;
-    }
 
     final uri = Uri.parse('$baseUrl$path');
     
@@ -76,9 +71,6 @@ class ApiClient {
     String contentType = 'application/json',
   }) async {
     final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
-    if (_token != null && !params.containsKey('access_token')) {
-      params['access_token'] = _token!;
-    }
     final uri = Uri.parse('$baseUrl$path');
     final Map<String, dynamic> allParams = Map<String, dynamic>.from(uri.queryParameters);
     allParams.addAll(params);

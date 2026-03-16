@@ -128,7 +128,7 @@ class VideoAnalysisService extends ChangeNotifier {
         _analysisId = analysisId;
         _currentMatchId = responseData['match_id'] ?? analysisId;
         _originalVideoUrl = responseData['video_path'] != null 
-            ? '${_apiClient.baseUrl}/analysis/files?path=${Uri.encodeQueryComponent(responseData['video_path'])}&access_token=${_apiClient.token}'
+            ? '${_apiClient.baseUrl}/analysis/files?path=${Uri.encodeQueryComponent(responseData['video_path'])}'
             : null;
         
         _segments = [];
@@ -209,7 +209,7 @@ class VideoAnalysisService extends ChangeNotifier {
         }
       } catch (e) {
         if (!_isAnalyzing) break;
-        print('Error polling analysis status: $e');
+        debugPrint('Error polling analysis status: $e');
         _backendHealthy = false;
         notifyListeners();
         await Future.delayed(const Duration(seconds: 3));
@@ -221,19 +221,20 @@ class VideoAnalysisService extends ChangeNotifier {
     _stopSseListener();
 
     final uri = Uri.parse(
-      '${_apiClient.baseUrl}/analysis/$analysisId/segments/stream?access_token=${_apiClient.token}',
+      '${_apiClient.baseUrl}/analysis/$analysisId/segments/stream',
     );
 
     try {
       final request = http.Request('GET', uri);
       request.headers['Accept'] = 'text/event-stream';
       request.headers['Cache-Control'] = 'no-cache';
+      request.headers.addAll(await _apiClient.getAuthHeaders());
 
       final client = http.Client();
       final response = await client.send(request);
 
       if (response.statusCode != 200) {
-        print('SSE Connection failed: ${response.statusCode}');
+        debugPrint('SSE Connection failed: ${response.statusCode}');
         return;
       }
 
@@ -251,7 +252,7 @@ class VideoAnalysisService extends ChangeNotifier {
               notifyListeners();
             }
           } catch (e) {
-            print('Error parsing SSE segment: $e');
+            debugPrint('Error parsing SSE segment: $e');
           }
         } else if (line.startsWith('event: done')) {
           _updateState(
@@ -261,13 +262,13 @@ class VideoAnalysisService extends ChangeNotifier {
           _stopSseListener();
         }
       }, onError: (e) {
-        print('SSE Error: $e');
+        debugPrint('SSE Error: $e');
         _stopSseListener();
       }, onDone: () {
         _stopSseListener();
       });
     } catch (e) {
-      print('Error starting SSE: $e');
+      debugPrint('Error starting SSE: $e');
     }
   }
 
@@ -288,7 +289,7 @@ class VideoAnalysisService extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error fetching segments: $e');
+      debugPrint('Error fetching segments: $e');
     }
   }
 

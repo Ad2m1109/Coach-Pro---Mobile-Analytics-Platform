@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/models/user.dart'; // Import User model
 import 'dart:convert';
-import 'package:frontend/models/staff.dart';
 
 class AuthService with ChangeNotifier {
   final ApiClient _apiClient;
@@ -137,7 +137,7 @@ class AuthService with ChangeNotifier {
       _currentUser = User.fromJson(userData);
       notifyListeners(); // Success: notify listeners that user is loaded
     } catch (e) {
-      print('Error fetching current user with token. Logging out. Error: $e');
+      debugPrint('Error fetching current user with token. Logging out. Error: $e');
       await logout(); // Failure: logout will clear everything and notify listeners
     }
   }
@@ -180,7 +180,7 @@ class AuthService with ChangeNotifier {
         _appPermissions = [];
       }
     } catch (e) {
-      print('Error parsing JWT claims: $e');
+      debugPrint('Error parsing JWT claims: $e');
     }
   }
 }

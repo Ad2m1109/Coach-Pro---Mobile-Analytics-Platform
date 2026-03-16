@@ -7,6 +7,7 @@ import 'package:frontend/features/analyze/presentation/widgets/analysis_progress
 import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart';
 import 'package:frontend/models/match_note.dart';
 import 'package:frontend/services/note_service.dart';
+import 'package:frontend/services/analysis_service.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 
@@ -81,7 +82,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     _lastVideoUrl = url;
     
     _videoController?.dispose();
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(url))
+    final analysisService = context.read<AnalysisService>();
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(url),
+      httpHeaders: analysisService.fileHeaders(),
+    )
       ..initialize().then((_) {
         setState(() {});
       });
