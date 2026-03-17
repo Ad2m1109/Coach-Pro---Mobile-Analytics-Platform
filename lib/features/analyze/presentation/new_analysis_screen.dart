@@ -10,6 +10,10 @@ import 'package:frontend/services/note_service.dart';
 import 'package:frontend/services/analysis_service.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:ui';
+import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
 
 class NewAnalysisScreen extends StatefulWidget {
   const NewAnalysisScreen({super.key});
@@ -19,17 +23,32 @@ class NewAnalysisScreen extends StatefulWidget {
 }
 
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
-  static const _pagePadding = EdgeInsets.all(16);
-  static const _buttonPadding = EdgeInsets.symmetric(
-    horizontal: 30,
-    vertical: 15,
-  );
 
   XFile? _videoFile;
   VideoPlayerController? _videoController;
   String? _lastVideoUrl;
-  final ScrollController _segmentScrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   final Map<String, GlobalKey> _segmentKeys = {};
+  bool _showMiniPlayer = false;
+  String? _activeSegmentId;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_videoController == null || !_videoController!.value.isInitialized) return;
+    
+    // Show mini player when main video player area is scrolled away (roughly > 300px)
+    final threshold = 400.0;
+    if (_scrollController.offset > threshold && !_showMiniPlayer) {
+      setState(() => _showMiniPlayer = true);
+    } else if (_scrollController.offset <= threshold && _showMiniPlayer) {
+      setState(() => _showMiniPlayer = false);
+    }
+  }
 
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
@@ -72,7 +91,8 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
   @override
   void dispose() {
-    _segmentScrollController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _videoController?.dispose();
     super.dispose();
   }
@@ -103,208 +123,274 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     return Consumer<VideoAnalysisService>(
       builder: (context, service, child) {
         final isAnalyzing = service.isAnalyzing;
-        final statusMessage = service.status.isEmpty
-            ? (_videoFile != null
-                ? appLocalizations.selected(_videoFile!.name)
-                : appLocalizations.noVideoSelected)
-            : service.status;
+        
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.teal.withOpacity(0.05),
+                      Colors.white,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                _buildSliverAppBar(appLocalizations),
+                
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.m),
+                    child: Column(
+                      children: [
+                        CustomCard(
+                          child: _buildControlSection(service, appLocalizations),
+                        ),
+                        const SizedBox(height: AppSpacing.m),
+                        if (service.originalVideoUrl != null)
+                          _buildVideoPlayer(service.originalVideoUrl!),
+                      ],
+                    ),
+                  ),
+                ),
 
-        return SingleChildScrollView(
-          padding: _pagePadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                appLocalizations.newAnalysis,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 24),
-              if (!isAnalyzing)
-                ElevatedButton.icon(
-                  onPressed: _pickVideo,
-                  icon: const Icon(Icons.video_library),
-                  label: Text(appLocalizations.uploadVideo),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    padding: _buttonPadding,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              Text(
-                statusMessage,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    service.backendHealthy ? Icons.cloud_done : Icons.cloud_off,
-                    size: 16,
-                    color: service.backendHealthy ? Colors.green : Colors.red,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    service.backendHealthy ? 'Analysis service healthy' : 'Analysis service unavailable',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: service.backendHealthy ? Colors.green[700] : Colors.red[700],
-                    ),
-                  ),
-                ],
-              ),
-              if (_videoFile != null && !isAnalyzing) ...[
-                const SizedBox(height: 16),
-                Text(
-                  appLocalizations.selected(_videoFile!.name),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-              if (isAnalyzing || service.analysisCompleted) ...[
-                const SizedBox(height: 24),
-                AnalysisProgressWidget(
-                  uploadProgress: service.uploadProgress,
-                  analysisProgress: service.analysisProgress,
-                  liveStats: service.liveStats,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Segments processed: ${service.segments.length}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'LLM recommendations shown in each segment card',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-                if (service.analysisCompleted) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green),
-                    ),
-                    child: Text(
-                      '✅ Analysis completed successfully.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.green[800],
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                if (service.isAnalyzing) ...[
-                  TextButton.icon(
-                    onPressed: service.isCanceling ? null : service.cancelAnalysis,
-                    icon: const Icon(Icons.stop, color: Colors.pink),
-                    label: Text(
-                      service.isCanceling ? 'Stopping...' : 'Stop Analysis',
-                      style: const TextStyle(color: Colors.pink),
-                    ),
-                  ),
-                ] else if (service.analysisCompleted) ...[
-                  ElevatedButton.icon(
-                    onPressed: service.isRetrying
-                        ? null
-                        : () async {
-                            try {
-                              await service.retryAnalysis(
-                                onComplete: () {
-                                  _showMessage(appLocalizations.videoAnalysisCompleted);
-                                },
-                                onError: (error) {
-                                  _showMessage(appLocalizations.videoAnalysisFailed(error));
-                                },
-                              );
-                            } catch (e) {
-                              _showMessage(appLocalizations.errorWithMessage(e.toString()));
-                            }
+                if (service.segments.isNotEmpty || isAnalyzing)
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _SliverTimelineDelegate(
+                      child: Container(
+                        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
+                        child: AnalysisTimeline(
+                          segments: service.segments,
+                          activeSegmentId: _activeSegmentId,
+                          isAnalyzing: isAnalyzing,
+                          onSegmentTap: (segment) {
+                            setState(() => _activeSegmentId = segment.id);
+                            _scrollToSegment(segment.id);
+                            _seekTo(segment.videoStartSec);
                           },
-                    icon: const Icon(Icons.refresh),
-                    label: Text(service.isRetrying ? 'Retrying...' : 'Retry Analysis'),
-                  ),
-                ],
-              ],
-              
-              const SizedBox(height: 32),
-              
-              if (isAnalyzing && service.originalVideoUrl != null) ...[
-                _buildVideoPlayer(service.originalVideoUrl!),
-                const SizedBox(height: 24),
-                _buildSegmentsHeader(appLocalizations),
-                _buildSegmentsList(service),
-                const SizedBox(height: 32),
-              ],
-
-              if (!isAnalyzing && service.originalVideoUrl != null) ...[
-                 _buildVideoPlayer(service.originalVideoUrl!),
-                 const SizedBox(height: 24),
-                 _buildSegmentsHeader(appLocalizations),
-                 _buildSegmentsList(service),
-                 const SizedBox(height: 32),
-              ],
-
-              if (!isAnalyzing)
-                ElevatedButton(
-                  onPressed: _uploadAndAnalyzeVideo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: Text(
-                    appLocalizations.analyze,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                  ),
-                ),
-              
-              if (isAnalyzing) ...[
-                const SizedBox(height: 32),
-                const Divider(),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      appLocalizations.liveNotes,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add_comment, color: Colors.blue),
-                      onPressed: () => _showAddLiveNoteDialog(appLocalizations),
-                      tooltip: appLocalizations.addLiveReaction,
+                  ),
+
+                if (isAnalyzing || service.analysisCompleted)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.m),
+                    child: AnalysisProgressWidget(
+                      uploadProgress: service.uploadProgress,
+                      analysisProgress: service.analysisProgress,
+                      liveStats: service.liveStats,
                     ),
-                  ],
+                  ),
+                  ),
+
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        if (index == service.segments.length) {
+                          return isAnalyzing ? _buildSkeletonCard() : const SizedBox.shrink();
+                        }
+                        final segment = service.segments[index];
+                        _segmentKeys[segment.id] = _segmentKeys[segment.id] ?? GlobalKey();
+                        return Container(
+                          key: _segmentKeys[segment.id],
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: SegmentCard(
+                            segment: segment,
+                            onPlay: () {
+                              setState(() => _activeSegmentId = segment.id);
+                              _seekTo(segment.videoStartSec);
+                            },
+                          ),
+                        );
+                      },
+                      childCount: service.segments.length + (isAnalyzing ? 1 : 0),
+                    ),
+                  ),
                 ),
-                _buildLiveNotesList(appLocalizations),
+
+                if (isAnalyzing)
+                  SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.m),
+                    child: _buildLiveNotesSection(appLocalizations),
+                  ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
-            ],
-          ),
+            ),
+            
+            if (_showMiniPlayer && service.originalVideoUrl != null)
+              _buildFloatingMiniPlayer(service.originalVideoUrl!),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildSliverAppBar(AppLocalizations l10n) {
+    return SliverAppBar(
+      pinned: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      elevation: 0,
+      title: Text(
+        l10n.newAnalysis,
+        style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+
+  Widget _buildControlSection(VideoAnalysisService service, AppLocalizations l10n) {
+    return Column(
+      children: [
+        if (!service.isAnalyzing)
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _videoFile != null ? 'READY TO ANALYZE' : 'SELECT SOURCE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.primary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      _videoFile != null ? _videoFile!.name : 'No video selected',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton.filledTonal(
+                onPressed: _pickVideo,
+                icon: const Icon(Icons.video_library),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: AppSpacing.m),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            onPressed: service.isAnalyzing ? null : _uploadAndAnalyzeVideo,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM)),
+            ),
+            child: service.isAnalyzing 
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                    const SizedBox(width: AppSpacing.s),
+                    Text('ANALYSIS IN PROGRESS', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  ],
+                )
+              : Text('START TACTICAL ANALYSIS', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          ),
+        ),
+        if (service.isAnalyzing) ...[
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: service.cancelAnalysis,
+            icon: const Icon(Icons.stop_circle_outlined, size: 18, color: Colors.red),
+            label: const Text('ABORT PROCESS', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFloatingMiniPlayer(String url) {
+    return Positioned(
+      right: 16,
+      top: MediaQuery.of(context).padding.top + 10,
+      child: GestureDetector(
+        onTap: () {
+           _scrollController.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
+        },
+        child: Material(
+          elevation: 12,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 160,
+            height: 90,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                children: [
+                  VideoPlayer(_videoController!),
+                  Container(color: Colors.black26),
+                  const Center(child: Icon(Icons.fullscreen, color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveNotesSection(AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.liveNotes,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+            IconButton(
+              icon: Icon(Icons.add_comment, color: Theme.of(context).colorScheme.primary),
+              onPressed: () => _showAddLiveNoteDialog(l10n),
+            ),
+          ],
+        ),
+        _buildLiveNotesList(l10n),
+      ],
     );
   }
 
@@ -356,264 +442,69 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     );
   }
 
-  Widget _buildPartTimeline(VideoAnalysisService service) {
-    final sorted = [...service.segments];
-    sorted.sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
-    if (sorted.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final processingSegment = sorted.firstWhere(
-      (segment) {
-        final s = segment.status.toUpperCase();
-        return s == 'PROCESSING' || s == 'STREAMING' || s == 'RECEIVING';
-      },
-      orElse: () => sorted.last,
-    );
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.timeline, size: 18, color: Colors.indigo),
-                const SizedBox(width: 8),
-                Text(
-                  'Part Timeline',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...sorted.map((segment) {
-              final part = segment.segmentIndex + 1;
-              String status = segment.status.toUpperCase();
-              if (status.isEmpty) status = 'PENDING';
-              IconData icon;
-              Color iconColor;
-              String label;
-              switch (status) {
-                case 'COMPLETED':
-                  icon = Icons.check_circle;
-                  iconColor = Colors.green;
-                  label = 'COMPLETED';
-                  break;
-                case 'PROCESSING':
-                case 'STREAMING':
-                case 'RECEIVING':
-                  icon = Icons.autorenew;
-                  iconColor = Colors.orange;
-                  label = 'PROCESSING';
-                  break;
-                case 'FAILED':
-                  icon = Icons.error;
-                  iconColor = Colors.red;
-                  label = 'FAILED';
-                  break;
-                case 'QUEUED':
-                case 'PENDING':
-                default:
-                  icon = Icons.hourglass_top;
-                  iconColor = Colors.grey[700]!;
-                  label = 'PENDING';
-                  break;
-              }
-
-              final isActive = segment.id == processingSegment.id;
-              final rowColor = isActive ? Colors.indigo.withOpacity(0.08) : Colors.transparent;
-
-              return InkWell(
-                onTap: () => _scrollToSegment(segment.id),
-                child: Container(
-                  color: rowColor,
-                  padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(icon, size: 18, color: iconColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Part $part',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: isActive ? Colors.indigo[900] : null,
-                                ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: iconColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _scrollToSegment(String segmentId) {
+    _scrollController.animateTo(
+      _scrollController.offset + 100, // Minimal move to trigger mini-player logic or generic scroll
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    
     final key = _segmentKeys[segmentId];
     if (key == null) return;
     final context = key.currentContext;
     if (context == null) return;
     Scrollable.ensureVisible(
       context,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
-      alignment: 0.1,
+      alignment: 0.2, // Focus it near the top but below the sticky header
     );
   }
 
-  Widget _buildSegmentsHeader(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+
+  Widget _buildSkeletonCard() {
+    return CustomCard(
+      padding: const EdgeInsets.all(AppSpacing.m),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Theme.of(context).dividerColor.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.m),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.analytics_rounded, color: Colors.indigo),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.analysisSegments,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo[900],
-                      ),
+                Container(
+                  height: 12,
+                  width: 150,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).dividerColor.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(AppSpacing.borderRadiusS),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s),
+                Container(
+                  height: 10,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).dividerColor.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(AppSpacing.borderRadiusS),
+                  ),
                 ),
               ],
             ),
-            if (context.read<VideoAnalysisService>().isAnalyzing)
-              const Chip(
-                avatar: SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-                label: Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 10)),
-                backgroundColor: Colors.red,
-                padding: EdgeInsets.zero,
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSegmentsList(VideoAnalysisService service) {
-    final segments = service.segments;
-    final isAnalyzing = service.isAnalyzing;
-    
-    // Simple heuristic for total segments: duration / window (default 60s)
-    // We can refine this if needed, but for now, showing a generic "Processing" state.
-    
-    return Column(
-      children: [
-        _buildPartTimeline(service),
-        if (isAnalyzing) ...[
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              minHeight: 6,
-              backgroundColor: Colors.indigo.withOpacity(0.2),
-            ),
           ),
-          const SizedBox(height: 16),
         ],
-        ListView.builder(
-          controller: _segmentScrollController,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(top: 8),
-          itemCount: segments.length + (isAnalyzing ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == segments.length) {
-              return _buildSkeletonCard();
-            }
-            final segment = segments[index];
-            _segmentKeys[segment.id] = _segmentKeys[segment.id] ?? GlobalKey();
-            return Container(
-              key: _segmentKeys[segment.id],
-              child: SegmentCard(
-                segment: segment,
-                onPlay: () => _seekTo(segment.videoStartSec),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSkeletonCard() {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 12,
-                    width: 150,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 10,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -647,18 +538,20 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
           itemCount: notes.length,
           itemBuilder: (context, index) {
             final note = notes[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4),
+            return CustomCard(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs, horizontal: AppSpacing.s),
               child: ListTile(
                 dense: true,
+                contentPadding: EdgeInsets.zero,
                 title: Text(note.content),
                 subtitle: Text(
                   '${note.noteType.displayName} • ${DateFormat.Hm().format(note.createdAt)}',
-                  style: const TextStyle(fontSize: 10),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
                 ),
-                leading: const Icon(
+                leading: Icon(
                   Icons.bolt,
-                  color: Colors.orange,
+                  color: Theme.of(context).colorScheme.secondary,
+                  size: 20,
                 ),
               ),
             );
@@ -721,5 +614,29 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       ),
     );
     contentController.dispose();
+  }
+}
+
+class _SliverTimelineDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+
+  _SliverTimelineDelegate({required this.child});
+
+  @override
+  double get minExtent => 120;
+  @override
+  double get maxExtent => 120;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverTimelineDelegate oldDelegate) {
+    return false;
   }
 }

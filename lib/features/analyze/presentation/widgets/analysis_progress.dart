@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
 
 class AnalysisProgressWidget extends StatelessWidget {
   final double uploadProgress;
@@ -17,45 +19,40 @@ class AnalysisProgressWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     final stats = liveStats ?? const <String, dynamic>{};
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.video_file, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  appLocalizations.videoAnalysisProgress,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildProgressSection(
-              context: context,
-              title: appLocalizations.uploadVideo,
-              progress: _clampProgress(uploadProgress),
-              icon: Icons.upload_file,
-            ),
-            const SizedBox(height: 16),
-            _buildProgressSection(
-              context: context,
-              title: appLocalizations.analyze,
-              progress: _clampProgress(analysisProgress),
-              icon: Icons.analytics,
-            ),
-            if (stats.isNotEmpty) ...[
-              const Divider(height: 32),
-              _buildLiveStats(context, stats),
+    return CustomCard(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.video_file, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.s),
+              Text(
+                appLocalizations.videoAnalysisProgress,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.l),
+          _buildProgressSection(
+            context: context,
+            title: appLocalizations.uploadVideo,
+            progress: _clampProgress(uploadProgress),
+            icon: Icons.upload_file,
+          ),
+          const SizedBox(height: AppSpacing.m),
+          _buildProgressSection(
+            context: context,
+            title: appLocalizations.analyze,
+            progress: _clampProgress(analysisProgress),
+            icon: Icons.analytics,
+          ),
+          if (stats.isNotEmpty) ...[
+            const Divider(height: AppSpacing.xl),
+            _buildLiveStats(context, stats),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -71,57 +68,101 @@ class AnalysisProgressWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.bolt, size: 20, color: Colors.amber),
-            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.bolt, size: 18, color: Theme.of(context).colorScheme.secondary),
+            ),
+            const SizedBox(width: AppSpacing.s),
             Text(
-              "Live Player Metrics",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              "Live Tactical Hub",
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+            ),
+            const Spacer(),
+            Text(
+              "${stats.length} Active",
+              style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.m),
         SizedBox(
-          height: 100,
+          height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: stats.length,
             itemBuilder: (context, index) {
               final playerId = stats.keys.elementAt(index);
-              final playerStats =
-                  stats[playerId] as Map<String, dynamic>? ??
-                  const <String, dynamic>{};
-              final distance = (playerStats['distance'] as num?)?.toDouble();
+              final playerStats = stats[playerId] as Map<String, dynamic>? ?? {};
+              final distance = (playerStats['distance'] as num?)?.toDouble() ?? 0.0;
+              
+              // Determine team color (heuristic or from data if available)
+              final isTeamA = int.tryParse(playerId.toString()) != null && int.parse(playerId.toString()) % 2 == 0;
+              final teamColor = isTeamA ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.secondary;
 
               return Container(
-                width: 120,
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.all(8),
+                width: 110,
+                margin: const EdgeInsets.only(right: AppSpacing.s),
+                padding: const EdgeInsets.all(AppSpacing.s),
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                  ),
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
+                  border: Border.all(color: teamColor.withOpacity(0.2), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: teamColor.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      "Player #$playerId",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator(
+                            value: (distance % 100) / 100, // Just for visual effect
+                            strokeWidth: 3,
+                            backgroundColor: teamColor.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(teamColor),
+                          ),
+                        ),
+                        Text(
+                          "#$playerId",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: teamColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.s),
                     Text(
-                      '${distance?.toStringAsFixed(1) ?? '0.0'}m',
+                      '${distance.toStringAsFixed(1)}m',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     Text(
-                      'Distance',
-                      style: Theme.of(context).textTheme.labelSmall,
+                      'DISTANCE',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        letterSpacing: 1,
+                      ),
                     ),
                   ],
                 ),
