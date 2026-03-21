@@ -23,6 +23,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/locale_notifier.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/services/note_service.dart';
+import 'package:frontend/services/tracking_profile_service.dart';
 import 'package:frontend/services/chat_bubble_notifier.dart';
 import 'package:frontend/services/tactical_alert_service.dart';
 import 'package:frontend/core/design_system/app_theme.dart';
@@ -154,6 +155,12 @@ Future<void> main() async {
         ChangeNotifierProvider<TacticalAlertService>(
           create: (context) => TacticalAlertService(
             Provider.of<ApiClient>(context, listen: false),
+          ),
+        ),
+        Provider<TrackingProfileService>(
+          create: (context) => TrackingProfileService(
+            baseUrl: analysisBaseUrl,
+            analysisService: Provider.of<AnalysisService>(context, listen: false),
           ),
         ),
       ],

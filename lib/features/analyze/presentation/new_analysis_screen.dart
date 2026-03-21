@@ -14,6 +14,8 @@ import 'dart:ui';
 import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/features/analyze/presentation/calibration_screen.dart';
+import 'package:frontend/features/analyze/presentation/sync_calibration_screen.dart';
 
 class NewAnalysisScreen extends StatefulWidget {
   const NewAnalysisScreen({super.key});
@@ -31,6 +33,10 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   final Map<String, GlobalKey> _segmentKeys = {};
   bool _showMiniPlayer = false;
   String? _activeSegmentId;
+
+  double _detectionThreshold = 0.5;
+  double _ballThreshold = 0.3;
+  int _maxLostFrames = 15;
 
   @override
   void initState() {
@@ -77,6 +83,9 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
       await videoAnalysisService.uploadAndAnalyzeVideo(
         videoFile: _videoFile!,
+        detectionThreshold: _detectionThreshold,
+        ballThreshold: _ballThreshold,
+        maxLostFrames: _maxLostFrames,
         onComplete: () {
           _showMessage(appLocalizations.videoAnalysisCompleted);
         },
@@ -326,6 +335,48 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               : Text('START TACTICAL ANALYSIS', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
           ),
         ),
+        if (_videoFile != null && !service.isAnalyzing) ...[
+          const SizedBox(height: AppSpacing.s),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CalibrationScreen(matchId: service.currentMatchId),
+                ),
+              );
+            },
+            icon: const Icon(Icons.architecture),
+            label: const Text('CALIBRATE PITCH PRECISION'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM)),
+              side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.m),
+        _buildEngineSettings(),
+        if (_videoFile != null && !service.isAnalyzing) ...[
+          const SizedBox(height: AppSpacing.s),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SyncCalibrationScreen(matchId: service.currentMatchId),
+                ),
+              );
+            },
+            icon: const Icon(Icons.sync),
+            label: const Text('SYNC MULTI-CAMERA SOURCES'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 44),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM)),
+              side: BorderSide(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
+            ),
+          ),
+        ],
         if (service.isAnalyzing) ...[
           const SizedBox(height: 12),
           TextButton.icon(
@@ -334,6 +385,72 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             label: const Text('ABORT PROCESS', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildEngineSettings() {
+    return CustomCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('ENGINE TUNING', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
+            const SizedBox(height: 16),
+            _buildSliderRow(
+              label: 'General Detection Threshold',
+              value: _detectionThreshold,
+              onChanged: (v) => setState(() => _detectionThreshold = v),
+              min: 0.1,
+              max: 0.9,
+            ),
+            _buildSliderRow(
+              label: 'Ball-Specific Confidence',
+              value: _ballThreshold,
+              onChanged: (v) => setState(() => _ballThreshold = v),
+              min: 0.05,
+              max: 0.8,
+            ),
+            _buildSliderRow(
+              label: 'Track Persistence (frames)',
+              value: _maxLostFrames.toDouble(),
+              onChanged: (v) => setState(() => _maxLostFrames = v.toInt()),
+              min: 5,
+              max: 60,
+              isInteger: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliderRow({
+    required String label,
+    required double value,
+    required ValueChanged<double> onChanged,
+    required double min,
+    required double max,
+    bool isInteger = false,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 13)),
+            Text(isInteger ? value.toInt().toString() : value.toStringAsFixed(2), 
+                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+          ],
+        ),
+        Slider(
+          value: value,
+          onChanged: onChanged,
+          min: min,
+          max: max,
+          divisions: isInteger ? (max - min).toInt() : 20,
+        ),
       ],
     );
   }

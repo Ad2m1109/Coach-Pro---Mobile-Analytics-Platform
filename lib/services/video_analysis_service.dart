@@ -63,6 +63,9 @@ class VideoAnalysisService extends ChangeNotifier {
 
   Future<void> uploadAndAnalyzeVideo({
     required XFile videoFile,
+    required double detectionThreshold,
+    required double ballThreshold,
+    required int maxLostFrames,
     required VoidCallback onComplete,
     required void Function(String) onError,
   }) async {
@@ -79,6 +82,10 @@ class VideoAnalysisService extends ChangeNotifier {
       final uri = Uri.parse('${_apiClient.baseUrl}/analyze_match');
       final request = http.MultipartRequest('POST', uri);
       final videoLength = await videoFile.length();
+
+      request.fields['confidence_threshold'] = detectionThreshold.toString();
+      request.fields['ball_confidence'] = ballThreshold.toString();
+      request.fields['max_lost_frames'] = maxLostFrames.toString();
 
       // Add authentication headers
       final authHeaders = await _apiClient.getAuthHeaders();
