@@ -37,6 +37,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   double _detectionThreshold = 0.5;
   double _ballThreshold = 0.3;
   int _maxLostFrames = 15;
+  bool _enableReid = false;
 
   @override
   void initState() {
@@ -86,6 +87,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         detectionThreshold: _detectionThreshold,
         ballThreshold: _ballThreshold,
         maxLostFrames: _maxLostFrames,
+        enableReid: _enableReid,
         onComplete: () {
           _showMessage(appLocalizations.videoAnalysisCompleted);
         },
@@ -420,6 +422,76 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               max: 60,
               isInteger: true,
             ),
+            const Divider(height: 32),
+            SwitchListTile(
+              title: const Text('Enable Player Re-Identification', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Use deep learning models (BoT-SORT/OsNet) to maintain player IDs despite severe occlusions. Slower but more accurate.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              value: _enableReid,
+              onChanged: (val) {
+                setState(() => _enableReid = val);
+              },
+              contentPadding: EdgeInsets.zero,
+            ),
+            if (_enableReid)
+               const Padding(
+                 padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+                 child: Row(
+                   children: [
+                     Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
+                     SizedBox(width: 8),
+                     Expanded(child: Text("Requires significantly more GPU memory.", style: TextStyle(color: Colors.orange, fontSize: 12))),
+                   ],
+                 ),
+               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthMonitor(VideoAnalysisService service) {
+    if (service.liveStats == null) return const SizedBox.shrink();
+    
+    // Determine health status based on tracking rate
+    final trackingRate = double.tryParse((service.liveStats!['players_detected'] ?? '0').toString()) ?? 0;
+    final bool isHealthy = trackingRate > 10; // Simple heuristic
+
+    return CustomCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('SYSTEM HEALTH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isHealthy ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(isHealthy ? Icons.check_circle : Icons.warning_amber, 
+                           color: isHealthy ? Colors.green : Colors.orange, size: 14),
+                      const SizedBox(width: 4),
+                      Text(isHealthy ? 'OPTIMAL' : 'LOW VISIBILITY', 
+                           style: TextStyle(color: isHealthy ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: isHealthy ? 1.0 : 0.4,
+              backgroundColor: Colors.grey.withOpacity(0.2),
+              color: isHealthy ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(height: 8),
+            Text('Confidence: ${isHealthy ? "High" : "Degraded"} (Players: ${trackingRate.toInt()})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),

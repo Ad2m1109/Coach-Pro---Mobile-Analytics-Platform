@@ -66,6 +66,7 @@ class VideoAnalysisService extends ChangeNotifier {
     required double detectionThreshold,
     required double ballThreshold,
     required int maxLostFrames,
+    required bool enableReid,
     required VoidCallback onComplete,
     required void Function(String) onError,
   }) async {
@@ -86,6 +87,7 @@ class VideoAnalysisService extends ChangeNotifier {
       request.fields['confidence_threshold'] = detectionThreshold.toString();
       request.fields['ball_confidence'] = ballThreshold.toString();
       request.fields['max_lost_frames'] = maxLostFrames.toString();
+      request.fields['enable_reid'] = enableReid.toString();
 
       // Add authentication headers
       final authHeaders = await _apiClient.getAuthHeaders();
