@@ -1641,6 +1641,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No analysis segments generated yet.'**
   String get noSegmentsYet;
+
+  /// No description provided for @or.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get or;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogle;
+
+  /// No description provided for @signUpWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up with Google'**
+  String get signUpWithGoogle;
 }
 
 class _AppLocalizationsDelegate

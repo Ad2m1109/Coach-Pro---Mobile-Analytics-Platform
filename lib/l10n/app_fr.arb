@@ -386,5 +386,8 @@
     },
     "pressures": "Pressions",
     "noEventsFound": "Aucun événement trouvé.",
-    "nationality": "Nationalité"
+    "nationality": "Nationalité",
+    "or": "OU",
+    "signInWithGoogle": "Se connecter avec Google",
+    "signUpWithGoogle": "S'inscrire avec Google"
 }

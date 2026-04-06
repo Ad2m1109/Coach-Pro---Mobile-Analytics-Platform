@@ -413,5 +413,8 @@
     "recommendation": "Recommendation",
     "severity": "Severity",
     "detailedAnalysis": "Detailed Analysis",
-    "noSegmentsYet": "No analysis segments generated yet."
+    "noSegmentsYet": "No analysis segments generated yet.",
+    "or": "OR",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google"
 }

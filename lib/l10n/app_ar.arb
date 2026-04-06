@@ -386,5 +386,8 @@
     },
     "pressures": "الضغوط",
     "noEventsFound": "لم يتم العثور على أحداث.",
-    "nationality": "الجنسية"
+    "nationality": "الجنسية",
+    "or": "أو",
+    "signInWithGoogle": "تسجيل الدخول باستخدام جوجل",
+    "signUpWithGoogle": "التسجيل باستخدام جوجل"
 }

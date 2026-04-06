@@ -839,4 +839,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noSegmentsYet => 'No analysis segments generated yet.';
+
+  @override
+  String get or => 'OR';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
+
+  @override
+  String get signUpWithGoogle => 'Sign up with Google';
 }

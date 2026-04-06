@@ -838,4 +838,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noSegmentsYet => 'No analysis segments generated yet.';
+
+  @override
+  String get or => 'أو';
+
+  @override
+  String get signInWithGoogle => 'تسجيل الدخول باستخدام جوجل';
+
+  @override
+  String get signUpWithGoogle => 'التسجيل باستخدام جوجل';
 }

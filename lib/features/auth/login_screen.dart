@@ -26,6 +26,14 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _passwordApiError;
   bool _isPasswordVisible = false;
 
+  String _formatUnexpectedError(Object error) {
+    final text = error.toString();
+    if (text.startsWith('Exception: ')) {
+      return text.substring('Exception: '.length);
+    }
+    return text;
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -34,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    final appLocalizations = AppLocalizations.of(context)!;
     // Clear previous API errors
     setState(() {
       _emailApiError = null;
@@ -56,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context.goNamed(AppRouteConstants.strategieRouteName);
         }
       } on ApiException catch (e) {
+        if (!mounted) return;
         setState(() {
           _passwordController.clear();
           if (e.message.toLowerCase().contains('account does not exist')) {
@@ -68,11 +76,50 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         });
       } catch (e) {
+        if (!mounted) return;
         setState(() {
           _passwordController.clear();
-          _passwordApiError = appLocalizations.anUnexpectedErrorOccurred;
+          _passwordApiError = _formatUnexpectedError(e);
         });
       } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _emailApiError = null;
+      _passwordApiError = null;
+    });
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.loginWithGoogle();
+      if (mounted && authService.isAuthenticated) {
+        context.goNamed(AppRouteConstants.strategieRouteName);
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _passwordApiError = e.message;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          if (!e.toString().contains('cancelled')) {
+            _passwordApiError = _formatUnexpectedError(e);
+          }
+        });
+      }
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
@@ -83,6 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
+    final authService = context.watch<AuthService>();
     return Scaffold(
       appBar: AppBar(title: Text(appLocalizations.login)),
       body: Center(
@@ -160,6 +208,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _login,
                   isLoading: _isLoading,
                 ),
+                if (authService.isGoogleSignInAvailable) ...[
+                  const SizedBox(height: AppSpacing.m),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s),
+                        child: Text(
+                          appLocalizations.or,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _loginWithGoogle,
+                    icon: const Icon(Icons.login),
+                    label: Text(appLocalizations.signInWithGoogle),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSpacing.s),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.m),
                 TextButton(
                   onPressed: () {

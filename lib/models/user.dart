@@ -6,8 +6,6 @@ part 'user.g.dart';
 class User {
   final String id;
   final String email;
-  @JsonKey(name: 'password_hash')
-  final String passwordHash;
   @JsonKey(name: 'full_name')
   final String? fullName;
   @JsonKey(name: 'is_active')
@@ -20,7 +18,6 @@ class User {
   User({
     required this.id,
     required this.email,
-    required this.passwordHash,
     this.fullName,
     required this.isActive,
     required this.createdAt,
