@@ -117,103 +117,181 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final avgSpeed = teamA['avg_speed'] ?? 0.0;
     final pressing = teamA['pressing_intensity'] ?? 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blueGrey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.analytics, color: Colors.blueAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'TACTICAL TELEMETRY',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      letterSpacing: 1.1,
-                      color: Colors.blueAccent.shade100,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                childAspectRatio: 3.5,
-                children: [
-                  _buildMetricItem(Icons.straighten, 'Def Line', '${defLine.toStringAsFixed(1)}m'),
-                  _buildMetricItem(Icons.swap_horizontal_circle, 'Width', '${width.toStringAsFixed(1)}m'),
-                  _buildMetricItem(Icons.compress, 'Compact', '${compactness.toStringAsFixed(1)}m'),
-                  _buildMetricItem(Icons.speed, 'Speed', '${avgSpeed.toStringAsFixed(1)}m/s'),
-                  _buildMetricItem(Icons.bolt, 'Pressing', '$pressing'),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (segment.recommendation != null && segment.recommendation!.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade900.withOpacity(0.5), Colors.black.withOpacity(0.5)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blue.withOpacity(0.1),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                )
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
-                Row(
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.psychology, color: Colors.redAccent, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.psychology, color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'AI SCOUT ADVISORY',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 1.5,
-                        color: Colors.white,
-                      ),
+                    Text(
+                      'TACTICAL MASTERCLASS',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                            color: Colors.white,
+                          ),
+                    ),
+                    Text(
+                      'Segment #${segment.segmentIndex + 1} • Analytics HUD',
+                      style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const Spacer(),
+                _buildSeverityBadge(segment.severityLabel),
+              ],
+            ),
+          ),
+
+          const Divider(color: Colors.white10, height: 1),
+
+          // 5 Variables Grid
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  segment.recommendation!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                  'DETERMINISTIC METRICS',
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
                   ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildEliteMetric(Icons.straighten, 'Def Line', '${defLine.toStringAsFixed(1)}m')),
+                    Expanded(child: _buildEliteMetric(Icons.swap_horizontal_circle, 'Width', '${width.toStringAsFixed(1)}m')),
+                    Expanded(child: _buildEliteMetric(Icons.compress, 'Compact', '${compactness.toStringAsFixed(1)}m')),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildEliteMetric(Icons.speed, 'Avg Speed', '${avgSpeed.toStringAsFixed(1)} m/s')),
+                    Expanded(child: _buildEliteMetric(Icons.bolt, 'Pressing', '$pressing actions')),
+                  ],
                 ),
               ],
             ),
           ),
+
+          if (segment.recommendation != null && segment.recommendation!.isNotEmpty) ...[
+            const Divider(color: Colors.white10, height: 1),
+            // AI Recommendation
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ELITE STRATEGIC ADVISORY',
+                        style: TextStyle(
+                          color: Colors.amberAccent.withOpacity(0.8),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    segment.recommendation!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.6,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEliteMetric(IconData icon, String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: Colors.white38),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontFamily: 'monospace',
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildSeverityBadge(String label) {
+    Color color;
+    switch (label.toUpperCase()) {
+      case 'CRITICAL': color = Colors.red; break;
+      case 'HIGH': color = Colors.orange; break;
+      case 'MEDIUM': color = Colors.amber; break;
+      default: color = Colors.blue;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
