@@ -137,40 +137,28 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         
         return Stack(
           children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.teal.withOpacity(0.05),
-                      Colors.white,
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            Container(color: Theme.of(context).scaffoldBackgroundColor),
             CustomScrollView(
               controller: _scrollController,
               slivers: [
                 _buildSliverAppBar(appLocalizations),
                 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.m),
-                    child: Column(
-                      children: [
-                        CustomCard(
-                          child: _buildControlSection(service, appLocalizations),
-                        ),
-                        const SizedBox(height: AppSpacing.m),
-                        if (service.originalVideoUrl != null)
-                          _buildVideoPlayer(service.originalVideoUrl!),
-                      ],
+                if (!isAnalyzing)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.m),
+                      child: Column(
+                        children: [
+                          CustomCard(
+                            child: _buildControlSection(service, appLocalizations),
+                          ),
+                          const SizedBox(height: AppSpacing.m),
+                          if (service.originalVideoUrl != null)
+                            _buildVideoPlayer(service.originalVideoUrl!),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
                 if (service.segments.isNotEmpty || isAnalyzing)
                   SliverPersistentHeader(

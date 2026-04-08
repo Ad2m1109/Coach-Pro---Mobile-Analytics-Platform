@@ -4,7 +4,9 @@ import 'package:frontend/services/analysis_service.dart';
 import 'package:frontend/models/analysis_segment.dart';
 import 'package:frontend/features/analyze/presentation/analysis_preview_screen.dart';
 import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart';
+import 'package:frontend/features/analyze/presentation/widgets/premium_video_player.dart';
 import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -18,6 +20,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Map<String, bool> _expanded = {};
   final Map<String, List<AnalysisSegment>> _runSegments = {};
   final Map<String, bool> _segmentsLoading = {};
+  final Map<String, VideoPlayerController?> _controllers = {};
+  final Map<String, Future<void>?> _initFutures = {};
+  final Map<String, int> _selectedSegmentIndices = {};
   Future<void> _deleteRun(String id) async {
     final appLocalizations = AppLocalizations.of(context)!;
     try {
@@ -52,7 +57,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {});
   }
 
-  Widget _buildMiniTimeline(List<AnalysisSegment> segments) {
+  Widget _buildMiniTimeline(String reportId, List<AnalysisSegment> segments) {
     if (segments.isEmpty) {
       return const Text('No part timeline available yet.');
     }
@@ -72,22 +77,160 @@ class _HistoryScreenState extends State<HistoryScreen> {
         } else {
           color = Colors.grey;
         }
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            border: Border.all(color: color),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            'P${segment.segmentIndex + 1}',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
+        return GestureDetector(
+          onTap: () async {
+            setState(() {
+              _selectedSegmentIndices[reportId] = sorted.indexOf(segment);
+            });
+            final controller = _controllers[reportId];
+            if (controller != null && controller.value.isInitialized) {
+              await controller.seekTo(Duration(seconds: segment.startSec.round()));
+              controller.play();
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(_selectedSegmentIndices[reportId] == sorted.indexOf(segment) ? 0.4 : 0.15),
+              border: Border.all(color: color, width: _selectedSegmentIndices[reportId] == sorted.indexOf(segment) ? 2 : 1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'P${segment.segmentIndex + 1}',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildFocusedTelemetry(AnalysisSegment segment) {
+    final analysis = segment.analysisJson ?? {};
+    final teamA = analysis['team_a'] ?? {};
+    final defLine = teamA['defensive_line'] ?? 0.0;
+    final width = teamA['width'] ?? 0.0;
+    final compactness = teamA['compactness'] ?? 0.0;
+    final avgSpeed = teamA['avg_speed'] ?? 0.0;
+    final pressing = teamA['pressing_intensity'] ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.analytics, color: Colors.blueAccent, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'TACTICAL TELEMETRY',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 1.1,
+                      color: Colors.blueAccent.shade100,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                childAspectRatio: 3.5,
+                children: [
+                  _buildMetricItem(Icons.straighten, 'Def Line', '${defLine.toStringAsFixed(1)}m'),
+                  _buildMetricItem(Icons.swap_horizontal_circle, 'Width', '${width.toStringAsFixed(1)}m'),
+                  _buildMetricItem(Icons.compress, 'Compact', '${compactness.toStringAsFixed(1)}m'),
+                  _buildMetricItem(Icons.speed, 'Speed', '${avgSpeed.toStringAsFixed(1)}m/s'),
+                  _buildMetricItem(Icons.bolt, 'Pressing', '$pressing'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (segment.recommendation != null && segment.recommendation!.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade900.withOpacity(0.5), Colors.black.withOpacity(0.5)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.1),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.psychology, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'AI SCOUT ADVISORY',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 1.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  segment.recommendation!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMetricItem(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.white54),
+        const SizedBox(width: 8),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+            Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
+          ],
+        ),
+      ],
     );
   }
 
@@ -99,9 +242,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   @override
+  void dispose() {
+    for (var controller in _controllers.values) {
+      controller?.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
-    return Consumer<AnalysisService>(
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(appLocalizations.history),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Consumer<AnalysisService>(
       builder: (context, analysisService, child) {
         if (analysisService.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -123,7 +281,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
           padding: const EdgeInsets.all(8),
           itemBuilder: (context, index) {
             final report = reports[index];
-            final isFailed = report.status.toUpperCase() == 'FAILED';
             final expanded = _expanded[report.id] ?? false;
             final segmentList = _runSegments[report.id] ?? [];
             final highSeverityCount = segmentList.where((s) => s.severityLabel.toUpperCase() == 'HIGH' || s.severityLabel.toUpperCase() == 'CRITICAL').length;
@@ -185,11 +342,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             tooltip: expanded ? 'Collapse' : 'Expand',
                             icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
                             onPressed: () async {
+                              final wasExpanded = expanded;
                               setState(() {
-                                _expanded[report.id] = !expanded;
+                                _expanded[report.id] = !wasExpanded;
                               });
-                              if (!_runSegments.containsKey(report.id) && !expanded) {
+
+                              if (!wasExpanded) {
+                                // Expanding
                                 await _ensureSegments(report.id);
+                                final videoUrl = report.outputs?['output_video'] ?? 
+                                               report.outputs?['original_video'];
+                                if (videoUrl != null && _controllers[report.id] == null) {
+                                  final controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+                                  _controllers[report.id] = controller;
+                                  _initFutures[report.id] = controller.initialize().then((_) => setState(() {}));
+                                }
+                              } else {
+                                // Collapsing - optionally dispose or keep for performance
+                                // We'll keep it for now but pause
+                                _controllers[report.id]?.pause();
                               }
                             },
                           ),
@@ -217,10 +388,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: _buildMiniTimeline(segmentList),
+                      child: _buildMiniTimeline(report.id, segmentList),
                     ),
                     if (expanded) ...[
                       const Divider(),
+                      if (_controllers[report.id] != null) 
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            children: [
+                              PremiumVideoPlayer(
+                                controller: _controllers[report.id]!,
+                                autoPlay: false,
+                              ),
+                              const SizedBox(height: 16),
+                              if (segmentList.isNotEmpty)
+                                _buildFocusedTelemetry(
+                                  segmentList[_selectedSegmentIndices[report.id] ?? 0],
+                                ),
+                            ],
+                          ),
+                        ),
                       if (_segmentsLoading[report.id] ?? false)
                         const Padding(
                           padding: EdgeInsets.all(16.0),
@@ -238,7 +426,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             children: segmentList.map((segment) {
                               return SegmentCard(
                                 segment: segment,
-                                onPlay: () {},
+                                onPlay: () async {
+                                  setState(() {
+                                    _selectedSegmentIndices[report.id] = segmentList.indexOf(segment);
+                                  });
+                                  final controller = _controllers[report.id];
+                                  if (controller != null && controller.value.isInitialized) {
+                                    await controller.seekTo(Duration(seconds: segment.startSec.round()));
+                                    controller.play();
+                                  }
+                                },
                               );
                             }).toList(),
                           ),
@@ -251,6 +448,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           },
         );
       },
+    ),
     );
   }
 }

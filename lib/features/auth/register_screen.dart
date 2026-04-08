@@ -5,6 +5,7 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/routes/app_router.dart';
+import 'package:frontend/features/auth/widgets/email_verification_dialog.dart';
 
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:frontend/widgets/custom_button.dart';
@@ -50,18 +51,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         final authService = Provider.of<AuthService>(context, listen: false);
-        await authService.register(
+        final pendingRegistration = await authService.register(
           _emailController.text,
           _passwordController.text,
           _fullNameController.text,
         );
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appLocalizations.registrationSuccessful)),
+          SnackBar(content: Text(pendingRegistration.detail)),
         );
-        context.goNamed(
-          AppRouteConstants.strategieRouteName,
-        ); // Navigate to main app after successful registration and login
+        final verified = await showEmailVerificationDialog(
+          context,
+          email: pendingRegistration.email,
+        );
+        if (!mounted) return;
+        if (verified == true) {
+          context.goNamed(AppRouteConstants.strategieRouteName);
+        }
       } on ApiException catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

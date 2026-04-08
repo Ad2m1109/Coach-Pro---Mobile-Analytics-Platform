@@ -12,6 +12,8 @@ import 'package:frontend/models/match.dart';
 import 'package:frontend/widgets/scaffold_with_nav_bar.dart'; // Import the new widget
 import 'package:frontend/features/auth/login_screen.dart';
 import 'package:frontend/features/auth/register_screen.dart';
+import 'package:frontend/features/auth/forgot_password_screen.dart';
+import 'package:frontend/features/auth/verify_email_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_service.dart';
 
@@ -25,6 +27,8 @@ class AppRouteConstants {
   static const String settingsRouteName = 'settings';
   static const String loginRouteName = 'login';
   static const String registerRouteName = 'register';
+  static const String forgotPasswordRouteName = 'forgot-password';
+  static const String verifyEmailRouteName = 'verify-email';
 }
 
 GoRouter buildAppRouter(BuildContext context) {
@@ -37,9 +41,13 @@ GoRouter buildAppRouter(BuildContext context) {
       final isAuthenticated = authService.isAuthenticated;
 
       // Check if the current location is one of the authentication routes
-      final isAuthenticating =
-          state.uri.toString() == '/${AppRouteConstants.loginRouteName}' ||
-          state.uri.toString() == '/${AppRouteConstants.registerRouteName}';
+      final authPaths = {
+        '/${AppRouteConstants.loginRouteName}',
+        '/${AppRouteConstants.registerRouteName}',
+        '/${AppRouteConstants.forgotPasswordRouteName}',
+        '/${AppRouteConstants.verifyEmailRouteName}',
+      };
+      final isAuthenticating = authPaths.contains(state.uri.path);
 
       // If not authenticated and not on an auth page, redirect to login
       if (!isAuthenticated && !isAuthenticating) return '/${AppRouteConstants.loginRouteName}';
@@ -59,6 +67,20 @@ GoRouter buildAppRouter(BuildContext context) {
         path: '/${AppRouteConstants.registerRouteName}',
         name: AppRouteConstants.registerRouteName,
         builder: (BuildContext context, GoRouterState state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/${AppRouteConstants.forgotPasswordRouteName}',
+        name: AppRouteConstants.forgotPasswordRouteName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/${AppRouteConstants.verifyEmailRouteName}',
+        name: AppRouteConstants.verifyEmailRouteName,
+        builder: (BuildContext context, GoRouterState state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return VerifyEmailScreen(email: email);
+        },
       ),
       ShellRoute(
         builder: (BuildContext context, GoRouterState state, Widget child) {

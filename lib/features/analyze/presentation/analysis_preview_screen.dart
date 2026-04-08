@@ -6,6 +6,12 @@ import 'package:frontend/services/analysis_service.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:frontend/features/analyze/presentation/widgets/premium_video_player.dart';
+import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
+import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart';
+import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/app_typography.dart';
 
 class AnalysisPreviewScreen extends StatefulWidget {
   final AnalysisReport report;
@@ -145,13 +151,17 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     await controller.seekTo(Duration(seconds: seg.startSec.round()));
   }
 
+
   @override
   Widget build(BuildContext context) {
     final report = widget.report;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(report.inputVideoName ?? 'Analysis Preview'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -169,51 +179,14 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         _segments.isNotEmpty ? _segments[_selected.clamp(0, _segments.length - 1)] : null;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
         if (hasVideo)
           FutureBuilder<void>(
             future: _initVideoFuture,
             builder: (context, snap) {
-              if (snap.connectionState != ConnectionState.done) {
-                return const AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final controller = _controller!;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AspectRatio(
-                    aspectRatio: controller.value.aspectRatio,
-                    child: VideoPlayer(controller),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          if (controller.value.isPlaying) {
-                            controller.pause();
-                          } else {
-                            controller.play();
-                          }
-                          setState(() {});
-                        },
-                        icon: Icon(
-                          controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                        ),
-                      ),
-                      Expanded(
-                        child: VideoProgressIndicator(
-                          controller,
-                          allowScrubbing: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              return PremiumVideoPlayer(
+                controller: _controller!,
               );
             },
           )
@@ -228,55 +201,92 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
             ),
           ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        Text(
-          report.message ?? 'Timeline',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tactical Timeline',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+            ),
+            Text(
+              '${_segments.length} Parts',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         if (_segments.isEmpty)
           const Text('No segments available for this analysis run yet.')
         else
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(_segments.length, (i) {
+          SizedBox(
+            height: 54,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _segments.length,
+              itemBuilder: (context, i) {
                 final seg = _segments[i];
                 final isSelected = i == _selected;
                 final color = _severityColor(seg.severityLabel);
                 final alertCount = _alertsForSegment(seg).length;
+
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 10),
                   child: InkWell(
                     onTap: () => _selectSegment(i),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? color.withOpacity(0.20) : Colors.grey.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isSelected ? color : Colors.grey.shade300),
+                        color: isSelected
+                            ? color.withOpacity(0.15)
+                            : Theme.of(context).cardColor.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? color : Colors.white10,
+                          width: isSelected ? 2 : 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'P${seg.segmentIndex + 1}',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? color : null),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              boxShadow: isSelected
+                                  ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 4)]
+                                  : null,
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          Text('${_formatTime(seg.startSec)}-${_formatTime(seg.endSec)}'),
+                          Text(
+                            'P${seg.segmentIndex + 1}',
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.white : Colors.white70,
+                            ),
+                          ),
                           if (alertCount > 0) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.06),
-                                borderRadius: BorderRadius.circular(999),
+                                color: Colors.white.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Text('A$alertCount', style: const TextStyle(fontSize: 12)),
+                              child: Text(
+                                '$alertCount',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ],
                         ],
@@ -284,66 +294,121 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                     ),
                   ),
                 );
-              }),
+              },
             ),
           ),
 
         const SizedBox(height: 16),
 
         if (selectedSeg != null) ...[
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: _severityColor(selectedSeg.severityLabel),
-                          shape: BoxShape.circle,
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.psychology, color: Theme.of(context).primaryColor, size: 24),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Tactical Masterclass',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).primaryColor,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _severityColor(selectedSeg.severityLabel).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              selectedSeg.severityLabel,
+                              style: TextStyle(
+                                color: _severityColor(selectedSeg.severityLabel),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 16),
                       Text(
-                        'Part ${selectedSeg.segmentIndex + 1}  (${_formatTime(selectedSeg.startSec)} - ${_formatTime(selectedSeg.endSec)})',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        selectedSeg.recommendation?.trim().isNotEmpty == true
+                            ? selectedSeg.recommendation!.trim()
+                            : 'No tactical insights generated for this phase.',
+                        style: const TextStyle(height: 1.5, fontSize: 15),
                       ),
-                      const Spacer(),
-                      Text(selectedSeg.severityLabel),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    selectedSeg.recommendation?.trim().isNotEmpty == true
-                        ? selectedSeg.recommendation!.trim()
-                        : 'No LLM recommendation for this part.',
+                ),
+                if (_alertsForSegment(selectedSeg).isNotEmpty) ...[
+                  const Divider(color: Colors.white10, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SITUATION DATA',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.white38,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        ..._alertsForSegment(selectedSeg).map((a) {
+                          final t = a.matchTime;
+                          final timeLabel = t != null ? _formatTime(t) : '--:--';
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.03),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.analytics_outlined, color: a.severityColor, size: 18),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        a.decisionType,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                      Text(
+                                        'Timestamp: $timeLabel',
+                                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Events',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._alertsForSegment(selectedSeg).map((a) {
-                    final t = a.matchTime;
-                    final timeLabel = t != null ? _formatTime(t) : '--:--';
-                    return ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.bolt, color: a.severityColor),
-                      title: Text('${a.decisionType} (${a.severityLabel})'),
-                      subtitle: Text(timeLabel),
-                    );
-                  }),
-                  if (_alertsForSegment(selectedSeg).isEmpty)
-                    const Text('No events in this part.'),
                 ],
-              ),
+              ],
             ),
           ),
         ],

@@ -129,25 +129,25 @@ class SegmentCard extends StatelessWidget {
 
   Widget _buildMetricsGrid(BuildContext context) {
     final analysis = segment.analysisJson ?? {};
-    final posA = analysis['possession_team_a_pct'] ?? 50.0;
-    final posB = analysis['possession_team_b_pct'] ?? 50.0;
-    final gapsA = analysis['backline_gaps_team_a'] ?? 0;
-    final gapsB = analysis['backline_gaps_team_b'] ?? 0;
-    final entropy = analysis['zone_entropy'] ?? 0.0;
+    final teamA = analysis['team_a'] ?? {};
+    
+    // The 5 Deterministic Tactical Variables
+    final defLine = teamA['defensive_line'] ?? 0.0;
+    final width = teamA['width'] ?? 0.0;
+    final compactness = teamA['compactness'] ?? 0.0;
+    final avgSpeed = teamA['avg_speed'] ?? 0.0;
+    final pressing = teamA['pressing_intensity'] ?? 0;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            _buildTacticalBadge(
-              Icons.trending_up, 
-              posA > posB ? 'Dominance' : 'Parity', 
-              Theme.of(context).colorScheme.primary
-            ),
-            const SizedBox(width: AppSpacing.s),
-            if (gapsA > 0 || gapsB > 0)
-              _buildTacticalBadge(Icons.security, 'Defense Alert', Colors.orange),
-          ],
+        Text(
+          'TACTICAL TELEMETRY',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+                letterSpacing: 1.1,
+              ),
         ),
         const SizedBox(height: AppSpacing.s),
         Container(
@@ -161,9 +161,9 @@ class SegmentCard extends StatelessWidget {
             children: [
               _buildMetricRow(
                 context,
-                Icons.pie_chart_rounded,
-                'Possession Balance',
-                '$posA% - $posB%',
+                Icons.straighten,
+                'Defensive Line',
+                '${defLine.toStringAsFixed(1)}m',
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -171,9 +171,9 @@ class SegmentCard extends StatelessWidget {
               ),
               _buildMetricRow(
                 context,
-                Icons.shield_outlined,
-                'Defensive Alerts',
-                'S1: $gapsA | S2: $gapsB',
+                Icons.swap_horizontal_circle_outlined,
+                'Team Width',
+                '${width.toStringAsFixed(1)}m',
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -181,9 +181,29 @@ class SegmentCard extends StatelessWidget {
               ),
               _buildMetricRow(
                 context,
-                Icons.hub_outlined,
-                'Tactical Entropy',
-                entropy.toStringAsFixed(3),
+                Icons.compress,
+                'Compactness',
+                '${compactness.toStringAsFixed(1)}m',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: Divider(height: 1),
+              ),
+              _buildMetricRow(
+                context,
+                Icons.speed,
+                'Average Speed',
+                '${avgSpeed.toStringAsFixed(2)} m/s',
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                child: Divider(height: 1),
+              ),
+              _buildMetricRow(
+                context,
+                Icons.bolt,
+                'Pressing Intensity',
+                '$pressing actions',
               ),
             ],
           ),
@@ -250,62 +270,63 @@ class SegmentCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: hasRec ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
+        color: hasRec ? Theme.of(context).colorScheme.primary : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusL),
+        border: Border.all(color: hasRec ? Colors.transparent : Colors.white10),
         boxShadow: hasRec ? [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           )
         ] : null,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
+        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusL),
         child: Stack(
           children: [
             if (hasRec)
               Positioned(
-                right: -20,
-                top: -20,
+                right: -10,
+                top: -10,
                 child: Icon(
-                  Icons.psychology,
-                  size: 100,
-                  color: Colors.white.withOpacity(0.05),
+                  Icons.psychology_outlined,
+                  size: 80,
+                  color: Colors.white.withOpacity(0.1),
                 ),
               ),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.m),
+              padding: const EdgeInsets.all(AppSpacing.l),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Icon(
-                        Icons.insights_rounded,
+                        Icons.auto_awesome,
                         size: 20,
-                        color: hasRec ? Colors.white : Theme.of(context).hintColor,
+                        color: hasRec ? Colors.white : Colors.white38,
                       ),
                       const SizedBox(width: AppSpacing.s),
                       Text(
-                        'AI TACTICAL ADVISORY',
+                        'ELITE TACTICAL ADVISORY',
                         style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
-                          letterSpacing: 1.2,
-                          color: hasRec ? Colors.white : Theme.of(context).hintColor,
+                          letterSpacing: 1.5,
+                          color: hasRec ? Colors.white : Colors.white38,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.s),
+                  const SizedBox(height: AppSpacing.m),
                   Text(
-                    hasRec ? segment.recommendation! : 'Segment severity below LLM threshold. No advisory generated.',
+                    hasRec ? segment.recommendation! : 'Segment severity below LLM threshold. Monitoring phase...',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       height: 1.6,
                       fontStyle: hasRec ? FontStyle.normal : FontStyle.italic,
-                      color: hasRec ? Colors.white.withOpacity(0.9) : Theme.of(context).hintColor,
+                      color: hasRec ? Colors.white : Colors.white38,
                       fontWeight: hasRec ? FontWeight.w500 : FontWeight.normal,
                     ),
                   ),

@@ -5,6 +5,7 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/routes/app_router.dart';
+import 'package:frontend/features/auth/widgets/email_verification_dialog.dart';
 
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:frontend/widgets/custom_button.dart';
@@ -64,6 +65,18 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } on ApiException catch (e) {
         if (!mounted) return;
+        if (e.statusCode == 403 &&
+            e.message.toLowerCase().contains('email not verified')) {
+          final verified = await showEmailVerificationDialog(
+            context,
+            email: _emailController.text.trim(),
+          );
+          if (!mounted) return;
+          if (verified == true) {
+            context.goNamed(AppRouteConstants.strategieRouteName);
+          }
+          return;
+        }
         setState(() {
           _passwordController.clear();
           if (e.message.toLowerCase().contains('account does not exist')) {
@@ -207,6 +220,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   text: appLocalizations.login,
                   onPressed: _login,
                   isLoading: _isLoading,
+                ),
+                const SizedBox(height: AppSpacing.s),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => context.goNamed(
+                              AppRouteConstants.forgotPasswordRouteName,
+                            ),
+                    child: const Text('Forgot password?'),
+                  ),
                 ),
                 if (authService.isGoogleSignInAvailable) ...[
                   const SizedBox(height: AppSpacing.m),

@@ -6,6 +6,16 @@ import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+class PendingRegistration {
+  final String email;
+  final String detail;
+
+  const PendingRegistration({
+    required this.email,
+    required this.detail,
+  });
+}
+
 class AuthService with ChangeNotifier {
   final ApiClient _apiClient;
   final ApiClient? _analysisApiClient;
@@ -147,13 +157,7 @@ class AuthService with ChangeNotifier {
         isAuth: true,
       );
 
-      _token = response['access_token'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token', _token!);
-      _parseJwtClaims(_token!);
-      _apiClient.setToken(_token!);
-      _analysisApiClient?.setToken(_token!);
-      await fetchCurrentUser();
+      await _applyAuthenticationResponse(response);
     } catch (e) {
       _clearSessionState();
       rethrow;
@@ -168,37 +172,92 @@ class AuthService with ChangeNotifier {
         isAuth: true,
         contentType: 'application/x-www-form-urlencoded',
       );
-      _token = response['access_token'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token', _token!); // Store token
-      _parseJwtClaims(_token!);
-      _apiClient.setToken(_token!); // Set token in ApiClient
-      _analysisApiClient?.setToken(_token!); // Set token in Analysis ApiClient
-      await fetchCurrentUser(); // Fetch user details after login
+      await _applyAuthenticationResponse(response);
     } catch (e) {
       _clearSessionState();
       rethrow;
     }
   }
 
-  Future<void> register(String email, String password, String? fullName) async {
+  Future<PendingRegistration> register(
+    String email,
+    String password,
+    String? fullName,
+  ) async {
     try {
       final response = await _apiClient.post(
         '/register',
         data: {'email': email, 'password': password, 'full_name': fullName},
         isAuth: true,
       );
-      _token = response['access_token'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token', _token!); // Store token
-      _parseJwtClaims(_token!);
-      _apiClient.setToken(_token!); // Set token in ApiClient
-      _analysisApiClient?.setToken(_token!); // Set token in Analysis ApiClient
-      await fetchCurrentUser(); // Fetch user details after registration
+      return PendingRegistration(
+        email: (response['email'] ?? email).toString(),
+        detail:
+            (response['detail'] ?? 'Verification code sent to your email.')
+                .toString(),
+      );
     } catch (e) {
       _clearSessionState();
       rethrow;
     }
+  }
+
+  Future<void> verifyRegistration(String email, String code) async {
+    try {
+      final response = await _apiClient.post(
+        '/register/verify',
+        data: {'email': email, 'code': code},
+        isAuth: true,
+      );
+      await _applyAuthenticationResponse(response);
+    } catch (e) {
+      _clearSessionState();
+      rethrow;
+    }
+  }
+
+  Future<PendingRegistration> resendRegistrationCode(String email) async {
+    try {
+      final response = await _apiClient.post(
+        '/register/resend',
+        data: {'email': email},
+        isAuth: true,
+      );
+      return PendingRegistration(
+        email: (response['email'] ?? email).toString(),
+        detail:
+            (response['detail'] ?? 'Verification code sent to your email.')
+                .toString(),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<String> requestPasswordResetCode(String email) async {
+    final response = await _apiClient.post(
+      '/password/forgot',
+      data: {'email': email},
+      isAuth: true,
+    );
+    return (response['detail'] ?? 'Password reset code sent.').toString();
+  }
+
+  Future<String> resetPasswordWithCode(
+    String email,
+    String code,
+    String newPassword,
+  ) async {
+    final response = await _apiClient.post(
+      '/password/reset',
+      data: {
+        'email': email,
+        'code': code,
+        'new_password': newPassword,
+      },
+      isAuth: true,
+    );
+    return (response['detail'] ?? 'Password updated successfully.').toString();
   }
 
   Future<void> fetchCurrentUser() async {
@@ -238,6 +297,16 @@ class AuthService with ChangeNotifier {
     _appPermissions = [];
     _apiClient.removeToken();
     _analysisApiClient?.removeToken();
+  }
+
+  Future<void> _applyAuthenticationResponse(dynamic response) async {
+    _token = response['access_token'];
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', _token!);
+    _parseJwtClaims(_token!);
+    _apiClient.setToken(_token!);
+    _analysisApiClient?.setToken(_token!);
+    await fetchCurrentUser();
   }
 
   void _parseJwtClaims(String token) {
