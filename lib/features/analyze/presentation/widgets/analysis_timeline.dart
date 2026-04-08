@@ -80,63 +80,120 @@ class _TimelineItem extends StatelessWidget {
     required this.onTap,
   });
 
-  Color _getStatusColor(BuildContext context) {
-    switch (segment.status.toUpperCase()) {
-      case 'COMPLETED':
-        return Theme.of(context).colorScheme.primary;
-      case 'PROCESSING':
-        return Colors.orange;
-      case 'FAILED':
-        return Theme.of(context).colorScheme.error;
-      default:
-        return Theme.of(context).disabledColor;
+  Color _getSeverityColor(BuildContext context, String label) {
+    switch (label.toUpperCase()) {
+      case 'CRITICAL': return Colors.red;
+      case 'HIGH': return Colors.orange;
+      case 'MEDIUM': return Colors.amber;
+      case 'LOW': return Colors.blue;
+      default: return Colors.blue;
     }
+  }
+
+  Color _getStatusColor(BuildContext context) {
+    if (segment.status.toUpperCase() == 'PROCESSING') return Colors.orange;
+    if (segment.status.toUpperCase() == 'FAILED') return Theme.of(context).colorScheme.error;
+    return Theme.of(context).colorScheme.primary;
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor(context);
+    final colorA = _getSeverityColor(context, segment.teamASeverityLabel);
+    final colorB = _getSeverityColor(context, segment.teamBSeverityLabel);
     
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        width: 100,
+        width: 110,
         margin: const EdgeInsets.all(AppSpacing.xs),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: isActive ? statusColor.withOpacity(0.1) : Theme.of(context).cardTheme.color,
+          color: isActive ? statusColor.withOpacity(0.08) : Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
           border: Border.all(
             color: isActive ? statusColor : Theme.of(context).dividerColor.withOpacity(0.1),
             width: isActive ? 2 : 1,
           ),
-          boxShadow: isActive 
-            ? [BoxShadow(color: statusColor.withOpacity(0.2), blurRadius: 4, spreadRadius: 1)]
-            : null,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
           children: [
-            Text(
-              'PART ${segment.segmentIndex + 1}',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: isActive ? statusColor : Theme.of(context).textTheme.bodySmall?.color,
+            // Dual Team Indicators (Left side bars)
+            Positioned(
+              left: 4,
+              top: 10,
+              bottom: 10,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Container(
+                      width: 4,
+                      decoration: BoxDecoration(
+                        color: colorA,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Container(
+                      width: 4,
+                      decoration: BoxDecoration(
+                        color: colorB,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Icon(
-              _getIconForStatus(segment.status),
-              size: 20,
-              color: statusColor,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${(segment.startSec / 60).floor()}:${(segment.startSec % 60).toInt().toString().padLeft(2, '0')}',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[500],
+            
+            // Content
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'PART ${segment.segmentIndex + 1}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                      color: isActive ? statusColor : Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'A',
+                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: colorA),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _getIconForStatus(segment.status),
+                        size: 14,
+                        color: statusColor.withOpacity(0.5),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'B',
+                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: colorB),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${(segment.startSec / 60).floor()}:${(segment.startSec % 60).toInt().toString().padLeft(2, '0')}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[500],
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

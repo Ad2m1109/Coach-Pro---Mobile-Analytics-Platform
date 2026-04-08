@@ -23,6 +23,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Map<String, VideoPlayerController?> _controllers = {};
   final Map<String, Future<void>?> _initFutures = {};
   final Map<String, int> _selectedSegmentIndices = {};
+  final Map<String, String> _selectedTeams = {};
   Future<void> _deleteRun(String id) async {
     final appLocalizations = AppLocalizations.of(context)!;
     try {
@@ -108,14 +109,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildFocusedTelemetry(AnalysisSegment segment) {
+  Widget _buildFocusedTelemetry(String reportId, AnalysisSegment segment) {
     final analysis = segment.analysisJson ?? {};
-    final teamA = analysis['team_a'] ?? {};
-    final defLine = teamA['defensive_line'] ?? 0.0;
-    final width = teamA['width'] ?? 0.0;
-    final compactness = teamA['compactness'] ?? 0.0;
-    final avgSpeed = teamA['avg_speed'] ?? 0.0;
-    final pressing = teamA['pressing_intensity'] ?? 0;
+    final selectedTeam = _selectedTeams[reportId] ?? 'team_a';
+    final teamData = analysis[selectedTeam] ?? {};
+    
+    final defLine = teamData['defensive_line'] ?? 0.0;
+    final width = teamData['width'] ?? 0.0;
+    final compactness = teamData['compactness'] ?? 0.0;
+    final avgSpeed = teamData['avg_speed'] ?? 0.0;
+    final pressing = teamData['pressing_intensity'] ?? 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -165,6 +168,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ],
                 ),
                 const Spacer(),
+                _buildTeamSelector(reportId, selectedTeam),
+                const SizedBox(width: 12),
                 _buildSeverityBadge(segment.severityLabel),
               ],
             ),
@@ -229,14 +234,34 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+                  Text(
+                    'TACTICAL CASE DESCRIPTION',
+                    style: TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    segment.tacticalNarrative,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'STRATEGIC HINTS',
+                    style: TextStyle(color: Colors.amberAccent.withOpacity(0.5), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     segment.recommendation!,
                     style: const TextStyle(
                       fontSize: 14,
                       height: 1.6,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -244,6 +269,44 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildTeamSelector(String reportId, String selectedTeam) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTeamTab(reportId, 'team_a', 'TEAM A', selectedTeam == 'team_a'),
+          _buildTeamTab(reportId, 'team_b', 'TEAM B', selectedTeam == 'team_b'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamTab(String reportId, String teamKey, String label, bool isSelected) {
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTeams[reportId] = teamKey),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.redAccent.withOpacity(0.8) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white38,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -482,6 +545,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               const SizedBox(height: 16),
                               if (segmentList.isNotEmpty)
                                 _buildFocusedTelemetry(
+                                  report.id,
                                   segmentList[_selectedSegmentIndices[report.id] ?? 0],
                                 ),
                             ],

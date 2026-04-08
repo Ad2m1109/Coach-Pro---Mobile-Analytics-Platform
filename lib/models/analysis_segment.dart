@@ -12,6 +12,13 @@ class AnalysisSegment {
   final String severityLabel;
   final String status;
 
+  // Team-specific getters
+  String get teamASeverityLabel => analysisJson?['team_a']?['severity_label'] ?? 'LOW';
+  String get teamBSeverityLabel => analysisJson?['team_b']?['severity_label'] ?? 'LOW';
+  double get teamASeverityScore => (analysisJson?['team_a']?['severity_score'] ?? 0.0).toDouble();
+  double get teamBSeverityScore => (analysisJson?['team_b']?['severity_score'] ?? 0.0).toDouble();
+  String get tacticalNarrative => analysisJson?['tactical_narrative'] ?? 'No narrative analysis available for this phase.';
+
   AnalysisSegment({
     required this.id,
     this.analysisId,

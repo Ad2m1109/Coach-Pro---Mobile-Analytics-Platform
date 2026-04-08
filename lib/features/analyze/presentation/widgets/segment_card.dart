@@ -3,7 +3,7 @@ import 'package:frontend/models/analysis_segment.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
 
-class SegmentCard extends StatelessWidget {
+class SegmentCard extends StatefulWidget {
   final AnalysisSegment segment;
   final VoidCallback onPlay;
 
@@ -13,17 +13,24 @@ class SegmentCard extends StatelessWidget {
     required this.onPlay,
   });
 
+  @override
+  State<SegmentCard> createState() => _SegmentCardState();
+}
+
+class _SegmentCardState extends State<SegmentCard> {
+  String _focusedTeam = 'team_a';
+
   Color _getSeverityColor(BuildContext context, String label) {
     switch (label.toUpperCase()) {
       case 'CRITICAL':
-        return Theme.of(context).colorScheme.error;
+        return Color(0xFFE53935);
       case 'HIGH':
-        return Colors.orange;
+        return Color(0xFFFB8C00);
       case 'MEDIUM':
-        return Colors.amber;
+        return Color(0xFFFFB300);
       case 'LOW':
       default:
-        return Theme.of(context).colorScheme.primary;
+        return Color(0xFF1E88E5);
     }
   }
 
@@ -35,13 +42,17 @@ class SegmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final severityColor = _getSeverityColor(context, segment.severityLabel);
+    // Determine color based on focused team's severity if available
+    final analysis = widget.segment.analysisJson ?? {};
+    final teamData = analysis[_focusedTeam] ?? {};
+    final teamLabel = teamData['severity_label'] ?? widget.segment.severityLabel;
+    final severityColor = _getSeverityColor(context, teamLabel);
     
     return CustomCard(
       padding: EdgeInsets.zero,
       color: Theme.of(context).cardTheme.color,
       child: ExpansionTile(
-        key: PageStorageKey(segment.id),
+        key: PageStorageKey(widget.segment.id),
         leading: Container(
           width: 44,
           height: 44,
@@ -51,7 +62,7 @@ class SegmentCard extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              '#${segment.segmentIndex + 1}',
+              '#${widget.segment.segmentIndex + 1}',
               style: TextStyle(
                 color: severityColor,
                 fontWeight: FontWeight.bold,
@@ -63,7 +74,7 @@ class SegmentCard extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                '${_formatTime(segment.startSec)} – ${_formatTime(segment.endSec)}',
+                '${_formatTime(widget.segment.startSec)} – ${_formatTime(widget.segment.endSec)}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -74,7 +85,7 @@ class SegmentCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                segment.severityLabel,
+                teamLabel,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -88,7 +99,7 @@ class SegmentCard extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.xs),
           child: Text(
-            'Match Intensity: ${(segment.severityScore * 100).toStringAsFixed(1)}%',
+            'Team ${_focusedTeam == 'team_a' ? 'A' : 'B'} Health: ${(teamData['severity_score'] ?? widget.segment.severityScore * 100).toStringAsFixed(1)}%',
             style: TextStyle(color: Theme.of(context).hintColor, fontSize: 12),
           ),
         ),
@@ -100,7 +111,7 @@ class SegmentCard extends StatelessWidget {
               children: [
                 const Divider(),
                 const SizedBox(height: AppSpacing.s),
-                _buildMetricsGrid(context),
+                _buildMetricsGrid(context, teamData),
                 const SizedBox(height: AppSpacing.m),
                 _buildRecommendationBox(context),
                 const SizedBox(height: AppSpacing.m),
@@ -108,7 +119,7 @@ class SegmentCard extends StatelessWidget {
                   width: double.infinity,
                   height: 44,
                   child: ElevatedButton.icon(
-                    onPressed: onPlay,
+                    onPressed: widget.onPlay,
                     icon: const Icon(Icons.play_circle_filled, size: 20),
                     label: const Text(
                       'Jump to Segment',
@@ -127,27 +138,30 @@ class SegmentCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricsGrid(BuildContext context) {
-    final analysis = segment.analysisJson ?? {};
-    final teamA = analysis['team_a'] ?? {};
-    
+  Widget _buildMetricsGrid(BuildContext context, Map<String, dynamic> teamData) {
     // The 5 Deterministic Tactical Variables
-    final defLine = teamA['defensive_line'] ?? 0.0;
-    final width = teamA['width'] ?? 0.0;
-    final compactness = teamA['compactness'] ?? 0.0;
-    final avgSpeed = teamA['avg_speed'] ?? 0.0;
-    final pressing = teamA['pressing_intensity'] ?? 0;
+    final defLine = teamData['defensive_line'] ?? 0.0;
+    final width = teamData['width'] ?? 0.0;
+    final compactness = teamData['compactness'] ?? 0.0;
+    final avgSpeed = teamData['avg_speed'] ?? 0.0;
+    final pressing = teamData['pressing_intensity'] ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'TACTICAL TELEMETRY',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
-                letterSpacing: 1.1,
-              ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'TACTICAL TELEMETRY',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                    letterSpacing: 1.1,
+                  ),
+            ),
+            _buildTeamSwitcher(),
+          ],
         ),
         const SizedBox(height: AppSpacing.s),
         Container(
@@ -212,29 +226,41 @@ class SegmentCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTacticalBadge(IconData icon, String label, Color color) {
+  Widget _buildTeamSwitcher() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 9, 
-              fontWeight: FontWeight.w900, 
-              color: color,
-              letterSpacing: 0.5,
-            ),
-          ),
+          _buildTeamTab('team_a', 'TEAM A'),
+          _buildTeamTab('team_b', 'TEAM B'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTeamTab(String teamKey, String label) {
+    bool isSelected = _focusedTeam == teamKey;
+    return GestureDetector(
+      onTap: () => setState(() => _focusedTeam = teamKey),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white38,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -265,7 +291,7 @@ class SegmentCard extends StatelessWidget {
   }
 
   Widget _buildRecommendationBox(BuildContext context) {
-    final hasRec = segment.recommendation != null && segment.recommendation!.isNotEmpty;
+    final hasRec = widget.segment.recommendation != null && widget.segment.recommendation!.isNotEmpty;
     
     return Container(
       width: double.infinity,
@@ -321,7 +347,7 @@ class SegmentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.m),
                   Text(
-                    hasRec ? segment.recommendation! : 'Segment severity below LLM threshold. Monitoring phase...',
+                    hasRec ? widget.segment.recommendation! : 'Segment severity below LLM threshold. Monitoring phase...',
                     style: TextStyle(
                       fontSize: 15,
                       height: 1.6,

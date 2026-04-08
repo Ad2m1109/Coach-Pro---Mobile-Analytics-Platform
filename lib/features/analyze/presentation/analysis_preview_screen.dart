@@ -28,6 +28,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
   List<AnalysisSegment> _segments = [];
   int _selected = 0;
+  String _focusedTeam = 'team_a';
 
   List<TacticalAlert> _alerts = [];
 
@@ -177,6 +178,8 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
     final AnalysisSegment? selectedSeg =
         _segments.isNotEmpty ? _segments[_selected.clamp(0, _segments.length - 1)] : null;
+    final analysis = selectedSeg?.analysisJson ?? {};
+    final teamData = analysis[_focusedTeam] ?? {};
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -301,117 +304,182 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         const SizedBox(height: 16),
 
         if (selectedSeg != null) ...[
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white10),
+          _buildTacticalHUD(selectedSeg, teamData),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTacticalHUD(AnalysisSegment segment, Map<String, dynamic> teamData) {
+    final defLine = teamData['defensive_line'] ?? 0.0;
+    final width = teamData['width'] ?? 0.0;
+    final compactness = teamData['compactness'] ?? 0.0;
+    final avgSpeed = teamData['avg_speed'] ?? 0.0;
+    final pressing = teamData['pressing_intensity'] ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header + Team Switcher
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.psychology, color: Theme.of(context).primaryColor, size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  'Tactical Masterclass',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                        letterSpacing: 1.2,
+                      ),
+                ),
+                const Spacer(),
+                _buildTeamSwitcher(),
+              ],
             ),
+          ),
+
+          const Divider(color: Colors.white10, height: 1),
+
+          // Metrics Grid
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.psychology, color: Theme.of(context).primaryColor, size: 24),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Tactical Masterclass',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).primaryColor,
-                                  letterSpacing: 1.2,
-                                ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _severityColor(selectedSeg.severityLabel).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              selectedSeg.severityLabel,
-                              style: TextStyle(
-                                color: _severityColor(selectedSeg.severityLabel),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        selectedSeg.recommendation?.trim().isNotEmpty == true
-                            ? selectedSeg.recommendation!.trim()
-                            : 'No tactical insights generated for this phase.',
-                        style: const TextStyle(height: 1.5, fontSize: 15),
-                      ),
-                    ],
-                  ),
+                Row(
+                  children: [
+                    Expanded(child: _buildMetric(Icons.straighten, 'Def Line', '${defLine.toStringAsFixed(1)}m')),
+                    Expanded(child: _buildMetric(Icons.swap_horizontal_circle, 'Width', '${width.toStringAsFixed(1)}m')),
+                    Expanded(child: _buildMetric(Icons.compress, 'Compact', '${compactness.toStringAsFixed(1)}m')),
+                  ],
                 ),
-                if (_alertsForSegment(selectedSeg).isNotEmpty) ...[
-                  const Divider(color: Colors.white10, height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SITUATION DATA',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Colors.white38,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-                        ..._alertsForSegment(selectedSeg).map((a) {
-                          final t = a.matchTime;
-                          final timeLabel = t != null ? _formatTime(t) : '--:--';
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.03),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.analytics_outlined, color: a.severityColor, size: 18),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        a.decisionType,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                      ),
-                                      Text(
-                                        'Timestamp: $timeLabel',
-                                        style: const TextStyle(color: Colors.white54, fontSize: 11),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildMetric(Icons.speed, 'Avg Speed', '${avgSpeed.toStringAsFixed(1)} m/s')),
+                    Expanded(child: _buildMetric(Icons.bolt, 'Pressing', '$pressing events')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(color: Colors.white10, height: 1),
+
+          // Recommendation
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 14),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'AI TACTICAL ANALYSIS',
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'CASE DESCRIPTION',
+                  style: TextStyle(color: Theme.of(context).primaryColor.withOpacity(0.7), fontSize: 9, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  segment.tacticalNarrative,
+                  style: const TextStyle(height: 1.5, fontSize: 13, color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'STRATEGIC HINTS',
+                  style: TextStyle(color: Colors.amberAccent.withOpacity(0.7), fontSize: 9, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  segment.recommendation?.trim().isNotEmpty == true
+                      ? segment.recommendation!.trim()
+                      : 'No tactical hints generated.',
+                  style: const TextStyle(height: 1.5, fontSize: 14, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTeamSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          _buildTeamTab('team_a', 'TEAM A'),
+          _buildTeamTab('team_b', 'TEAM B'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamTab(String teamKey, String label) {
+    final bool isSelected = _focusedTeam == teamKey;
+    return GestureDetector(
+      onTap: () => setState(() => _focusedTeam = teamKey),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white38,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetric(IconData icon, String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 12, color: Colors.white38),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 9, color: Colors.white38)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
