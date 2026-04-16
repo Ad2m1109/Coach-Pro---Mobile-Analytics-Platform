@@ -27,6 +27,7 @@ class NewAnalysisScreen extends StatefulWidget {
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
   XFile? _videoFile;
+  XFile? _videoFile2;
   VideoPlayerController? _videoController;
   String? _lastVideoUrl;
   final ScrollController _scrollController = ScrollController();
@@ -38,6 +39,10 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   double _ballThreshold = 0.3;
   int _maxLostFrames = 15;
   bool _enableReid = false;
+  
+  String _targetTeam = "Both";
+  int _cameraCount = 1;
+  String _cameraType = "TV";
 
   @override
   void initState() {
@@ -65,6 +70,14 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     setState(() => _videoFile = video);
   }
 
+  Future<void> _pickVideo2() async {
+    final picker = ImagePicker();
+    final video = await picker.pickVideo(source: ImageSource.gallery);
+
+    if (!mounted) return;
+    setState(() => _videoFile2 = video);
+  }
+
   void _showMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -78,16 +91,24 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       _showMessage(appLocalizations.selectVideoFirst);
       return;
     }
+    if (_cameraCount == 2 && _videoFile2 == null) {
+      _showMessage("Please select the second camera source before proceeding.");
+      return;
+    }
 
     try {
       final videoAnalysisService = context.read<VideoAnalysisService>();
 
       await videoAnalysisService.uploadAndAnalyzeVideo(
         videoFile: _videoFile!,
+        videoFile2: _videoFile2,
         detectionThreshold: _detectionThreshold,
         ballThreshold: _ballThreshold,
         maxLostFrames: _maxLostFrames,
         enableReid: _enableReid,
+        targetTeam: _targetTeam,
+        cameraCount: _cameraCount,
+        cameraType: _cameraType,
         onComplete: () {
           _showMessage(appLocalizations.videoAnalysisCompleted);
         },
@@ -265,40 +286,83 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     return Column(
       children: [
         if (!service.isAnalyzing)
-          Row(
+          Column(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _videoFile != null ? 'READY TO ANALYZE' : 'SELECT SOURCE${_cameraCount == 2 ? " 1" : ""}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context).colorScheme.primary,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          _videoFile != null ? _videoFile!.name : 'No video selected',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton.filledTonal(
+                    onPressed: _pickVideo,
+                    icon: const Icon(Icons.video_library),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              if (_cameraCount == 2) ...[
+                const SizedBox(height: AppSpacing.m),
+                Row(
                   children: [
-                    Text(
-                      _videoFile != null ? 'READY TO ANALYZE' : 'SELECT SOURCE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).colorScheme.primary,
-                        letterSpacing: 1.5,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _videoFile2 != null ? 'SOURCE 2 READY' : 'SELECT SOURCE 2',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Theme.of(context).colorScheme.primary,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            _videoFile2 != null ? _videoFile2!.name : 'No video selected',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      _videoFile != null ? _videoFile!.name : 'No video selected',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(width: 12),
+                    IconButton.filledTonal(
+                      onPressed: _pickVideo2,
+                      icon: const Icon(Icons.video_library),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              IconButton.filledTonal(
-                onPressed: _pickVideo,
-                icon: const Icon(Icons.video_library),
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  foregroundColor: Theme.of(context).colorScheme.primary,
-                ),
-              ),
+              ],
             ],
           ),
         const SizedBox(height: AppSpacing.m),
@@ -326,47 +390,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
           ),
         ),
         if (_videoFile != null && !service.isAnalyzing) ...[
-          const SizedBox(height: AppSpacing.s),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CalibrationScreen(matchId: service.currentMatchId),
-                ),
-              );
-            },
-            icon: const Icon(Icons.architecture),
-            label: const Text('CALIBRATE PITCH PRECISION'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM)),
-              side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
-            ),
-          ),
+          const SizedBox(height: AppSpacing.m),
+          _buildCameraConfig(),
         ],
         const SizedBox(height: AppSpacing.m),
         _buildEngineSettings(),
-        if (_videoFile != null && !service.isAnalyzing) ...[
-          const SizedBox(height: AppSpacing.s),
-          OutlinedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SyncCalibrationScreen(matchId: service.currentMatchId),
-                ),
-              );
-            },
-            icon: const Icon(Icons.sync),
-            label: const Text('SYNC MULTI-CAMERA SOURCES'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM)),
-              side: BorderSide(color: Theme.of(context).colorScheme.secondary.withOpacity(0.5)),
-            ),
-          ),
-        ],
         if (service.isAnalyzing) ...[
           const SizedBox(height: 12),
           TextButton.icon(
@@ -386,6 +414,24 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Text('ANALYSIS CONFIGURATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
+            const SizedBox(height: 16),
+            const Text('AI Target Focus', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: "Both", label: Text("Both")),
+                ButtonSegment(value: "Team A", label: Text("Team A")),
+                ButtonSegment(value: "Team B", label: Text("Team B")),
+              ],
+              selected: {_targetTeam},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() {
+                  _targetTeam = newSelection.first;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
             const Text('ENGINE TUNING', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
             const SizedBox(height: 16),
             _buildSliderRow(
@@ -431,6 +477,50 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                    ],
                  ),
                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCameraConfig() {
+    return CustomCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('CAMERA CONFIGURATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.orange)),
+            const SizedBox(height: 16),
+            const Text('Number of Cameras', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 8),
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 1, label: Text("1 Camera")),
+                ButtonSegment(value: 2, label: Text("2 Cameras")),
+              ],
+              selected: {_cameraCount},
+              onSelectionChanged: (Set<int> newSelection) {
+                setState(() {
+                  _cameraCount = newSelection.first;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            const Text('Camera Type', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 8),
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: "Fixed", label: Text("Fixed Camera")),
+                ButtonSegment(value: "TV", label: Text("TV / Moving Camera")),
+              ],
+              selected: {_cameraType},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() {
+                  _cameraType = newSelection.first;
+                });
+              },
+            ),
           ],
         ),
       ),

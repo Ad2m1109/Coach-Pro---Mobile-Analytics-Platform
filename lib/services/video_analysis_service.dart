@@ -63,10 +63,14 @@ class VideoAnalysisService extends ChangeNotifier {
 
   Future<void> uploadAndAnalyzeVideo({
     required XFile videoFile,
+    XFile? videoFile2,
     required double detectionThreshold,
     required double ballThreshold,
     required int maxLostFrames,
     required bool enableReid,
+    required String targetTeam,
+    required int cameraCount,
+    required String cameraType,
     required VoidCallback onComplete,
     required void Function(String) onError,
   }) async {
@@ -88,6 +92,9 @@ class VideoAnalysisService extends ChangeNotifier {
       request.fields['ball_confidence'] = ballThreshold.toString();
       request.fields['max_lost_frames'] = maxLostFrames.toString();
       request.fields['enable_reid'] = enableReid.toString();
+      request.fields['target_team'] = targetTeam;
+      request.fields['camera_count'] = cameraCount.toString();
+      request.fields['camera_type'] = cameraType;
 
       // Add authentication headers
       final authHeaders = await _apiClient.getAuthHeaders();
@@ -118,6 +125,17 @@ class VideoAnalysisService extends ChangeNotifier {
         filename: videoFile.name,
       );
       request.files.add(multipartFile);
+
+      if (videoFile2 != null) {
+        final videoLength2 = await videoFile2.length();
+        final multipartFile2 = http.MultipartFile(
+          'file2',
+          videoFile2.openRead().cast<List<int>>(),
+          videoLength2,
+          filename: videoFile2.name,
+        );
+        request.files.add(multipartFile2);
+      }
 
       // Send request
       final streamedResponse = await request.send();

@@ -9,8 +9,11 @@ import 'package:frontend/services/tactical_alert_service.dart';
 import 'package:frontend/features/match_statistics/presentation/widgets/tactical_status_panel.dart';
 import 'package:frontend/features/match_statistics/presentation/widgets/severity_timeline_table.dart';
 import 'package:frontend/features/match_statistics/presentation/widgets/severity_line_chart.dart';
+import 'package:frontend/features/match_statistics/presentation/widgets/tactical_trends_chart.dart';
 import 'package:frontend/features/match_statistics/presentation/widgets/alert_counters_panel.dart';
 import 'package:frontend/features/match_statistics/presentation/widgets/tactical_minimap.dart';
+import 'package:frontend/features/analyze/presentation/widgets/attribute_evolution_chart.dart';
+import 'package:frontend/models/analysis_segment.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
@@ -33,6 +36,9 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
   int? _videoAnchorSeconds;
   String? _videoError;
   String? _selectedDecisionId;
+  List<AnalysisSegment> _segments = [];
+  int _selectedSegmentIndex = -1;
+  String _focusedTeam = 'team_a'; // Track which team is focused in the Status Board
 
   @override
   void initState() {
@@ -45,6 +51,7 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
 
   @override
   void dispose() {
+    _videoController?.removeListener(_syncChartToVideo);
     _videoController?.dispose();
     super.dispose();
   }
@@ -70,31 +77,41 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
               ? analysis['outputs'] as Map<String, dynamic>
               : const {};
 
-      final String? previewPath = outputs['tracking_video_preview_path']?.toString();
-      final String? videoPath = outputs['tracking_video_path']?.toString();
-      final String? chosenPath = (previewPath != null && previewPath.isNotEmpty)
-          ? previewPath
-          : ((videoPath != null && videoPath.isNotEmpty) ? videoPath : null);
+      final String? relativeVideoPath = (outputs['tracking_video_preview_path'] as String?) ??
+          (outputs['tracking_video_path'] as String?) ??
+          outputs['input_video_path']?.toString();
 
-      if (chosenPath == null) {
-        if (!mounted) return;
+      if (relativeVideoPath != null && relativeVideoPath.isNotEmpty) {
+        await _initializeVideo(
+          streamUrl: analysisService.streamUrl(relativeVideoPath),
+          fallbackUrl: analysisService.fileUrl(relativeVideoPath),
+          headers: analysisService.fileHeaders(),
+        );
+      } else {
         setState(() {
           _videoLoading = false;
           _videoError = 'No tracking video available yet.';
         });
-        return;
       }
 
-      await _initializeVideo(
-        streamUrl: analysisService.streamUrl(chosenPath),
-        fallbackUrl: analysisService.fileUrl(chosenPath),
-        headers: analysisService.fileHeaders(),
-      );
+      // Load segments for the chart
+      final rawSegments = await analysisService.getSegmentsForMatch(widget.match.id);
+      final segmentsList = rawSegments
+          .whereType<Map<String, dynamic>>()
+          .map(AnalysisSegment.fromJson)
+          .toList()
+        ..sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
+
+      if (mounted) {
+        setState(() {
+          _segments = segmentsList;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _videoLoading = false;
-        _videoError = 'Failed to load tracking video.';
+        _videoError = 'Failed to load match analysis data.';
       });
     }
   }
@@ -142,6 +159,7 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
       _videoLoading = false;
       _videoError = null;
     });
+    _videoController!.addListener(_syncChartToVideo);
   }
 
   Future<void> _setMatchAnchor() async {
@@ -170,10 +188,20 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
       _showMessage('Match synced successfully.');
     } catch (e) {
       _showMessage('Failed to set match anchor.');
-    } finally {
+    }
+  }
+
+  void _syncChartToVideo() {
+    final controller = _videoController;
+    if (controller == null || !controller.value.isInitialized || _segments.isEmpty) return;
+
+    final double position = controller.value.position.inSeconds.toDouble();
+    final int newIndex = _segments.indexWhere((s) => position >= s.startSec && position <= s.endSec);
+
+    if (newIndex != -1 && newIndex != _selectedSegmentIndex) {
       if (mounted) {
         setState(() {
-          _settingAnchor = false;
+          _selectedSegmentIndex = newIndex;
         });
       }
     }
@@ -233,6 +261,180 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
+  Widget _buildTacticalCommandCenter(AnalysisSegment segment) {
+    final List<Map<String, dynamic>> rawTags = _focusedTeam == 'team_a' ? segment.teamATags : segment.teamBTags;
+    // Map them to TacticalTag model
+    final List<TacticalTag> tags = rawTags.map((json) => TacticalTag.fromJson(json)).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.m),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text(
+            'TACTICAL COMMAND CENTER',
+            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 12),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Match Report Intelligence Feed',
+            style: TextStyle(color: Colors.white38, fontSize: 9, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 16),
+          _buildTeamSwitcher(),
+          const SizedBox(height: 24),
+          
+          // Tactical Status Board
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.radar, size: 14, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    'TACTICAL STATUS BOARD',
+                    style: TextStyle(
+                      color: Theme.of(context).primaryColor.withOpacity(0.7),
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildStatusReadout('DEFENSIVE LINE', _getTagForCategory(tags, 'DEFENSIVE_LINE')),
+              const Divider(height: 12, color: Colors.white12),
+              _buildStatusReadout('TEAM WIDTH', _getTagForCategory(tags, 'WIDTH')),
+              const Divider(height: 12, color: Colors.white12),
+              _buildStatusReadout('COMPACTNESS', _getTagForCategory(tags, 'COMPACTNESS')),
+              const Divider(height: 12, color: Colors.white12),
+              _buildStatusReadout('TRANSITION SPEED', _getTagForCategory(tags, 'SPEED')),
+              const Divider(height: 12, color: Colors.white12),
+              _buildStatusReadout('PRESSING', _getTagForCategory(tags, 'PRESSING')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamSwitcher() {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildTeamTab('team_a', 'TEAM A')),
+          Expanded(child: _buildTeamTab('team_b', 'TEAM B')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamTab(String teamKey, String label) {
+    final bool isSelected = _focusedTeam == teamKey;
+    return GestureDetector(
+      onTap: () => setState(() => _focusedTeam = teamKey),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.white38,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusReadout(String label, TacticalTag? tag) {
+    final bool hasComment = tag != null;
+    final String tagText = (tag?.tag ?? 'Stable System').toUpperCase();
+    final String description = tag?.description ?? 'Monitoring structural variables...';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white24, fontSize: 8, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tagText,
+                  style: TextStyle(
+                    color: hasComment ? Theme.of(context).primaryColor : Colors.white12,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: hasComment ? Colors.white70 : Colors.white10,
+                    fontSize: 9,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  TacticalTag? _getTagForCategory(List<TacticalTag> tags, String category) {
+    final patterns = {
+      'DEFENSIVE_LINE': ['LINE', 'DEPTH', 'OFFSIDE'],
+      'WIDTH': ['WIDTH', 'WIDE', 'STRETCHED'],
+      'COMPACTNESS': ['COMPACT', 'GAPS', 'DISCONNECTED'],
+      'SPEED': ['SPEED', 'TRANSITION', 'FAST', 'SLOW'],
+      'PRESSING': ['PRESS', 'CLOSE', 'INTENSITY'],
+    };
+
+    final keywords = patterns[category] ?? [];
+    for (final tag in tags) {
+      final upperTag = tag.tag.toUpperCase();
+      if (keywords.any((kw) => upperTag.contains(kw))) {
+        return tag;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<TacticalAlertService>(
@@ -260,14 +462,40 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
                 formatAnchor: _formatAnchor,
               ),
               const SizedBox(height: AppSpacing.m),
-              TacticalStatusPanel(
-                isConnected: alertService.isConnected,
-                lastAlert: alertService.history.isNotEmpty ? alertService.history.last : null,
-              ),
+              
+              // New Tactical Command Center Integration
+              if (_selectedSegmentIndex != -1 && _segments.isNotEmpty)
+                _buildTacticalCommandCenter(_segments[_selectedSegmentIndex])
+              else
+                TacticalStatusPanel(
+                  isConnected: alertService.isConnected,
+                  lastAlert: alertService.history.isNotEmpty ? alertService.history.last : null,
+                ),
+                
               const SizedBox(height: AppSpacing.m),
               AlertCountersPanel(alerts: alertService.history),
               const SizedBox(height: AppSpacing.m),
+              if (alertService.flowAnalyses.isNotEmpty) ...[
+                _GameFlowNarrative(analysis: alertService.flowAnalyses.last),
+                const SizedBox(height: AppSpacing.m),
+              ],
               _DecisionMetricsPanel(metrics: alertService.decisionMetrics),
+              const SizedBox(height: AppSpacing.m),
+              AttributeEvolutionChart(
+                segments: _segments,
+                selectedIndex: _selectedSegmentIndex,
+                onSeek: (secs) {
+                  if (_videoAnchorSeconds == null) {
+                    _showMessage('Sync video first to use chart navigation.');
+                    return;
+                  }
+                  final controller = _videoController;
+                  if (controller != null && controller.value.isInitialized) {
+                    final int target = _videoAnchorSeconds! + secs.round();
+                    controller.seekTo(Duration(seconds: target < 0 ? 0 : target));
+                  }
+                },
+              ),
               const SizedBox(height: AppSpacing.m),
               SeverityLineChart(alerts: alertService.history),
               const SizedBox(height: AppSpacing.m),
@@ -452,6 +680,92 @@ class _MetricCard extends StatelessWidget {
             Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GameFlowNarrative extends StatelessWidget {
+  final Map<String, dynamic> analysis;
+
+  const _GameFlowNarrative({required this.analysis});
+
+  @override
+  Widget build(BuildContext context) {
+    final momentum = analysis['momentum'] ?? 'Neutral';
+    final narrative = analysis['analysis'] ?? 'No flow analysis yet.';
+    final recommendation = analysis['recommendation'] ?? 'Maintain current structure.';
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.m),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+            Theme.of(context).colorScheme.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'STRATEGIC GAME FLOW',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  momentum.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.m),
+          Text(
+            narrative,
+            style: const TextStyle(fontSize: 14, height: 1.4),
+          ),
+          const SizedBox(height: AppSpacing.m),
+          const Divider(),
+          const SizedBox(height: AppSpacing.s),
+          Row(
+            children: [
+              const Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber),
+              const SizedBox(width: AppSpacing.s),
+              Expanded(
+                child: Text(
+                  'ADJUSTMENT: $recommendation',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

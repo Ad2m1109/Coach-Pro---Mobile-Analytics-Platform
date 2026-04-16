@@ -19,6 +19,11 @@ class AnalysisSegment {
   double get teamBSeverityScore => (analysisJson?['team_b']?['severity_score'] ?? 0.0).toDouble();
   String get tacticalNarrative => analysisJson?['tactical_narrative'] ?? 'No narrative analysis available for this phase.';
 
+  List<Map<String, dynamic>> get teamATags => 
+      List<Map<String, dynamic>>.from(analysisJson?['team_a_tags'] ?? []);
+  List<Map<String, dynamic>> get teamBTags => 
+      List<Map<String, dynamic>>.from(analysisJson?['team_b_tags'] ?? []);
+
   AnalysisSegment({
     required this.id,
     this.analysisId,

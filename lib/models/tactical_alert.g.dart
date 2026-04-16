@@ -54,6 +54,17 @@ Map<String, dynamic> _$TacticalZoneSnapshotToJson(
       'y_max': instance.yMax,
     };
 
+TacticalTag _$TacticalTagFromJson(Map<String, dynamic> json) => TacticalTag(
+      tag: json['tag'] as String,
+      description: json['description'] as String,
+    );
+
+Map<String, dynamic> _$TacticalTagToJson(TacticalTag instance) =>
+    <String, dynamic>{
+      'tag': instance.tag,
+      'description': instance.description,
+    };
+
 TacticalAlert _$TacticalAlertFromJson(Map<String, dynamic> json) =>
     TacticalAlert(
       id: json['alert_id'] as String,
@@ -79,6 +90,15 @@ TacticalAlert _$TacticalAlertFromJson(Map<String, dynamic> json) =>
           .toList(),
       ball: json['ball'] == null ? null : TacticalBallSnapshot.fromJson(json['ball'] as Map<String, dynamic>),
       zone: json['zone'] == null ? null : TacticalZoneSnapshot.fromJson(json['zone'] as Map<String, dynamic>),
+      teamATags: (json['team_a_tags'] as List<dynamic>?)
+          ?.map((e) => TacticalTag.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      teamBTags: (json['team_b_tags'] as List<dynamic>?)
+          ?.map((e) => TacticalTag.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      tacticalOutlier: json['tactical_outlier'] as Map<String, dynamic>?,
+      flowAnalysis: json['flow_analysis'] as Map<String, dynamic>?,
+      analysis: json['analysis'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$TacticalAlertToJson(TacticalAlert instance) =>
@@ -104,4 +124,9 @@ Map<String, dynamic> _$TacticalAlertToJson(TacticalAlert instance) =>
       'players': instance.players?.map((e) => e.toJson()).toList(),
       'ball': instance.ball?.toJson(),
       'zone': instance.zone?.toJson(),
+      'team_a_tags': instance.teamATags?.map((e) => e.toJson()).toList(),
+      'team_b_tags': instance.teamBTags?.map((e) => e.toJson()).toList(),
+      'tactical_outlier': instance.tacticalOutlier,
+      'flow_analysis': instance.flowAnalysis,
+      'analysis': instance.analysis,
     };

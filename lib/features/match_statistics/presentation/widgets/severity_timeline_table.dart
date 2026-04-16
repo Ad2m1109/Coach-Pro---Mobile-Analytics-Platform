@@ -4,6 +4,7 @@ import 'package:frontend/models/tactical_alert.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/services/tactical_alert_service.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/app_colors.dart';
 
 class SeverityTimelineTable extends StatelessWidget {
   final List<TacticalAlert> alerts;
@@ -35,6 +36,7 @@ class SeverityTimelineTable extends StatelessWidget {
       children: sortedAlerts
           .map(
             (alert) => _TimelineItem(
+              alerts: sortedAlerts,
               alert: alert,
               onTap: onAlertTap,
               isSelected: selectedDecisionId == alert.decisionId,
@@ -46,11 +48,17 @@ class SeverityTimelineTable extends StatelessWidget {
 }
 
 class _TimelineItem extends StatelessWidget {
+  final List<TacticalAlert> alerts;
   final TacticalAlert alert;
   final ValueChanged<TacticalAlert>? onTap;
   final bool isSelected;
 
-  const _TimelineItem({required this.alert, this.onTap, this.isSelected = false});
+  const _TimelineItem({
+    required this.alerts,
+    required this.alert,
+    this.onTap,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,127 +71,197 @@ class _TimelineItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
           child: IntrinsicHeight(
             child: Row(
-            children: [
-              Container(
-                width: 45,
-                alignment: Alignment.center,
-                child: Text(
-                  alert.timestamp,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              children: [
+                Container(
+                  width: 45,
+                  alignment: Alignment.center,
+                  child: Text(
+                    alert.timestamp,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                 ),
-              ),
-              VerticalDivider(color: alert.severityColor, thickness: 3, width: 20),
-              const SizedBox(width: AppSpacing.s),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            alert.decisionType,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: alert.severityColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            alert.status,
-                            style: TextStyle(
-                              color: alert.severityColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      alert.action,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    if (alert.feedback != 'none') ...[
-                      const SizedBox(height: 8),
+                VerticalDivider(color: alert.severityColor, thickness: 3, width: 20),
+                const SizedBox(width: AppSpacing.s),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            alert.isAccepted ? Icons.check_circle : Icons.cancel,
-                            size: 14,
-                            color: alert.isAccepted ? Colors.green : Colors.red,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            alert.isAccepted ? 'Accepted' : 'Dismissed',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: alert.isAccepted ? Colors.green : Colors.red,
+                          Expanded(
+                            child: Text(
+                              alert.decisionType,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
-                          ),
-                          if (alert.isEvaluated) ...[
-                            const SizedBox(width: AppSpacing.s),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: (alert.decisionEffective == true ? Colors.green : Colors.red).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                alert.decisionEffective == true ? 'EFFECTIVE' : 'FAILED',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: alert.decisionEffective == true ? Colors.green : Colors.red,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ] else ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _FeedbackButton(
-                            label: 'Accept',
-                            icon: Icons.check,
-                            color: Colors.green,
-                            onPressed: () => _handleFeedback(context, 'accepted'),
                           ),
                           const SizedBox(width: AppSpacing.s),
-                          _FeedbackButton(
-                            label: 'Dismiss',
-                            icon: Icons.close,
-                            color: Colors.red,
-                            onPressed: () => _handleFeedback(context, 'dismissed'),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: alert.severityColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              alert.status,
+                              style: TextStyle(
+                                color: alert.severityColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        alert.action,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      if (alert.feedback != 'none') ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              alert.isAccepted ? Icons.check_circle : Icons.cancel,
+                              size: 14,
+                              color: alert.isAccepted ? Colors.green : Colors.red,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              alert.isAccepted ? 'Accepted' : 'Dismissed',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: alert.isAccepted ? Colors.green : Colors.red,
+                              ),
+                            ),
+                            if (alert.isEvaluated) ...[
+                              const SizedBox(width: AppSpacing.s),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (alert.decisionEffective == true ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  alert.decisionEffective == true ? 'EFFECTIVE' : 'FAILED',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: alert.decisionEffective == true ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _FeedbackButton(
+                              label: 'Accept',
+                              icon: Icons.check,
+                              color: Colors.green,
+                              onPressed: () => _handleFeedback(context, 'accepted'),
+                            ),
+                            const SizedBox(width: AppSpacing.s),
+                            _FeedbackButton(
+                              label: 'Dismiss',
+                              icon: Icons.close,
+                              color: Colors.red,
+                              onPressed: () => _handleFeedback(context, 'dismissed'),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+
+                      // Status Tags
+                      if ((alert.teamATags?.isNotEmpty ?? false) || (alert.teamBTags?.isNotEmpty ?? false)) ...[
+                        const Text(
+                          'STATUS TAGS',
+                          style: TextStyle(color: Colors.white24, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            ...(alert.teamATags ?? []).map((t) => _buildTagChip(t)),
+                            ...(alert.teamBTags ?? []).map((t) => _buildTagChip(t)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // AI Narrative (Every 3rd alert to match segment logic)
+                      if (alerts.indexOf(alert) % 3 == 0) ...[
+                        const Divider(color: Colors.white10),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.auto_awesome, size: 12, color: Colors.amberAccent.withOpacity(0.6)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'AI TACTICAL NARRATIVE',
+                              style: TextStyle(color: Colors.amberAccent, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          alert.analysis?['tactical_narrative'] ?? 'No detailed narrative for this event.',
+                          style: const TextStyle(fontSize: 12, height: 1.4, color: Colors.white70),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s),
-              Text(
-                alert.severityLabel,
-                style: TextStyle(
-                  color: alert.severityColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
+                const SizedBox(width: AppSpacing.s),
+                Text(
+                  alert.severityLabel,
+                  style: TextStyle(
+                    color: alert.severityColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
                 ),
-              ),
-            ],
+              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTagChip(TacticalTag tagData) {
+    final String tag = tagData.tag;
+    final String description = tagData.description;
+
+    bool isWarning = tag.contains('VULNERABLE') ||
+        tag.contains('OVER-STRETCHED') ||
+        tag.contains('DISCONNECTED') ||
+        tag.contains('LOOSE') ||
+        tag.contains('FAIL');
+    
+    Color color = isWarning ? AppColors.secondary : AppColors.primary;
+
+    return Tooltip(
+      message: description,
+      triggerMode: TooltipTriggerMode.tap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Text(
+          tag,
+          style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold),
         ),
       ),
     );

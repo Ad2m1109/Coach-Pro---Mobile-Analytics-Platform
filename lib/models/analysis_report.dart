@@ -6,6 +6,7 @@ class AnalysisReport {
   final double progress;
   final String? message;
   final Map<String, dynamic>? outputs;
+  final String? inputVideoPath;
   final DateTime? submittedAt;
   final DateTime? completedAt;
 
@@ -17,6 +18,7 @@ class AnalysisReport {
     required this.progress,
     this.message,
     this.outputs,
+    this.inputVideoPath,
     this.submittedAt,
     this.completedAt,
   });
@@ -41,6 +43,7 @@ class AnalysisReport {
       progress: ((json['progress'] ?? 0) as num).toDouble(),
       message: (json['message'])?.toString(),
       outputs: parsedOutputs,
+      inputVideoPath: json['input_video_path']?.toString(),
       submittedAt: submittedAtRaw is String ? DateTime.parse(submittedAtRaw) : null,
       completedAt: completedAtRaw is String ? DateTime.parse(completedAtRaw) : null,
     );

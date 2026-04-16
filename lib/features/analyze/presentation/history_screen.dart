@@ -150,24 +150,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: const Icon(Icons.psychology, color: Colors.redAccent, size: 24),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TACTICAL MASTERCLASS',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                            color: Colors.white,
-                          ),
-                    ),
-                    Text(
-                      'Segment #${segment.segmentIndex + 1} • Analytics HUD',
-                      style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TACTICAL MASTERCLASS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                              color: Colors.white,
+                            ),
+                      ),
+                      Text(
+                        'Segment #${segment.segmentIndex + 1} • Analytics HUD',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 _buildTeamSelector(reportId, selectedTeam),
                 const SizedBox(width: 12),
                 _buildSeverityBadge(segment.severityLabel),

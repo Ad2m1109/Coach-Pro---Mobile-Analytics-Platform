@@ -10,6 +10,7 @@ class TacticalAlertService extends ChangeNotifier {
   WebSocket? _socket;
   final _alertController = StreamController<TacticalAlert>.broadcast();
   List<TacticalAlert> _history = [];
+  List<Map<String, dynamic>> _flowAnalyses = [];
   Map<String, dynamic> _decisionMetrics = const {};
   bool _isConnected = false;
 
@@ -17,6 +18,7 @@ class TacticalAlertService extends ChangeNotifier {
 
   Stream<TacticalAlert> get alertStream => _alertController.stream;
   List<TacticalAlert> get history => _history;
+  List<Map<String, dynamic>> get flowAnalyses => _flowAnalyses;
   Map<String, dynamic> get decisionMetrics => _decisionMetrics;
   bool get isConnected => _isConnected;
 
@@ -50,6 +52,13 @@ class TacticalAlertService extends ChangeNotifier {
         (data) {
           try {
             final Map<String, dynamic> json = jsonDecode(data);
+            
+            if (json['type'] == 'flow_analysis') {
+              _flowAnalyses.add(json);
+              notifyListeners();
+              return;
+            }
+
             final alert = TacticalAlert.fromJson(json);
             
             // Deduplicate/Update history

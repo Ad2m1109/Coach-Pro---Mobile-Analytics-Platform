@@ -61,6 +61,18 @@ class TacticalZoneSnapshot {
 }
 
 @JsonSerializable()
+class TacticalTag {
+  final String tag;
+  final String description;
+
+  TacticalTag({required this.tag, required this.description});
+
+  factory TacticalTag.fromJson(Map<String, dynamic> json) =>
+      _$TacticalTagFromJson(json);
+  Map<String, dynamic> toJson() => _$TacticalTagToJson(this);
+}
+
+@JsonSerializable()
 class TacticalAlert {
   @JsonKey(name: 'alert_id')
   final String id;
@@ -113,6 +125,21 @@ class TacticalAlert {
   final List<TacticalPlayerSnapshot>? players;
   final TacticalBallSnapshot? ball;
   final TacticalZoneSnapshot? zone;
+
+  @JsonKey(name: 'team_a_tags')
+  final List<TacticalTag>? teamATags;
+  
+  @JsonKey(name: 'team_b_tags')
+  final List<TacticalTag>? teamBTags;
+
+  @JsonKey(name: 'analysis')
+  final Map<String, dynamic>? analysis;
+
+  @JsonKey(name: 'tactical_outlier')
+  final Map<String, dynamic>? tacticalOutlier;
+
+  @JsonKey(name: 'flow_analysis')
+  final Map<String, dynamic>? flowAnalysis;
   
   TacticalAlert({
     required this.id,
@@ -136,6 +163,11 @@ class TacticalAlert {
     this.players,
     this.ball,
     this.zone,
+    this.teamATags,
+    this.teamBTags,
+    this.tacticalOutlier,
+    this.flowAnalysis,
+    this.analysis,
   });
 
   bool get isResponded => feedback != 'none';
