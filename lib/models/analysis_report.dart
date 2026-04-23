@@ -29,7 +29,7 @@ class AnalysisReport {
     if (rawOutputs is Map<String, dynamic>) {
       parsedOutputs = rawOutputs;
     } else if (rawOutputs is Map) {
-      parsedOutputs = rawOutputs.cast<String, dynamic>();
+      parsedOutputs = Map<String, dynamic>.from(rawOutputs);
     }
 
     final submittedAtRaw = json['submitted_at'] ?? json['submittedAt'];

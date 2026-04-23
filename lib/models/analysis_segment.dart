@@ -19,10 +19,10 @@ class AnalysisSegment {
   double get teamBSeverityScore => (analysisJson?['team_b']?['severity_score'] ?? 0.0).toDouble();
   String get tacticalNarrative => analysisJson?['tactical_narrative'] ?? 'No narrative analysis available for this phase.';
 
-  List<Map<String, dynamic>> get teamATags => 
-      List<Map<String, dynamic>>.from(analysisJson?['team_a_tags'] ?? []);
-  List<Map<String, dynamic>> get teamBTags => 
-      List<Map<String, dynamic>>.from(analysisJson?['team_b_tags'] ?? []);
+  List<Map<String, dynamic>> get teamATags =>
+      (analysisJson?['team_a_tags'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
+  List<Map<String, dynamic>> get teamBTags =>
+      (analysisJson?['team_b_tags'] as List?)?.map((e) => Map<String, dynamic>.from(e as Map)).toList() ?? [];
 
   AnalysisSegment({
     required this.id,
@@ -48,7 +48,9 @@ class AnalysisSegment {
       startSec: (json['start_sec'] ?? 0).toDouble(),
       endSec: (json['end_sec'] ?? 0).toDouble(),
       videoStartSec: (json['video_start_sec'] ?? 0).toDouble(),
-      analysisJson: json['analysis_json'] ?? json['analysis'],
+      analysisJson: (json['analysis_json'] ?? json['analysis']) != null
+          ? Map<String, dynamic>.from(json['analysis_json'] ?? json['analysis'])
+          : null,
       recommendation: json['recommendation'],
       severityScore: (json['severity_score'] ?? 0).toDouble(),
       severityLabel: json['severity_label'] ?? 'LOW',

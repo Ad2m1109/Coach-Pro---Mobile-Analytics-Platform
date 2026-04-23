@@ -66,8 +66,8 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
       final rawSegments = await analysisService.getSegmentsForAnalysis(widget.report.id);
       final segments = rawSegments
-          .whereType<Map<String, dynamic>>()
-          .map(AnalysisSegment.fromJson)
+          .where((item) => item is Map)
+          .map((item) => AnalysisSegment.fromJson(Map<String, dynamic>.from(item as Map)))
           .toList()
         ..sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
 
@@ -235,8 +235,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
     final AnalysisSegment? selectedSeg =
         _segments.isNotEmpty ? _segments[_selected.clamp(0, _segments.length - 1)] : null;
-    final analysis = selectedSeg?.analysisJson ?? {};
-    final teamData = analysis[_focusedTeam] ?? {};
+    final Map<String, dynamic> analysis = selectedSeg?.analysisJson ?? const {};
+    final Map<String, dynamic> teamData = (analysis[_focusedTeam] is Map) 
+        ? Map<String, dynamic>.from(analysis[_focusedTeam] as Map) 
+        : const {};
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
