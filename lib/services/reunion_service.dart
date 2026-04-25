@@ -10,10 +10,13 @@ class ReunionService {
   Future<List<Reunion>> getReunions() async {
     try {
       final responseData = await _apiClient.get('/reunions');
-      final List<Reunion> reunions = (responseData as List)
-          .map((item) => Reunion.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return reunions;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Reunion.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching reunions: $e');
       throw Exception('Failed to load reunions');
@@ -29,7 +32,10 @@ class ReunionService {
         'icon_name': reunion.iconName,
       };
       final responseData = await _apiClient.post('/reunions', data: data);
-      return Reunion.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Reunion.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating reunion: $e');
       throw Exception('Failed to create reunion');

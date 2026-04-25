@@ -10,8 +10,8 @@ class MatchService {
   final TeamService _teamService;
 
   MatchService({required ApiClient apiClient, required TeamService teamService})
-      : _apiClient = apiClient,
-        _teamService = teamService;
+    : _apiClient = apiClient,
+      _teamService = teamService;
 
   Future<List<Match>> getMatches({String? status, String? eventId}) async {
     try {
@@ -24,13 +24,17 @@ class MatchService {
         queryParameters['event_id'] = eventId;
       }
       if (queryParameters.isNotEmpty) {
-        queryString = '$queryString?${Uri(queryParameters: queryParameters).query}';
+        queryString =
+            '$queryString?${Uri(queryParameters: queryParameters).query}';
       }
       final responseData = await _apiClient.get(queryString);
-      final List<Match> matches = (responseData as List)
-          .map((item) => Match.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return matches;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Match.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching matches: $e');
       throw Exception('Failed to load matches');
@@ -40,7 +44,10 @@ class MatchService {
   Future<Match> getMatchById(String matchId) async {
     try {
       final responseData = await _apiClient.get('/matches/$matchId');
-      return Match.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Match.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error fetching match: $e');
       throw Exception('Failed to load match');
@@ -67,7 +74,9 @@ class MatchService {
         opponentTeam = await _teamService.getTeamByName(opponentName);
       } catch (e) {
         // If not found, create it
-        opponentTeam = await _teamService.createTeam(Team(id: '', name: opponentName));
+        opponentTeam = await _teamService.createTeam(
+          Team(id: '', name: opponentName),
+        );
       }
       final opponentTeamId = opponentTeam.id;
 
@@ -82,7 +91,10 @@ class MatchService {
         'away_score': 0,
       };
       final responseData = await _apiClient.post('/matches', data: matchData);
-      return Match.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Match.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating match: $e');
       throw Exception('Failed to create match');
@@ -92,7 +104,10 @@ class MatchService {
   Future<MatchDetails> getMatchDetails(String matchId) async {
     try {
       final responseData = await _apiClient.get('/matches/$matchId/details');
-      return MatchDetails.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return MatchDetails.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error fetching match details: $e');
       throw Exception('Failed to load match details');

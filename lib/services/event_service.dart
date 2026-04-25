@@ -10,10 +10,13 @@ class EventService {
   Future<List<Event>> getEvents() async {
     try {
       final responseData = await _apiClient.get('/events');
-      final List<Event> events = (responseData as List)
-          .map((item) => Event.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return events;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Event.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching events: $e');
       throw Exception('Failed to load events');
@@ -22,11 +25,12 @@ class EventService {
 
   Future<Event> createEvent(EventCreate event) async {
     try {
-      final data = {
-        'name': event.name,
-      };
+      final data = {'name': event.name};
       final responseData = await _apiClient.post('/events', data: data);
-      return Event.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Event.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating event: $e');
       throw Exception('Failed to create event');

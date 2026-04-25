@@ -64,9 +64,8 @@ class _VideoUploadWidgetState extends State<VideoUploadWidget> {
       final totalBytes = await _selectedVideo!.length();
       int uploadedBytes = 0;
 
-      final Stream<Uint8List> trackedStream = _selectedVideo!
-          .openRead()
-          .transform(
+      final Stream<Uint8List>
+      trackedStream = _selectedVideo!.openRead().transform(
         StreamTransformer<Uint8List, Uint8List>.fromHandlers(
           handleData: (Uint8List data, EventSink<Uint8List> sink) {
             uploadedBytes += data.length;
@@ -104,7 +103,7 @@ class _VideoUploadWidgetState extends State<VideoUploadWidget> {
         throw Exception('Upload failed (${response.statusCode}): $body');
       }
 
-      final parsed = jsonDecode(body) as Map<String, dynamic>;
+      final parsed = Map<String, dynamic>.from(jsonDecode(body));
       final jobId = parsed['job_id'] as String?;
       if (jobId == null || jobId.isEmpty) {
         throw Exception('Upload succeeded but no job_id returned');

@@ -8,7 +8,7 @@ import 'package:frontend/models/analysis_segment.dart';
 
 class VideoAnalysisService extends ChangeNotifier {
   final ApiClient _apiClient;
-  
+
   bool _isAnalyzing = false;
   bool _analysisCompleted = false;
   double _uploadProgress = 0.0;
@@ -24,7 +24,7 @@ class VideoAnalysisService extends ChangeNotifier {
   bool _isRetrying = false;
   List<AnalysisSegment> _segments = [];
   StreamSubscription? _sseSubscription;
-  
+
   bool get isAnalyzing => _isAnalyzing;
   bool get analysisCompleted => _analysisCompleted;
   bool get isCanceling => _isCanceling;
@@ -103,7 +103,7 @@ class VideoAnalysisService extends ChangeNotifier {
       // Wrap the video stream to track upload progress
       int uploadedBytes = 0;
       final totalBytes = videoLength;
-      
+
       final trackedStream = videoFile.openRead().transform(
         StreamTransformer<Uint8List, Uint8List>.fromHandlers(
           handleData: (data, sink) {
@@ -111,7 +111,8 @@ class VideoAnalysisService extends ChangeNotifier {
             final progress = uploadedBytes / totalBytes.toDouble();
             _updateState(
               uploadProgress: progress,
-              status: 'Uploading video: ${(progress * 100).toStringAsFixed(1)}%',
+              status:
+                  'Uploading video: ${(progress * 100).toStringAsFixed(1)}%',
             );
             sink.add(data);
           },
@@ -139,25 +140,29 @@ class VideoAnalysisService extends ChangeNotifier {
 
       // Send request
       final streamedResponse = await request.send();
-      
+
       // Collect response body
       final responseBytes = await streamedResponse.stream.toBytes();
       final responseBody = utf8.decode(responseBytes);
 
-      if (streamedResponse.statusCode == 200 || streamedResponse.statusCode == 202) {
+      if (streamedResponse.statusCode == 200 ||
+          streamedResponse.statusCode == 202) {
         _updateState(
           uploadProgress: 1.0,
           status: 'Upload complete! Initializing analysis...',
         );
 
-        final responseData = json.decode(responseBody);
-        final analysisId = responseData['analysis_id'] ?? responseData['match_id'] ?? '';
+        final responseData = Map<String, dynamic>.from(
+          json.decode(responseBody),
+        );
+        final analysisId =
+            responseData['analysis_id'] ?? responseData['match_id'] ?? '';
         _analysisId = analysisId;
         _currentMatchId = responseData['match_id'] ?? analysisId;
-        _originalVideoUrl = responseData['video_path'] != null 
+        _originalVideoUrl = responseData['video_path'] != null
             ? '${_apiClient.baseUrl}/analysis/files?path=${Uri.encodeQueryComponent(responseData['video_path'])}'
             : null;
-        
+
         _segments = [];
         notifyListeners();
 
@@ -167,19 +172,17 @@ class VideoAnalysisService extends ChangeNotifier {
 
         await _runAnalysisStatusLoop(analysisId);
       } else {
-        throw Exception('Upload failed with status code: ${streamedResponse.statusCode}');
+        throw Exception(
+          'Upload failed with status code: ${streamedResponse.statusCode}',
+        );
       }
     } catch (e) {
       final error = e.toString();
-      _updateState(
-        isAnalyzing: false,
-        status: 'Error: $error',
-        error: error,
-      );
+      _updateState(isAnalyzing: false, status: 'Error: $error', error: error);
       onError(error);
       return;
     }
-    
+
     _stopSseListener();
     _updateState(isAnalyzing: false);
   }
@@ -196,14 +199,19 @@ class VideoAnalysisService extends ChangeNotifier {
         );
 
         if (response.statusCode == 200) {
-          final statusData = json.decode(response.body);
+          final statusData = Map<String, dynamic>.from(
+            json.decode(response.body),
+          );
 
           if (statusData['progress'] != null) {
             final progress = (statusData['progress'] as num).toDouble();
             _updateState(
               analysisProgress: progress,
-              status: 'Analyzing video: ${(progress * 100).toStringAsFixed(1)}%',
-              liveStats: (statusData['live_stats'] as Map<String, dynamic>?) ?? _liveStats,
+              status:
+                  'Analyzing video: ${(progress * 100).toStringAsFixed(1)}%',
+              liveStats:
+                  (statusData['live_stats'] is Map ? Map<String, dynamic>.from(statusData['live_stats']) : null) ??
+                  _liveStats,
             );
           }
 
@@ -218,7 +226,11 @@ class VideoAnalysisService extends ChangeNotifier {
               );
               break;
             case 'FAILED':
-              throw Exception(statusData['message'] ?? statusData['error'] ?? 'Analysis failed');
+              throw Exception(
+                statusData['message'] ??
+                    statusData['error'] ??
+                    'Analysis failed',
+              );
             case 'QUEUED':
             case 'PENDING':
               _updateState(status: 'Analysis queued...');
@@ -232,7 +244,9 @@ class VideoAnalysisService extends ChangeNotifier {
               break;
           }
         } else {
-          throw Exception('Failed to get analysis status: ${response.statusCode}');
+          throw Exception(
+            'Failed to get analysis status: ${response.statusCode}',
+          );
         }
       } catch (e) {
         if (!_isAnalyzing) break;
@@ -268,32 +282,37 @@ class VideoAnalysisService extends ChangeNotifier {
       _sseSubscription = response.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter())
-          .listen((line) {
-        if (line.startsWith('data: ')) {
-          final data = line.substring(6);
-          try {
-            final payload = json.decode(data);
-            if (payload['type'] == 'segment' || payload['status'] == 'SEGMENT_DONE') {
-              final segment = AnalysisSegment.fromJson(payload);
-              _segments.insert(0, segment); // Newest first
-              notifyListeners();
-            }
-          } catch (e) {
-            debugPrint('Error parsing SSE segment: $e');
-          }
-        } else if (line.startsWith('event: done')) {
-          _updateState(
-            analysisCompleted: true,
-            status: 'Analysis complete',
+          .listen(
+            (line) {
+              if (line.startsWith('data: ')) {
+                final data = line.substring(6);
+                try {
+                  final payload = Map<String, dynamic>.from(json.decode(data));
+                  if (payload['type'] == 'segment' ||
+                      payload['status'] == 'SEGMENT_DONE') {
+                    final segment = AnalysisSegment.fromJson(payload);
+                    _segments.insert(0, segment); // Newest first
+                    notifyListeners();
+                  }
+                } catch (e) {
+                  debugPrint('Error parsing SSE segment: $e');
+                }
+              } else if (line.startsWith('event: done')) {
+                _updateState(
+                  analysisCompleted: true,
+                  status: 'Analysis complete',
+                );
+                _stopSseListener();
+              }
+            },
+            onError: (e) {
+              debugPrint('SSE Error: $e');
+              _stopSseListener();
+            },
+            onDone: () {
+              _stopSseListener();
+            },
           );
-          _stopSseListener();
-        }
-      }, onError: (e) {
-        debugPrint('SSE Error: $e');
-        _stopSseListener();
-      }, onDone: () {
-        _stopSseListener();
-      });
     } catch (e) {
       debugPrint('Error starting SSE: $e');
     }
@@ -351,7 +370,10 @@ class VideoAnalysisService extends ChangeNotifier {
     }
   }
 
-  Future<void> retryAnalysis({required VoidCallback onComplete, required void Function(String) onError}) async {
+  Future<void> retryAnalysis({
+    required VoidCallback onComplete,
+    required void Function(String) onError,
+  }) async {
     if (_analysisId == null || _analysisId!.isEmpty) {
       onError('No previous analysis to retry.');
       return;
@@ -367,7 +389,10 @@ class VideoAnalysisService extends ChangeNotifier {
     );
 
     try {
-      final response = await _apiClient.post('/analysis/${_analysisId!}/retry', data: {});
+      final response = await _apiClient.post(
+        '/analysis/${_analysisId!}/retry',
+        data: {},
+      );
       if (response == null || response['analysis_id'] == null) {
         throw Exception('Retry response missing analysis_id');
       }
@@ -385,10 +410,7 @@ class VideoAnalysisService extends ChangeNotifier {
       if (_analysisCompleted) onComplete();
     } catch (e) {
       final errorMsg = e.toString();
-      _updateState(
-        isAnalyzing: false,
-        status: 'Retry failed: $errorMsg',
-      );
+      _updateState(isAnalyzing: false, status: 'Retry failed: $errorMsg');
       onError(errorMsg);
     } finally {
       _isRetrying = false;

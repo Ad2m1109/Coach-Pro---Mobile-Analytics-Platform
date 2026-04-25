@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/analysis_report.dart';
 import 'package:frontend/models/analysis_segment.dart';
-import 'package:frontend/models/tactical_alert.dart';
 import 'package:frontend/services/analysis_service.dart';
-import 'package:frontend/services/api_client.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/features/analyze/presentation/widgets/premium_video_player.dart';
-import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
-import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart';
-import 'package:frontend/features/analyze/presentation/widgets/attribute_evolution_chart.dart';
-import 'package:frontend/widgets/custom_card.dart';
-import 'package:frontend/core/design_system/app_spacing.dart';
-import 'package:frontend/core/design_system/app_typography.dart';
 import 'package:frontend/core/design_system/app_colors.dart';
 
 class AnalysisPreviewScreen extends StatefulWidget {
@@ -32,7 +25,6 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
   int _selected = 0;
   String _focusedTeam = 'team_a';
 
-  List<TacticalAlert> _alerts = [];
   int _lastSyncedIndex = -1;
 
   VideoPlayerController? _controller;
@@ -62,35 +54,24 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     try {
       // Read dependencies before any await to avoid using BuildContext across async gaps.
       final analysisService = context.read<AnalysisService>();
-      final ApiClient apiClient = context.read<ApiClient>();
 
-      final rawSegments = await analysisService.getSegmentsForAnalysis(widget.report.id);
-      final segments = rawSegments
-          .where((item) => item is Map)
-          .map((item) => AnalysisSegment.fromJson(Map<String, dynamic>.from(item as Map)))
-          .toList()
-        ..sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
-
-      // Tactical alerts are served by the classic backend (8000) ApiClient.
-      final matchId = widget.report.matchId;
-      List<TacticalAlert> alerts = [];
-      if (matchId != null && matchId.isNotEmpty) {
-        try {
-          final data = await apiClient.get('/matches/$matchId/alerts');
-          if (data is List) {
-            alerts = data
-                .whereType<Map<String, dynamic>>()
-                .map(TacticalAlert.fromJson)
-                .toList();
-          }
-        } catch (_) {
-          alerts = [];
-        }
-      }
+      final rawSegments = await analysisService.getSegmentsForAnalysis(
+        widget.report.id,
+      );
+      final segments =
+          rawSegments
+              .whereType<Map<dynamic, dynamic>>()
+              .map(
+                (item) =>
+                    AnalysisSegment.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList()
+            ..sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
 
       // Pick a playable output (prefer preview if present).
       final outputs = widget.report.outputs ?? const <String, dynamic>{};
-      final String? relativeVideoPath = (outputs['tracking_video_preview_path'] as String?) ??
+      final String? relativeVideoPath =
+          (outputs['tracking_video_preview_path'] as String?) ??
           (outputs['tracking_video_path'] as String?) ??
           widget.report.inputVideoPath;
 
@@ -108,7 +89,6 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       if (!mounted) return;
       setState(() {
         _segments = segments;
-        _alerts = alerts;
         _selected = segments.isNotEmpty ? 0 : 0;
         _loading = false;
       });
@@ -142,18 +122,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     }
   }
 
-  List<TacticalAlert> _alertsForSegment(AnalysisSegment seg) {
-    final start = seg.startSec;
-    final end = seg.endSec;
-    return _alerts
-        .where((a) => a.matchTime != null && a.matchTime! >= start && a.matchTime! <= end)
-        .toList()
-      ..sort((a, b) => (a.matchTime ?? 0).compareTo(b.matchTime ?? 0));
-  }
-
   Future<void> _selectSegment(int index) async {
     if (index < 0 || index >= _segments.length) return;
-    
+
     // Update state first for immediate UI response
     setState(() {
       _selected = index;
@@ -163,27 +134,32 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return;
     final seg = _segments[index];
-    
+
     // Seek video - listener will trigger but _lastSyncedIndex guard will prevent double setState
     await controller.seekTo(Duration(seconds: seg.startSec.round()));
   }
 
   void _syncSegmentToVideo() {
     final controller = _controller;
-    if (controller == null || !controller.value.isInitialized || _segments.isEmpty) return;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _segments.isEmpty)
+      return;
 
     final double position = controller.value.position.inSeconds.toDouble();
-    
+
     // Check if current position is still within current segment to avoid unnecessary search
-    if (_lastSyncedIndex != -1 && 
+    if (_lastSyncedIndex != -1 &&
         _lastSyncedIndex < _segments.length &&
-        position >= _segments[_lastSyncedIndex].startSec && 
+        position >= _segments[_lastSyncedIndex].startSec &&
         position <= _segments[_lastSyncedIndex].endSec) {
       return;
     }
 
     // Find new segment
-    final int newIndex = _segments.indexWhere((s) => position >= s.startSec && position <= s.endSec);
+    final int newIndex = _segments.indexWhere(
+      (s) => position >= s.startSec && position <= s.endSec,
+    );
 
     if (newIndex != -1 && newIndex != _selected) {
       setState(() {
@@ -196,11 +172,12 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
   void _scrollToSegment(int index) {
     if (!_timelineScrollController.hasClients) return;
-    
+
     // Approximate item width (padding + content)
     const double itemWidth = 100.0;
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double targetOffset = (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+    final double targetOffset =
+        (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
 
     _timelineScrollController.animateTo(
       targetOffset.clamp(0, _timelineScrollController.position.maxScrollExtent),
@@ -208,7 +185,6 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       curve: Curves.easeInOut,
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -224,166 +200,55 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
-              : _buildBody(context),
+          ? Center(child: Text(_error!))
+          : _buildBody(context),
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    final report = widget.report;
     final hasVideo = _controller != null && _initVideoFuture != null;
 
-    final AnalysisSegment? selectedSeg =
-        _segments.isNotEmpty ? _segments[_selected.clamp(0, _segments.length - 1)] : null;
-    final Map<String, dynamic> analysis = selectedSeg?.analysisJson ?? const {};
-    final Map<String, dynamic> teamData = (analysis[_focusedTeam] is Map) 
-        ? Map<String, dynamic>.from(analysis[_focusedTeam] as Map) 
-        : const {};
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Column(
       children: [
+        // 1. Video player (fixed at top)
         if (hasVideo)
           FutureBuilder<void>(
             future: _initVideoFuture,
             builder: (context, snap) {
-              return PremiumVideoPlayer(
-                controller: _controller!,
-              );
+              return PremiumVideoPlayer(controller: _controller!);
             },
           )
         else
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No preview video available for this run.',
-                style: Theme.of(context).textTheme.bodyMedium,
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No preview video available for this run.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ),
           ),
 
-        const SizedBox(height: 20),
+        // 2. Enhanced Timeline (fixed below video)
+        _buildEnhancedTimeline(),
 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Tactical Timeline',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.5,
-                  ),
-            ),
-            Text(
-              '${_segments.length} Parts',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        if (_segments.isEmpty)
-          const Text('No segments available for this analysis run yet.')
-        else
-          SizedBox(
-            height: 54,
-            child: ListView.builder(
-              controller: _timelineScrollController,
-              scrollDirection: Axis.horizontal,
-              itemCount: _segments.length,
-              itemBuilder: (context, i) {
-                final seg = _segments[i];
-                final isSelected = i == _selected;
-                final color = _severityColor(seg.severityLabel);
-                final alertCount = _alertsForSegment(seg).length;
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: InkWell(
-                    onTap: () => _selectSegment(i),
-                    borderRadius: BorderRadius.circular(12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? color.withOpacity(0.15)
-                            : Theme.of(context).cardColor.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? color : Colors.white10,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              boxShadow: isSelected
-                                  ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 4)]
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'P${seg.segmentIndex + 1}',
-                            style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Colors.white : Colors.white70,
-                            ),
-                          ),
-                          if (alertCount > 0) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '$alertCount',
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-        const SizedBox(height: 16),
-        
-        AttributeEvolutionChart(
-          segments: _segments,
-          selectedIndex: _selected,
-          onSeek: (secs) {
-            final idx = _segments.indexWhere((s) => s.startSec == secs);
-            if (idx != -1) _selectSegment(idx);
-          },
-        ),
-
-        const SizedBox(height: 24),
-
-        if (selectedSeg != null) ...[
-          _buildTacticalCommandCenter(selectedSeg, teamData),
-        ],
+        // 3. Scrollable content area (chart + recommendations for current segment)
+        Expanded(child: _buildSyncedSegmentContent()),
       ],
     );
   }
 
-  Widget _buildTacticalCommandCenter(AnalysisSegment segment, Map<String, dynamic> teamData) {
+  Widget _buildTacticalCommandCenter(
+    AnalysisSegment segment,
+    Map<String, dynamic> teamData,
+  ) {
     final bool hasNarrative = segment.segmentIndex % 3 == 0;
-    final List<Map<String, dynamic>> tags = _focusedTeam == 'team_a' ? segment.teamATags : segment.teamBTags;
+    final List<Map<String, dynamic>> tags = _focusedTeam == 'team_a'
+        ? segment.teamATags
+        : segment.teamBTags;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,22 +261,26 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                 'TACTICAL COMMAND CENTER',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1.5,
-                    ),
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Live Intelligence Feed',
-                style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 0.5),
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                ),
               ),
               const SizedBox(height: 16),
               _buildTeamSwitcher(),
             ],
           ),
         ),
-        
+
         const SizedBox(height: 16),
 
         // Tactical Status Board (5 Monitoring Channels)
@@ -428,7 +297,11 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.radar, size: 14, color: Theme.of(context).primaryColor),
+                  Icon(
+                    Icons.radar,
+                    size: 14,
+                    color: Theme.of(context).primaryColor,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'TACTICAL STATUS BOARD',
@@ -442,15 +315,30 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildStatusReadout('DEFENSIVE LINE', _getTagForCategory(tags, 'DEFENSIVE_LINE')),
+              _buildStatusReadout(
+                'DEFENSIVE LINE',
+                _getTagForCategory(tags, 'DEFENSIVE_LINE'),
+              ),
               const Divider(height: 12, color: Colors.white12),
-              _buildStatusReadout('TEAM WIDTH', _getTagForCategory(tags, 'WIDTH')),
+              _buildStatusReadout(
+                'TEAM WIDTH',
+                _getTagForCategory(tags, 'WIDTH'),
+              ),
               const Divider(height: 12, color: Colors.white12),
-              _buildStatusReadout('COMPACTNESS', _getTagForCategory(tags, 'COMPACTNESS')),
+              _buildStatusReadout(
+                'COMPACTNESS',
+                _getTagForCategory(tags, 'COMPACTNESS'),
+              ),
               const Divider(height: 12, color: Colors.white12),
-              _buildStatusReadout('TRANSITION SPEED', _getTagForCategory(tags, 'SPEED')),
+              _buildStatusReadout(
+                'TRANSITION SPEED',
+                _getTagForCategory(tags, 'SPEED'),
+              ),
               const Divider(height: 12, color: Colors.white12),
-              _buildStatusReadout('PRESSING SYSTEM', _getTagForCategory(tags, 'PRESSING')),
+              _buildStatusReadout(
+                'PRESSING SYSTEM',
+                _getTagForCategory(tags, 'PRESSING'),
+              ),
             ],
           ),
         ),
@@ -470,20 +358,31 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.15)),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withOpacity(0.15),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).primaryColor.withOpacity(0.05),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 16),
+                      const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.amberAccent,
+                        size: 16,
+                      ),
                       const SizedBox(width: 12),
                       const Text(
                         'STRATEGIC INTELLIGENCE BRIEFING',
@@ -496,12 +395,22 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.amberAccent.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text('AI GEN', style: TextStyle(color: Colors.amberAccent, fontSize: 8, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'AI GEN',
+                          style: TextStyle(
+                            color: Colors.amberAccent,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -515,7 +424,11 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                       const SizedBox(height: 8),
                       Text(
                         segment.tacticalNarrative,
-                        style: const TextStyle(height: 1.6, fontSize: 13, color: Colors.white70),
+                        style: const TextStyle(
+                          height: 1.6,
+                          fontSize: 13,
+                          color: Colors.white70,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       _buildBriefHeader('PROPOSED ADJUSTMENTS'),
@@ -529,11 +442,16 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.lightbulb, size: 14, color: Colors.amberAccent),
+                            const Icon(
+                              Icons.lightbulb,
+                              size: 14,
+                              color: Colors.amberAccent,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                segment.recommendation?.trim().isNotEmpty == true
+                                segment.recommendation?.trim().isNotEmpty ==
+                                        true
                                     ? segment.recommendation!.trim()
                                     : 'Optimize defensive compactness to minimize vertical gaps.',
                                 style: const TextStyle(
@@ -559,7 +477,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.02),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.05), style: BorderStyle.solid),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.05),
+                style: BorderStyle.solid,
+              ),
             ),
             child: Center(
               child: Column(
@@ -569,7 +490,11 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                   const Text(
                     'Awaiting next deep analysis cycle...\nDeep briefings occur every 3 match phases.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white24, fontSize: 11, height: 1.4),
+                    style: TextStyle(
+                      color: Colors.white24,
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -599,16 +524,21 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
   Widget _buildStatusReadout(String label, Map<String, dynamic>? tagData) {
     final bool hasComment = tagData != null;
-    final String tagText = (tagData?['tag'] ?? 'STABLE SYSTEM').toString().toUpperCase();
-    final String comment = tagData?['description'] ?? 'Monitoring... No significant feedback detected.';
-    
+    final String tagText = (tagData?['tag'] ?? 'STABLE SYSTEM')
+        .toString()
+        .toUpperCase();
+    final String comment =
+        tagData?['description'] ??
+        'Monitoring... No significant feedback detected.';
+
     // Determine color based on tag severity or type
     Color color = Colors.white24;
     if (hasComment) {
-      bool isWarning = tagText.contains('VULNERABLE') || 
-                       tagText.contains('STRETCHED') || 
-                       tagText.contains('GAPS') ||
-                       tagText.contains('FAIL');
+      bool isWarning =
+          tagText.contains('VULNERABLE') ||
+          tagText.contains('STRETCHED') ||
+          tagText.contains('GAPS') ||
+          tagText.contains('FAIL');
       color = isWarning ? AppColors.secondary : AppColors.primary;
     }
 
@@ -619,7 +549,11 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
           width: 80,
           child: Text(
             label,
-            style: const TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white38,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -649,14 +583,21 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
           ),
         ),
         if (hasComment)
-          Icon(Icons.report_problem_outlined, size: 12, color: color.withOpacity(0.5))
+          Icon(
+            Icons.report_problem_outlined,
+            size: 12,
+            color: color.withOpacity(0.5),
+          )
         else
           Icon(Icons.check_circle_outline, size: 12, color: Colors.white10),
       ],
     );
   }
 
-  Map<String, dynamic>? _getTagForCategory(List<Map<String, dynamic>> tags, String category) {
+  Map<String, dynamic>? _getTagForCategory(
+    List<Map<String, dynamic>> tags,
+    String category,
+  ) {
     final patterns = {
       'DEFENSIVE_LINE': ['LINE', 'DEPTH', 'OFFSIDE'],
       'WIDTH': ['WIDTH', 'WIDE', 'STRETCHED'],
@@ -664,48 +605,16 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       'SPEED': ['SPEED', 'TRANSITION', 'FAST', 'SLOW'],
       'PRESSING': ['PRESS', 'CLOSE', 'INTENSITY'],
     };
-    
+
     final categoryPatterns = patterns[category] ?? [];
     try {
-      return tags.firstWhere(
-        (tag) {
-          final name = (tag['tag'] ?? '').toString().toUpperCase();
-          return categoryPatterns.any((p) => name.contains(p));
-        },
-      );
+      return tags.firstWhere((tag) {
+        final name = (tag['tag'] ?? '').toString().toUpperCase();
+        return categoryPatterns.any((p) => name.contains(p));
+      });
     } catch (_) {
       return null;
     }
-  }
-
-  Widget _buildTagChip(Map<String, dynamic> tagData) {
-    final String tag = tagData['tag'] ?? 'UNKNOWN';
-    final String description = tagData['description'] ?? '';
-
-    bool isWarning = tag.contains('VULNERABLE') ||
-        tag.contains('OVER-STRETCHED') ||
-        tag.contains('DISCONNECTED') ||
-        tag.contains('LOOSE') ||
-        tag.contains('FAIL');
-    
-    Color color = isWarning ? AppColors.secondary : AppColors.primary;
-
-    return Tooltip(
-      message: description,
-      triggerMode: TooltipTriggerMode.tap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Text(
-          tag,
-          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
   }
 
   Widget _buildTeamSwitcher() {
@@ -734,7 +643,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).primaryColor
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -749,4 +660,305 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       ),
     );
   }
+
+  // Enhanced Timeline with visual progress bar and segment markers
+  Widget _buildEnhancedTimeline() {
+    if (_segments.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text('No segments available for this analysis run yet.'),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Timeline',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${_segments.length} segments',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Visual timeline with segment markers
+          Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Stack(
+              children: [
+                // Video progress bar (background)
+                if (_controller != null && _controller!.value.isInitialized)
+                  Positioned(
+                    top: 20,
+                    left: 16,
+                    right: 16,
+                    child: VideoProgressIndicator(
+                      _controller!,
+                      allowScrubbing: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      colors: VideoProgressColors(
+                        playedColor: Theme.of(context).primaryColor,
+                        bufferedColor: Colors.white24,
+                        backgroundColor: Colors.white12,
+                      ),
+                    ),
+                  ),
+
+                // Segment markers
+                ...List.generate(_segments.length, (i) {
+                  final seg = _segments[i];
+                  final isSelected = i == _selected;
+                  final color = _severityColor(seg.severityLabel);
+
+                  // Calculate position based on segment index (equal spacing)
+                  final double position = i / _segments.length;
+
+                  return Positioned(
+                    left:
+                        16 +
+                        (MediaQuery.of(context).size.width - 32) * position,
+                    top: 10,
+                    child: GestureDetector(
+                      onTap: () => _selectSegment(i),
+                      child: Container(
+                        width: 8,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected ? color : color.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(4),
+                          border: isSelected
+                              ? Border.all(color: Colors.white, width: 2)
+                              : null,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+
+                // Playback head (if video is available)
+                if (_controller != null && _controller!.value.isInitialized)
+                  AnimatedBuilder(
+                    animation: _controller!,
+                    builder: (context, _) {
+                      final position = _controller!.value.position.inSeconds
+                          .toDouble();
+                      final duration = _controller!.value.duration.inSeconds
+                          .toDouble();
+                      if (duration == 0) return const SizedBox.shrink();
+
+                      final progress = position / duration;
+                      return Positioned(
+                        left:
+                            16 +
+                            (MediaQuery.of(context).size.width - 32) *
+                                progress -
+                            6,
+                        top: 14,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withOpacity(0.5),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Synced content area that updates with current segment
+  Widget _buildSyncedSegmentContent() {
+    if (_segments.isEmpty) return const SizedBox.shrink();
+
+    final currentSeg = _segments[_selected.clamp(0, _segments.length - 1)];
+    final Map<String, dynamic> analysis = currentSeg.analysisJson ?? const {};
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Segment header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _severityColor(currentSeg.severityLabel),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${_formatTime(currentSeg.startSec)} - ${_formatTime(currentSeg.endSec)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Segment ${currentSeg.segmentIndex + 1}',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const Spacer(),
+              // Team switcher
+              _buildTeamSwitcher(),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Per-segment chart (5 tactical metrics)
+          _buildSegmentMetricsChart(currentSeg),
+
+          const SizedBox(height: 16),
+
+          // Recommendations for current segment
+          _buildTacticalCommandCenter(
+            currentSeg,
+            analysis[_focusedTeam] is Map
+                ? Map<String, dynamic>.from(analysis[_focusedTeam])
+                : const {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Per-segment bar chart showing 5 tactical metrics
+  Widget _buildSegmentMetricsChart(AnalysisSegment seg) {
+    final analysis = seg.analysisJson ?? <String, dynamic>{};
+    final teamData =
+        (_focusedTeam == 'team_a' ? analysis['team_a'] : analysis['team_b']) ??
+        <String, dynamic>{};
+
+    final metrics = [
+      _ChartData(
+        'Def Line',
+        (teamData['defensive_line'] ?? 0).toDouble(),
+        Colors.red,
+      ),
+      _ChartData('Width', (teamData['width'] ?? 0).toDouble(), Colors.blue),
+      _ChartData(
+        'Compact',
+        (teamData['compactness'] ?? 0).toDouble(),
+        Colors.green,
+      ),
+      _ChartData(
+        'Speed',
+        (teamData['avg_speed'] ?? 0).toDouble(),
+        Colors.orange,
+      ),
+      _ChartData(
+        'Press',
+        (teamData['pressing_intensity'] ?? 0).toDouble(),
+        Colors.purple,
+      ),
+    ];
+
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Team ${_focusedTeam == 'team_a' ? 'A' : 'B'} Metrics',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+              letterSpacing: 1.1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: BarChart(
+              BarChartData(
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, _) {
+                        if (value.toInt() >= 0 &&
+                            value.toInt() < metrics.length) {
+                          return Text(
+                            metrics[value.toInt()].label,
+                            style: const TextStyle(fontSize: 10),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                barGroups: metrics.asMap().entries.map((e) {
+                  return BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: e.value.value,
+                        color: e.value.color,
+                        width: 16,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Chart data class for per-segment metrics
+class _ChartData {
+  final String label;
+  final double value;
+  final Color color;
+
+  _ChartData(this.label, this.value, this.color);
 }

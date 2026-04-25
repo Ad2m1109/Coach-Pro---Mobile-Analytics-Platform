@@ -99,7 +99,8 @@ class AnalysisProgressWidget extends StatelessWidget {
             itemCount: stats.length,
             itemBuilder: (context, index) {
               final playerId = stats.keys.elementAt(index);
-              final playerStats = stats[playerId] as Map<String, dynamic>? ?? {};
+              final rawStats = stats[playerId];
+              final playerStats = rawStats is Map ? rawStats : {};
               final distance = (playerStats['distance'] as num?)?.toDouble() ?? 0.0;
               
               // Determine team color (heuristic or from data if available)

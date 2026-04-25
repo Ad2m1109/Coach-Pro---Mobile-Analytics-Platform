@@ -34,7 +34,10 @@ class AssistantService {
         '/assistant/query',
         data: {'question': question},
       );
-      return AssistantResponse.fromJson(data as Map<String, dynamic>);
+      if (data is Map) {
+        return AssistantResponse.fromJson(Map<String, dynamic>.from(data));
+      }
+      throw Exception('Invalid response format');
     } on ApiException {
       rethrow;
     } catch (e) {

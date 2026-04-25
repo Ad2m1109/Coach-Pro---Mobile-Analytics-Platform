@@ -18,7 +18,8 @@ class ApiClient {
 
   String? get token => _token;
 
-  ApiClient({http.Client? httpClient, required this.baseUrl}) : _httpClient = httpClient ?? http.Client();
+  ApiClient({http.Client? httpClient, required this.baseUrl})
+    : _httpClient = httpClient ?? http.Client();
 
   void setToken(String token) {
     _token = token;
@@ -28,11 +29,15 @@ class ApiClient {
     _token = null;
   }
 
-  Map<String, String> _getHeaders({bool isAuth = false, String contentType = 'application/json'}) {
+  Map<String, String> _getHeaders({
+    bool isAuth = false,
+    String contentType = 'application/json',
+  }) {
     final Map<String, String> headers = {
       'Content-Type': '$contentType; charset=UTF-8',
     };
-    if (_token != null && !isAuth) { // Don't send token for auth endpoints
+    if (_token != null && !isAuth) {
+      // Don't send token for auth endpoints
       headers['Authorization'] = 'Bearer $_token';
     }
     return headers;
@@ -42,17 +47,28 @@ class ApiClient {
     return _getHeaders();
   }
 
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
+  Future<dynamic> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    final Map<String, dynamic> params = queryParameters != null
+        ? Map<String, dynamic>.from(queryParameters)
+        : {};
 
     final uri = Uri.parse('$baseUrl$path');
-    
+
     // Merge existing query parameters from the URI with the new ones
-    final Map<String, dynamic> allParams = Map<String, dynamic>.from(uri.queryParameters);
+    final Map<String, dynamic> allParams = Map<String, dynamic>.from(
+      uri.queryParameters,
+    );
     allParams.addAll(params);
-    
-    final finalUri = uri.replace(queryParameters: allParams.isNotEmpty ? allParams.map((k, v) => MapEntry(k, v.toString())) : null);
-    
+
+    final finalUri = uri.replace(
+      queryParameters: allParams.isNotEmpty
+          ? allParams.map((k, v) => MapEntry(k, v.toString()))
+          : null,
+    );
+
     try {
       final response = await _httpClient.get(finalUri, headers: _getHeaders());
       return _handleResponse(response);
@@ -70,18 +86,32 @@ class ApiClient {
     bool isAuth = false,
     String contentType = 'application/json',
   }) async {
-    final Map<String, dynamic> params = queryParameters != null ? Map<String, dynamic>.from(queryParameters) : {};
+    final Map<String, dynamic> params = queryParameters != null
+        ? Map<String, dynamic>.from(queryParameters)
+        : {};
     final uri = Uri.parse('$baseUrl$path');
-    final Map<String, dynamic> allParams = Map<String, dynamic>.from(uri.queryParameters);
+    final Map<String, dynamic> allParams = Map<String, dynamic>.from(
+      uri.queryParameters,
+    );
     allParams.addAll(params);
     final finalUri = uri.replace(
-      queryParameters: allParams.isNotEmpty ? allParams.map((k, v) => MapEntry(k, v.toString())) : null,
+      queryParameters: allParams.isNotEmpty
+          ? allParams.map((k, v) => MapEntry(k, v.toString()))
+          : null,
     );
     try {
       final response = await _httpClient.post(
         finalUri,
         headers: _getHeaders(isAuth: isAuth, contentType: contentType),
-        body: contentType == 'application/json' ? jsonEncode(data) : (data != null ? Uri(queryParameters: data.map((key, value) => MapEntry(key, value.toString()))).query : null),
+        body: contentType == 'application/json'
+            ? jsonEncode(data)
+            : (data != null
+                  ? Uri(
+                      queryParameters: data.map(
+                        (key, value) => MapEntry(key, value.toString()),
+                      ),
+                    ).query
+                  : null),
       );
       return _handleResponse(response);
     } on http.ClientException catch (e) {
@@ -125,19 +155,24 @@ class ApiClient {
       if (response.body.isEmpty) return null; // Handle empty response
       return jsonDecode(response.body);
     } else {
-      String errorMessage = 'Request failed with status: ${response.statusCode}';
+      String errorMessage =
+          'Request failed with status: ${response.statusCode}';
       try {
         final errorBody = jsonDecode(response.body);
-        if (errorBody != null && errorBody is Map && errorBody.containsKey('detail')) {
+        if (errorBody != null &&
+            errorBody is Map &&
+            errorBody.containsKey('detail')) {
           errorMessage = errorBody['detail'];
         }
       } catch (e) {
         // Ignore JSON decode error if response body is not JSON
       }
-      
+
       // If after trying to parse, the message is still the default and status is 401, provide a better default.
-      if (errorMessage == 'Request failed with status: ${response.statusCode}' && response.statusCode == 401) {
-          errorMessage = 'Unauthorized: Invalid credentials or token expired.';
+      if (errorMessage ==
+              'Request failed with status: ${response.statusCode}' &&
+          response.statusCode == 401) {
+        errorMessage = 'Unauthorized: Invalid credentials or token expired.';
       }
 
       throw ApiException(errorMessage, statusCode: response.statusCode);

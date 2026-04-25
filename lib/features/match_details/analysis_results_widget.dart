@@ -40,7 +40,7 @@ class AnalysisResultsWidget extends StatelessWidget {
           return const Center(child: Text('No analysis data'));
         }
 
-        final data = snapshot.data as Map<String, dynamic>;
+        final data = Map<String, dynamic>.from(snapshot.data as Map);
         final status = (data['status'] ?? 'NO_ANALYSIS').toString();
         final outputs =
             (data['outputs'] as Map?)?.cast<String, dynamic>() ??
@@ -81,9 +81,9 @@ class AnalysisResultsWidget extends StatelessWidget {
           children: [
             Text(
               'Analysis Report',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               'Match ID: $matchId',
@@ -100,7 +100,10 @@ class AnalysisResultsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTechnicalMetrics(BuildContext context, Map<String, dynamic> outputs) {
+  Widget _buildTechnicalMetrics(
+    BuildContext context,
+    Map<String, dynamic> outputs,
+  ) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -119,8 +122,8 @@ class AnalysisResultsWidget extends StatelessWidget {
                 Text(
                   'Technical Execution',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -129,10 +132,19 @@ class AnalysisResultsWidget extends StatelessWidget {
               spacing: 24,
               runSpacing: 16,
               children: [
-                _buildStatItem('Frames', outputs['total_frames']?.toString() ?? '-'),
-                _buildStatItem('Players', outputs['players_tracked']?.toString() ?? '-'),
+                _buildStatItem(
+                  'Frames',
+                  outputs['total_frames']?.toString() ?? '-',
+                ),
+                _buildStatItem(
+                  'Players',
+                  outputs['players_tracked']?.toString() ?? '-',
+                ),
                 _buildStatItem('FPS', outputs['fps']?.toString() ?? '-'),
-                _buildStatItem('Compute Time', '${outputs['processing_time_seconds'] ?? '-'}s'),
+                _buildStatItem(
+                  'Compute Time',
+                  '${outputs['processing_time_seconds'] ?? '-'}s',
+                ),
               ],
             ),
           ],
@@ -147,22 +159,48 @@ class AnalysisResultsWidget extends StatelessWidget {
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
 
-  Widget _buildOutputFilesList(BuildContext context, Map<String, dynamic> outputs) {
+  Widget _buildOutputFilesList(
+    BuildContext context,
+    Map<String, dynamic> outputs,
+  ) {
     return ExpansionTile(
       title: const Text('Generated Assets & Raw Data'),
       leading: const Icon(Icons.folder_open),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
-        _buildFileLink(context, 'Tracking Video', outputs['tracking_video_path']),
-        _buildFileLink(context, 'Heatmap Visualization', outputs['heatmap_video_path']),
-        _buildFileLink(context, 'Backline Analysis', outputs['backline_video_path']),
-        _buildFileLink(context, 'Live Animation', outputs['animation_video_path']),
-        _buildFileLink(context, 'Possession JSON', outputs['possession_analysis_path']),
+        _buildFileLink(
+          context,
+          'Tracking Video',
+          outputs['tracking_video_path'],
+        ),
+        _buildFileLink(
+          context,
+          'Heatmap Visualization',
+          outputs['heatmap_video_path'],
+        ),
+        _buildFileLink(
+          context,
+          'Backline Analysis',
+          outputs['backline_video_path'],
+        ),
+        _buildFileLink(
+          context,
+          'Live Animation',
+          outputs['animation_video_path'],
+        ),
+        _buildFileLink(
+          context,
+          'Possession JSON',
+          outputs['possession_analysis_path'],
+        ),
         _buildFileLink(context, 'Raw Metadata', outputs['tracking_json_path']),
       ],
     );
@@ -191,7 +229,10 @@ class _TacticalAdvisorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final analysisService = Provider.of<AnalysisService>(context, listen: false);
+    final analysisService = Provider.of<AnalysisService>(
+      context,
+      listen: false,
+    );
     return FutureBuilder<dynamic>(
       future: analysisService.fetchJsonPreview(advisoryPath),
       builder: (context, snapshot) {
@@ -208,12 +249,14 @@ class _TacticalAdvisorySection extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final data = snapshot.data as Map<String, dynamic>;
+        final data = Map<String, dynamic>.from(snapshot.data as Map);
         final advisories = (data['advisories'] as List?) ?? [];
         if (advisories.isEmpty) return const SizedBox.shrink();
 
         // Show the latest advisory (or wrap in a carousel if multiple)
-        final latest = advisories.last as Map<String, dynamic>;
+        final latest = advisories.last is Map
+            ? Map<String, dynamic>.from(advisories.last as Map)
+            : <String, dynamic>{};
         final output = (latest['advisor_output'] as Map?) ?? {};
         final metrics = (latest['decision_metrics'] as Map?) ?? {};
         final issues = (metrics['detected_issues'] as List?) ?? [];
@@ -227,14 +270,18 @@ class _TacticalAdvisorySection extends StatelessWidget {
                   shaderCallback: (bounds) => const LinearGradient(
                     colors: [Colors.purple, Colors.blue],
                   ).createShader(bounds),
-                  child: const Icon(Icons.psychology, color: Colors.white, size: 28),
+                  child: const Icon(
+                    Icons.psychology,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'AI Tactical Insights',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -257,7 +304,11 @@ class _TacticalAdvisorySection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildInsightHeader(context, output['confidence'] ?? (output['confidence_level'] ?? 0.0)),
+                    _buildInsightHeader(
+                      context,
+                      output['confidence'] ??
+                          (output['confidence_level'] ?? 0.0),
+                    ),
                     const Divider(height: 32),
                     _buildSectionTitle('## Situation Analysis'),
                     const SizedBox(height: 8),
@@ -270,9 +321,15 @@ class _TacticalAdvisorySection extends StatelessWidget {
                       _buildIssuesList(issues),
                     ],
                     const SizedBox(height: 24),
-                    _buildRecommendationCard(context, output['recommendation'] ?? ''),
+                    _buildRecommendationCard(
+                      context,
+                      output['recommendation'] ?? '',
+                    ),
                     const SizedBox(height: 20),
-                    _buildImpactBox(context, output['impact'] ?? (output['expected_impact'] ?? '')),
+                    _buildImpactBox(
+                      context,
+                      output['impact'] ?? (output['expected_impact'] ?? ''),
+                    ),
                   ],
                 ),
               ),
@@ -363,25 +420,40 @@ class _TacticalAdvisorySection extends StatelessWidget {
       children: [
         const Text(
           'CRITICAL OBSERVATIONS',
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.red),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+          ),
         ),
         const SizedBox(height: 8),
-        ...issues.map((issue) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.red),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  issue.toString(),
-                  style: const TextStyle(fontSize: 13, color: Colors.redAccent),
+        ...issues
+            .map(
+              (issue) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 14,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        issue.toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        )).toList(),
+            )
+            .toList(),
       ],
     );
   }
@@ -411,7 +483,10 @@ class _TacticalAdvisorySection extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'TACTICAL RECOMMENDATION',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
               ),
             ],
           ),
@@ -443,12 +518,19 @@ class _TacticalAdvisorySection extends StatelessWidget {
               children: [
                 const Text(
                   'EXPECTED IMPACT',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.green),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   impact,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.normal),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
               ],
             ),

@@ -13,10 +13,13 @@ class PlayerService {
   Future<List<Player>> getPlayers() async {
     try {
       final responseData = await _apiClient.get('/players');
-      final List<Player> players = (responseData as List)
-          .map((item) => Player.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return players;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Player.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching players: $e');
       throw Exception('Failed to load players');
@@ -28,9 +31,12 @@ class PlayerService {
       // The backend PlayerCreate model does not have an id, so we don't send it.
       final playerData = player.toJson();
       playerData.remove('id');
-      
+
       final responseData = await _apiClient.post('/players', data: playerData);
-      return Player.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Player.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating player: $e');
       throw Exception('Failed to create player');
@@ -39,8 +45,14 @@ class PlayerService {
 
   Future<Player> updatePlayer(Player player) async {
     try {
-      final responseData = await _apiClient.put('/players/${player.id}', data: player.toJson());
-      return Player.fromJson(responseData as Map<String, dynamic>);
+      final responseData = await _apiClient.put(
+        '/players/${player.id}',
+        data: player.toJson(),
+      );
+      if (responseData is Map) {
+        return Player.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error updating player: $e');
       throw Exception('Failed to update player');
@@ -48,11 +60,15 @@ class PlayerService {
   }
 
   Future<Player> uploadPlayerImage(String playerId, XFile imageFile) async {
-    final uri = Uri.parse('${_apiClient.baseUrl}/players/$playerId/upload_image');
+    final uri = Uri.parse(
+      '${_apiClient.baseUrl}/players/$playerId/upload_image',
+    );
     final request = http.MultipartRequest('POST', uri);
 
     // Add the file
-    request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+    request.files.add(
+      await http.MultipartFile.fromPath('file', imageFile.path),
+    );
 
     // Add headers, including the auth token
     if (_apiClient.token != null) {
@@ -64,10 +80,15 @@ class PlayerService {
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        return Player.fromJson(jsonDecode(responseBody));
+        return Player.fromJson(
+          Map<String, dynamic>.from(jsonDecode(responseBody)),
+        );
       } else {
         final errorBody = await response.stream.bytesToString();
-        throw ApiException('Failed to upload image: ${response.statusCode} - $errorBody', statusCode: response.statusCode);
+        throw ApiException(
+          'Failed to upload image: ${response.statusCode} - $errorBody',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
       debugPrint('Error uploading player image: $e');

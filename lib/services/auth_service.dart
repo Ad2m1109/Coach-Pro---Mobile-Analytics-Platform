@@ -10,10 +10,7 @@ class PendingRegistration {
   final String email;
   final String detail;
 
-  const PendingRegistration({
-    required this.email,
-    required this.detail,
-  });
+  const PendingRegistration({required this.email, required this.detail});
 }
 
 class AuthService with ChangeNotifier {
@@ -192,9 +189,8 @@ class AuthService with ChangeNotifier {
       );
       return PendingRegistration(
         email: (response['email'] ?? email).toString(),
-        detail:
-            (response['detail'] ?? 'Verification code sent to your email.')
-                .toString(),
+        detail: (response['detail'] ?? 'Verification code sent to your email.')
+            .toString(),
       );
     } catch (e) {
       _clearSessionState();
@@ -225,9 +221,8 @@ class AuthService with ChangeNotifier {
       );
       return PendingRegistration(
         email: (response['email'] ?? email).toString(),
-        detail:
-            (response['detail'] ?? 'Verification code sent to your email.')
-                .toString(),
+        detail: (response['detail'] ?? 'Verification code sent to your email.')
+            .toString(),
       );
     } catch (e) {
       rethrow;
@@ -250,11 +245,7 @@ class AuthService with ChangeNotifier {
   ) async {
     final response = await _apiClient.post(
       '/password/reset',
-      data: {
-        'email': email,
-        'code': code,
-        'new_password': newPassword,
-      },
+      data: {'email': email, 'code': code, 'new_password': newPassword},
       isAuth: true,
     );
     return (response['detail'] ?? 'Password updated successfully.').toString();
@@ -317,7 +308,9 @@ class AuthService with ChangeNotifier {
       final payload = parts[1];
       final normalized = base64Url.normalize(payload);
       final decoded = utf8.decode(base64Url.decode(normalized));
-      final Map<String, dynamic> claims = json.decode(decoded);
+      final Map<String, dynamic> claims = Map<String, dynamic>.from(
+        json.decode(decoded),
+      );
 
       _userType = claims['user_type'] as String?;
       _staffId = claims['staff_id'] as String?;

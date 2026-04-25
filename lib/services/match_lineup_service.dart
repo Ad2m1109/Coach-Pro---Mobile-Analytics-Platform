@@ -14,10 +14,15 @@ class MatchLineupService {
         queryString += '?match_id=$matchId';
       }
       final responseData = await _apiClient.get(queryString);
-      final List<MatchLineup> lineups = (responseData as List)
-          .map((item) => MatchLineup.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return lineups;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map(
+              (item) => MatchLineup.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching lineups: $e');
       throw Exception('Failed to load lineups');
@@ -26,8 +31,14 @@ class MatchLineupService {
 
   Future<MatchLineup> createLineup(MatchLineup lineup) async {
     try {
-      final responseData = await _apiClient.post('/match_lineups', data: lineup.toJson());
-      return MatchLineup.fromJson(responseData as Map<String, dynamic>);
+      final responseData = await _apiClient.post(
+        '/match_lineups',
+        data: lineup.toJson(),
+      );
+      if (responseData is Map) {
+        return MatchLineup.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating lineup: $e');
       throw Exception('Failed to create lineup');

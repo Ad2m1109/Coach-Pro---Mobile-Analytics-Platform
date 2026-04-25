@@ -23,8 +23,23 @@ class AnalysisService with ChangeNotifier {
 
     try {
       final dynamic responseData = await _apiClient.get('/analysis_history');
-      _reports = (responseData as List)
-          .map((item) => AnalysisReport.fromJson(item as Map<String, dynamic>))
+      List<dynamic> rawList;
+
+      if (responseData is List) {
+        rawList = responseData;
+      } else if (responseData is Map && responseData['data'] is List) {
+        rawList = responseData['data'];
+      } else if (responseData is Map && responseData['reports'] is List) {
+        rawList = responseData['reports'];
+      } else {
+        throw Exception('Unexpected analysis history response format');
+      }
+
+      _reports = rawList
+          .whereType<Map<dynamic, dynamic>>()
+          .map(
+            (item) => AnalysisReport.fromJson(Map<String, dynamic>.from(item)),
+          )
           .toList();
       _errorMessage = null;
     } on ApiException catch (e) {
@@ -72,7 +87,7 @@ class AnalysisService with ChangeNotifier {
   Future<List<dynamic>> getSegmentsForMatch(String matchId) async {
     try {
       final response = await _apiClient.get('/matches/$matchId/segments');
-      if (response is Map<String, dynamic> && response['segments'] is List) {
+      if (response is Map && response['segments'] is List) {
         return (response['segments'] as List).cast<dynamic>();
       }
       return [];
@@ -84,7 +99,7 @@ class AnalysisService with ChangeNotifier {
   Future<List<dynamic>> getSegmentsForAnalysis(String analysisId) async {
     try {
       final response = await _apiClient.get('/analysis/$analysisId/segments');
-      if (response is Map<String, dynamic> && response['segments'] is List) {
+      if (response is Map && response['segments'] is List) {
         return (response['segments'] as List).cast<dynamic>();
       }
       return [];

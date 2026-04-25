@@ -11,13 +11,19 @@ class NoteService {
       '/matches/${note.matchId}/notes',
       data: note.toJson(),
     );
-    return MatchNote.fromJson(response);
+    if (response is Map) {
+      return MatchNote.fromJson(Map<String, dynamic>.from(response));
+    }
+    throw Exception('Invalid response format');
   }
 
   Future<List<MatchNote>> getMatchNotes(String matchId) async {
     final response = await apiClient.get('/matches/$matchId/notes');
     if (response is List) {
-      return response.map((json) => MatchNote.fromJson(json)).toList();
+      return response
+          .whereType<Map<dynamic, dynamic>>()
+          .map((json) => MatchNote.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
     }
     return [];
   }

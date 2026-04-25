@@ -10,10 +10,13 @@ class FormationService {
   Future<List<Formation>> getFormations() async {
     try {
       final responseData = await _apiClient.get('/formations');
-      final List<Formation> formations = (responseData as List)
-          .map((item) => Formation.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return formations;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Formation.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching formations: $e');
       throw Exception('Failed to load formations');

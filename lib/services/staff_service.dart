@@ -9,10 +9,13 @@ class StaffService {
   Future<List<Staff>> getAllStaff() async {
     try {
       final responseData = await _apiClient.get('/staff');
-      final List<Staff> staff = (responseData as List)
-          .map((item) => Staff.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return staff;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Staff.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       throw Exception('Failed to load staff: $e');
     }
@@ -21,21 +24,25 @@ class StaffService {
   Future<Staff> getStaff(String staffId) async {
     try {
       final responseData = await _apiClient.get('/staff/$staffId');
-      return Staff.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Staff.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       throw Exception('Failed to load staff: $e');
     }
   }
 
-  Future<Staff> createStaffWithAccount(
-    StaffCreateRequest request,
-  ) async {
+  Future<Staff> createStaffWithAccount(StaffCreateRequest request) async {
     try {
       final responseData = await _apiClient.post(
         '/staff/create_with_account',
         data: request.toJson(),
       );
-      return Staff.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Staff.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       throw Exception('Failed to create staff: $e');
     }
@@ -47,7 +54,10 @@ class StaffService {
         '/staff/$staffId',
         data: staffData.toJson(),
       );
-      return Staff.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Staff.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       throw Exception('Failed to update staff: $e');
     }

@@ -5,15 +5,22 @@ import 'package:frontend/services/api_client.dart';
 class TrainingSessionService {
   final ApiClient _apiClient;
 
-  TrainingSessionService({required ApiClient apiClient}) : _apiClient = apiClient;
+  TrainingSessionService({required ApiClient apiClient})
+    : _apiClient = apiClient;
 
   Future<List<TrainingSession>> getTrainingSessions() async {
     try {
       final responseData = await _apiClient.get('/training_sessions');
-      final List<TrainingSession> sessions = (responseData as List)
-          .map((item) => TrainingSession.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return sessions;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map(
+              (item) =>
+                  TrainingSession.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching training sessions: $e');
       throw Exception('Failed to load training sessions');
@@ -28,8 +35,16 @@ class TrainingSessionService {
         'focus': session.focus,
         'icon_name': session.iconName,
       };
-      final responseData = await _apiClient.post('/training_sessions', data: data);
-      return TrainingSession.fromJson(responseData as Map<String, dynamic>);
+      final responseData = await _apiClient.post(
+        '/training_sessions',
+        data: data,
+      );
+      if (responseData is Map) {
+        return TrainingSession.fromJson(
+          Map<String, dynamic>.from(responseData),
+        );
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating training session: $e');
       throw Exception('Failed to create training session');

@@ -13,10 +13,13 @@ class TeamService {
   Future<List<Team>> getTeams() async {
     try {
       final responseData = await _apiClient.get('/teams');
-      final List<Team> teams = (responseData as List)
-          .map((item) => Team.fromJson(item as Map<String, dynamic>))
-          .toList();
-      return teams;
+      if (responseData is List) {
+        return responseData
+            .whereType<Map<dynamic, dynamic>>()
+            .map((item) => Team.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+      }
+      return [];
     } catch (e) {
       debugPrint('Error fetching teams: $e');
       throw Exception('Failed to load teams');
@@ -26,7 +29,10 @@ class TeamService {
   Future<Team> getTeam(String id) async {
     try {
       final responseData = await _apiClient.get('/teams/$id');
-      return Team.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Team.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error fetching team: $e');
       throw Exception('Failed to load team');
@@ -36,7 +42,10 @@ class TeamService {
   Future<Team> getTeamByName(String name) async {
     try {
       final responseData = await _apiClient.get('/teams/by_name/$name');
-      return Team.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Team.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error fetching team by name: $e');
       throw Exception('Failed to load team by name');
@@ -53,7 +62,10 @@ class TeamService {
         'logo_url': team.logoUrl,
       };
       final responseData = await _apiClient.post('/teams', data: teamData);
-      return Team.fromJson(responseData as Map<String, dynamic>);
+      if (responseData is Map) {
+        return Team.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error creating team: $e');
       throw Exception('Failed to create team');
@@ -62,8 +74,14 @@ class TeamService {
 
   Future<Team> updateTeam(String teamId, Team teamData) async {
     try {
-      final responseData = await _apiClient.put('/teams/$teamId', data: teamData.toJson());
-      return Team.fromJson(responseData as Map<String, dynamic>);
+      final responseData = await _apiClient.put(
+        '/teams/$teamId',
+        data: teamData.toJson(),
+      );
+      if (responseData is Map) {
+        return Team.fromJson(Map<String, dynamic>.from(responseData));
+      }
+      throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error updating team: $e');
       throw Exception('Failed to update team');
@@ -75,7 +93,9 @@ class TeamService {
     final request = http.MultipartRequest('POST', uri);
 
     // Add the file
-    request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+    request.files.add(
+      await http.MultipartFile.fromPath('file', imageFile.path),
+    );
 
     // Add headers, including the auth token
     if (_apiClient.token != null) {
@@ -87,10 +107,15 @@ class TeamService {
 
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        return Team.fromJson(jsonDecode(responseBody));
+        return Team.fromJson(
+          Map<String, dynamic>.from(jsonDecode(responseBody)),
+        );
       } else {
         final errorBody = await response.stream.bytesToString();
-        throw ApiException('Failed to upload logo: ${response.statusCode} - $errorBody', statusCode: response.statusCode);
+        throw ApiException(
+          'Failed to upload logo: ${response.statusCode} - $errorBody',
+          statusCode: response.statusCode,
+        );
       }
     } catch (e) {
       debugPrint('Error uploading team logo: $e');

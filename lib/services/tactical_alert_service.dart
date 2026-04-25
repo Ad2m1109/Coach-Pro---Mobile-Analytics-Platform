@@ -26,7 +26,7 @@ class TacticalAlertService extends ChangeNotifier {
   Future<void> initForMatch(String matchId) async {
     _history.clear();
     await _refreshDecisionData(matchId);
-    
+
     // Connect to WebSocket for real-time updates
     _connectWebSocket(matchId);
   }
@@ -38,7 +38,9 @@ class TacticalAlertService extends ChangeNotifier {
 
     // Derive WS URL from ApiClient baseUrl
     // baseUrl: http://localhost:8000/api -> ws://localhost:8000/ws/alerts/{match_id}
-    final wsBase = _apiClient.baseUrl.replaceFirst('http', 'ws').replaceFirst('/api', '');
+    final wsBase = _apiClient.baseUrl
+        .replaceFirst('http', 'ws')
+        .replaceFirst('/api', '');
     final wsUrl = '$wsBase/ws/alerts/$matchId';
 
     debugPrint('Connecting to Tactical Alerts WebSocket: $wsUrl');
@@ -51,8 +53,10 @@ class TacticalAlertService extends ChangeNotifier {
       _socket!.listen(
         (data) {
           try {
-            final Map<String, dynamic> json = jsonDecode(data);
-            
+            final Map<String, dynamic> json = Map<String, dynamic>.from(
+              jsonDecode(data),
+            );
+
             if (json['type'] == 'flow_analysis') {
               _flowAnalyses.add(json);
               notifyListeners();
@@ -60,7 +64,7 @@ class TacticalAlertService extends ChangeNotifier {
             }
 
             final alert = TacticalAlert.fromJson(json);
-            
+
             // Deduplicate/Update history
             final index = _history.indexWhere((a) => a.id == alert.id);
             if (index != -1) {
@@ -68,7 +72,7 @@ class TacticalAlertService extends ChangeNotifier {
             } else {
               _history.add(alert);
             }
-            
+
             _alertController.add(alert);
             notifyListeners();
           } catch (e) {
@@ -95,14 +99,18 @@ class TacticalAlertService extends ChangeNotifier {
   }
 
   /// Submit feedback for an alert (accepted/dismissed)
-  Future<void> submitFeedback(String matchId, String alertId, String feedback) async {
+  Future<void> submitFeedback(
+    String matchId,
+    String alertId,
+    String feedback,
+  ) async {
     try {
       final normalizedFeedback = feedback.toLowerCase();
       final action = normalizedFeedback == 'accepted' ? 'ACCEPT' : 'DISMISS';
       final alert = _history.cast<TacticalAlert?>().firstWhere(
-            (a) => a?.id == alertId || a?.decisionId == alertId,
-            orElse: () => null,
-          );
+        (a) => a?.id == alertId || a?.decisionId == alertId,
+        orElse: () => null,
+      );
 
       await _apiClient.post(
         '/decision/feedback',
@@ -144,7 +152,10 @@ class TacticalAlertService extends ChangeNotifier {
       }
 
       await _refreshDecisionData(matchId);
-      Future<void>.delayed(const Duration(seconds: 8), () => _refreshDecisionData(matchId));
+      Future<void>.delayed(
+        const Duration(seconds: 8),
+        () => _refreshDecisionData(matchId),
+      );
     } catch (e) {
       debugPrint('Error submitting feedback: $e');
       rethrow;
@@ -153,14 +164,19 @@ class TacticalAlertService extends ChangeNotifier {
 
   Future<void> _refreshDecisionData(String matchId) async {
     try {
-      final List<dynamic> data = await _apiClient.get('/matches/$matchId/alerts');
+      final List<dynamic> data = await _apiClient.get(
+        '/matches/$matchId/alerts',
+      );
       _history = data.map((json) => TacticalAlert.fromJson(json)).toList();
     } catch (e) {
       debugPrint('Error fetching alert history: $e');
     }
 
     try {
-      final dynamic metrics = await _apiClient.get('/decision/metrics', queryParameters: {'match_id': matchId});
+      final dynamic metrics = await _apiClient.get(
+        '/decision/metrics',
+        queryParameters: {'match_id': matchId},
+      );
       if (metrics is Map<String, dynamic>) {
         _decisionMetrics = metrics;
       }
