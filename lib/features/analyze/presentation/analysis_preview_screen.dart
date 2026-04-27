@@ -52,7 +52,6 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     });
 
     try {
-      // Read dependencies before any await to avoid using BuildContext across async gaps.
       final analysisService = context.read<AnalysisService>();
 
       final rawSegments = await analysisService.getSegmentsForAnalysis(
@@ -68,7 +67,6 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
               .toList()
             ..sort((a, b) => a.segmentIndex.compareTo(b.segmentIndex));
 
-      // Pick a playable output (prefer preview if present).
       final outputs = widget.report.outputs ?? const <String, dynamic>{};
       final String? relativeVideoPath =
           (outputs['tracking_video_preview_path'] as String?) ??
@@ -83,20 +81,22 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         );
         _initVideoFuture = _controller!.initialize().then((_) {
           _controller!.addListener(_syncSegmentToVideo);
+        }).catchError((e) {
+          print('Video init error: $e');
         });
       }
 
       if (!mounted) return;
       setState(() {
         _segments = segments;
-        _selected = segments.isNotEmpty ? 0 : 0;
+        _selected = segments.isNotEmpty ? 0 : -1;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
         _loading = false;
+        _error = e.toString();
       });
     }
   }

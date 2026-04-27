@@ -20,6 +20,7 @@ class VideoAnalysisService extends ChangeNotifier {
   String? _currentMatchId;
   String? _analysisId;
   String? _originalVideoUrl;
+  String? _trackingVideoUrl;  // Streaming tracking video during analysis
   bool _isCanceling = false;
   bool _isRetrying = false;
   List<AnalysisSegment> _segments = [];
@@ -38,6 +39,7 @@ class VideoAnalysisService extends ChangeNotifier {
   String? get currentMatchId => _currentMatchId;
   String? get analysisId => _analysisId;
   String? get originalVideoUrl => _originalVideoUrl;
+  String? get trackingVideoUrl => _trackingVideoUrl;  // Getter for streaming tracking video
   List<AnalysisSegment> get segments => _segments;
 
   VideoAnalysisService({required ApiClient apiClient}) : _apiClient = apiClient;
@@ -202,6 +204,13 @@ class VideoAnalysisService extends ChangeNotifier {
           final statusData = Map<String, dynamic>.from(
             json.decode(response.body),
           );
+
+          // Check for tracking video (for streaming while analyzing)
+          final trackingVideo = statusData['tracking_video_path'];
+          if (trackingVideo != null && trackingVideo != _trackingVideoUrl) {
+            _trackingVideoUrl = '${_apiClient.baseUrl}/analysis/files?path=${Uri.encodeQueryComponent(trackingVideo)}';
+            notifyListeners();
+          }
 
           if (statusData['progress'] != null) {
             final progress = (statusData['progress'] as num).toDouble();

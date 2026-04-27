@@ -59,6 +59,10 @@ class AnalysisService with ChangeNotifier {
 
   String streamUrl(String relativePath) {
     final encodedPath = Uri.encodeQueryComponent(relativePath);
+    final token = _apiClient.token;
+    if (token != null && token.isNotEmpty) {
+      return '${_apiClient.baseUrl}/analysis/stream?path=$encodedPath&access_token=$token';
+    }
     return '${_apiClient.baseUrl}/analysis/stream?path=$encodedPath';
   }
 

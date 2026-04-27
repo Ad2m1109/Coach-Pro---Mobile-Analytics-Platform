@@ -5,17 +5,22 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/video_analysis_service.dart';
 import 'package:frontend/features/analyze/presentation/widgets/analysis_progress.dart';
 import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart';
-import 'package:frontend/models/match_note.dart';
 import 'package:frontend/services/note_service.dart';
 import 'package:frontend/services/analysis_service.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
-import 'dart:ui';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
-import 'package:frontend/features/analyze/presentation/calibration_screen.dart';
-import 'package:frontend/features/analyze/presentation/sync_calibration_screen.dart';
+import 'package:frontend/models/match_note.dart';
+
+class _LiveChartMetric {
+  final String label;
+  final double value;
+  final Color color;
+  _LiveChartMetric(this.label, this.value, this.color);
+}
 
 class NewAnalysisScreen extends StatefulWidget {
   const NewAnalysisScreen({super.key});
@@ -83,6 +88,35 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _showCancelDialog() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Analysis'),
+        content: const Text('Are you sure you want to cancel the current analysis? Progress will be lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No, Continue'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final service = context.read<VideoAnalysisService>();
+      await service.cancelAnalysis();
+      _showMessage('Analysis cancelled');
+    }
   }
 
   Future<void> _uploadAndAnalyzeVideo() async {
@@ -164,24 +198,41 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               slivers: [
                 _buildSliverAppBar(appLocalizations),
                 
-                if (!isAnalyzing)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.m),
-                      child: Column(
-                        children: [
+                // Show video player - tracking video during analysis, original otherwise
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.m),
+                    child: Column(
+                      children: [
+                        // Video player first
+                        if (service.trackingVideoUrl != null)
+                          _buildVideoPlayer(service.trackingVideoUrl!)
+                        else if (service.originalVideoUrl != null)
+                          _buildVideoPlayer(service.originalVideoUrl!),
+                        // Progress bar (only when tracking video not yet available during analysis)
+                        if (isAnalyzing && service.trackingVideoUrl == null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.m),
+                            child: AnalysisProgressWidget(
+                              uploadProgress: service.uploadProgress,
+                              analysisProgress: service.analysisProgress,
+                              liveStats: service.liveStats,
+                            ),
+                          ),
+                        // Control section (only when not analyzing)
+                        if (!isAnalyzing) ...[
+                          const SizedBox(height: AppSpacing.m),
                           CustomCard(
                             child: _buildControlSection(service, appLocalizations),
                           ),
-                          const SizedBox(height: AppSpacing.m),
-                          if (service.originalVideoUrl != null)
-                            _buildVideoPlayer(service.originalVideoUrl!),
                         ],
-                      ),
+                      ],
                     ),
                   ),
+                ),
 
-                if (service.segments.isNotEmpty || isAnalyzing)
+                // Segments timeline (when segments exist)
+                if (service.segments.isNotEmpty)
                   SliverPersistentHeader(
                     pinned: true,
                     delegate: _SliverTimelineDelegate(
@@ -201,25 +252,14 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                     ),
                   ),
 
-                if (isAnalyzing || service.analysisCompleted)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.m),
-                    child: AnalysisProgressWidget(
-                      uploadProgress: service.uploadProgress,
-                      analysisProgress: service.analysisProgress,
-                      liveStats: service.liveStats,
-                    ),
-                  ),
-                  ),
-
+                // Show segments list
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
                         if (index == service.segments.length) {
-                          return isAnalyzing ? _buildSkeletonCard() : const SizedBox.shrink();
+                          return const SizedBox.shrink();
                         }
                         final segment = service.segments[index];
                         _segmentKeys[segment.id] = _segmentKeys[segment.id] ?? GlobalKey();
@@ -235,25 +275,26 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                           ),
                         );
                       },
-                      childCount: service.segments.length + (isAnalyzing ? 1 : 0),
+                      childCount: service.segments.length,
                     ),
                   ),
                 ),
 
+                // Always show progress during analysis
                 if (isAnalyzing)
                   SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.m),
-                    child: _buildLiveNotesSection(appLocalizations),
-                  ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.m),
+                      child: _buildLiveStatsChart(service.liveStats),
+                    ),
                   ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
             
-            if (_showMiniPlayer && service.originalVideoUrl != null)
-              _buildFloatingMiniPlayer(service.originalVideoUrl!),
+            if (_showMiniPlayer && (service.trackingVideoUrl ?? service.originalVideoUrl) != null)
+              _buildFloatingMiniPlayer(service.trackingVideoUrl ?? service.originalVideoUrl!),
           ],
         );
       },
@@ -261,6 +302,9 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   }
 
   Widget _buildSliverAppBar(AppLocalizations l10n) {
+    final service = context.read<VideoAnalysisService>();
+    final isAnalyzing = service.isAnalyzing;
+
     return SliverAppBar(
       pinned: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -273,6 +317,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       ),
       centerTitle: true,
       actions: [
+        if (isAnalyzing)
+          IconButton(
+            onPressed: () => _showCancelDialog(),
+            icon: const Icon(Icons.cancel_outlined),
+            tooltip: 'Cancel Analysis',
+          ),
         IconButton(
           icon: Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary),
           onPressed: () {},
@@ -769,6 +819,131 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveStatsChart(Map<String, dynamic> liveStats) {
+    final stats = liveStats ?? {};
+    if (stats.isEmpty) {
+      return CustomCard(
+        child: Column(
+          children: [
+            Icon(Icons.analytics, size: 40, color: Theme.of(context).hintColor),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              'Waiting for tactical data...',
+              style: TextStyle(color: Theme.of(context).hintColor),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Calculate aggregates for the 5 tactical metrics
+    double totalDefLine = 0, totalWidth = 0, totalCompact = 0, totalSpeed = 0;
+    int pressingCount = 0, playerCount = 0;
+    for (var rawStats in stats.values) {
+      if (rawStats is! Map) continue;
+      final s = Map<String, dynamic>.from(rawStats);
+      totalDefLine += (s['defensive_line'] as num?)?.toDouble() ?? 0;
+      totalWidth += (s['width'] as num?)?.toDouble() ?? 0;
+      totalCompact += (s['compactness'] as num?)?.toDouble() ?? 0;
+      totalSpeed += (s['avg_speed'] as num?)?.toDouble() ?? 0;
+      pressingCount += (s['pressing_intensity'] as num?)?.toInt() ?? 0;
+      playerCount++;
+    }
+
+    if (playerCount == 0) {
+      return CustomCard(
+        child: Center(
+          child: Text(
+            'Processing player tracking...',
+            style: TextStyle(color: Theme.of(context).hintColor),
+          ),
+        ),
+      );
+    }
+
+    final avgDefLine = totalDefLine / playerCount;
+    final avgWidth = totalWidth / playerCount;
+    final avgCompact = totalCompact / playerCount;
+    final avgSpeed = totalSpeed / playerCount;
+
+    final metrics = [
+      _LiveChartMetric('Def Line', avgDefLine, Colors.red),
+      _LiveChartMetric('Width', avgWidth, Colors.blue),
+      _LiveChartMetric('Compact', avgCompact, Colors.green),
+      _LiveChartMetric('Speed', avgSpeed, Colors.orange),
+      _LiveChartMetric('Press', pressingCount.toDouble(), Colors.purple),
+    ];
+
+    return CustomCard(
+      padding: const EdgeInsets.all(AppSpacing.m),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bolt, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: AppSpacing.s),
+              Text(
+                'LIVE TACTICAL METRICS',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.m),
+          SizedBox(
+            height: 180,
+            child: BarChart(
+              BarChartData(
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= 0 && value.toInt() < metrics.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              metrics[value.toInt()].label,
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                barGroups: metrics.asMap().entries.map((e) {
+                  return BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: e.value.value,
+                        color: e.value.color,
+                        width: 24,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+              ),
             ),
           ),
         ],
