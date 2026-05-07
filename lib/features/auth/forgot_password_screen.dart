@@ -8,6 +8,7 @@ import 'package:frontend/widgets/custom_button.dart';
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -117,7 +118,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Forgot Password')),
+      appBar: const PremiumAppBar(title: 'Forgot Password'),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),

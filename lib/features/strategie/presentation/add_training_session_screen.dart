@@ -4,6 +4,7 @@ import 'package:frontend/models/training_session.dart';
 import 'package:frontend/services/training_session_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AddTrainingSessionScreen extends StatefulWidget {
   const AddTrainingSessionScreen({super.key});
@@ -80,8 +81,8 @@ class _AddTrainingSessionScreenState extends State<AddTrainingSessionScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.addTrainingSession),
+      appBar: PremiumAppBar(
+        title: appLocalizations.addTrainingSession,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

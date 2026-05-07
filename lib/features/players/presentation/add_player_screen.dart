@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/player.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 import 'package:frontend/services/player_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart'; // For date formatting
@@ -116,8 +117,8 @@ class _AddPlayerScreenState extends State<AddPlayerScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.addNewPlayer),
+      appBar: PremiumAppBar(
+        title: appLocalizations.addNewPlayer,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

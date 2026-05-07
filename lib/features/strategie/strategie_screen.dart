@@ -5,9 +5,9 @@ import 'package:frontend/features/strategie/presentation/reunions_screen.dart';
 import 'package:frontend/features/strategie/presentation/training_screen.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:frontend/l10n/app_localizations.dart'; // New import
-
+import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class StrategieScreen extends StatefulWidget {
   const StrategieScreen({super.key});
@@ -72,20 +72,22 @@ class _StrategieScreenState extends State<StrategieScreen> with SingleTickerProv
     final canShowFab = _tabController.index == 0 ? canAddTraining : canAddReunions;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: PremiumAppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(appLocalizations.strategie),
             Text(
               '${appLocalizations.loggedInAs} $userEmail',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.white70),
             ),
           ],
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [

@@ -3,6 +3,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/event_service.dart';
 import 'package:frontend/models/event.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -58,8 +59,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.addNewEvent),
+      appBar: PremiumAppBar(
+        title: appLocalizations.addNewEvent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

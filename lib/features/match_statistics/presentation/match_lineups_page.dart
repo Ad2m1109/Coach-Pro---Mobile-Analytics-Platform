@@ -194,7 +194,6 @@ class _MatchLineupsPageState extends State<MatchLineupsPage> with SingleTickerPr
       children: [
         TabBar(
           controller: _tabController,
-          indicatorColor: Theme.of(context).colorScheme.primary,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [

@@ -6,8 +6,8 @@ import 'package:frontend/widgets/custom_button.dart';
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   final String email;
@@ -88,7 +88,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Email')),
+      appBar: const PremiumAppBar(title: 'Verify Email'),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),

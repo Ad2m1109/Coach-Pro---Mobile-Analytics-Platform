@@ -10,6 +10,7 @@ import 'package:frontend/features/auth/widgets/email_verification_dialog.dart';
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:frontend/widgets/custom_button.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -145,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
     final authService = context.watch<AuthService>();
     return Scaffold(
-      appBar: AppBar(title: Text(appLocalizations.login)),
+      appBar: PremiumAppBar(title: appLocalizations.login),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),
@@ -154,6 +155,15 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Hero(
+                  tag: 'app_logo_large',
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 180,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
                 CustomTextField(
                   controller: _emailController,
                   label: appLocalizations.email,

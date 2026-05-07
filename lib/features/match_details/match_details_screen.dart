@@ -19,6 +19,9 @@ import 'package:frontend/features/match_details/video_upload_widget.dart';
 import 'package:frontend/features/match_details/analysis_progress_widget.dart'
     as analysis_widgets;
 import 'package:frontend/features/match_details/analysis_results_widget.dart';
+import 'package:frontend/core/design_system/app_colors.dart';
+import 'package:frontend/core/design_system/app_shadow.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 // Data for preset formations
 class FormationPresets {
@@ -448,10 +451,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '${widget.match.homeTeam} ${appLocalizations.vs} ${widget.match.awayTeam}',
-        ),
+      appBar: PremiumAppBar(
+        title:
+            '${widget.match.homeTeam} ${appLocalizations.vs} ${widget.match.awayTeam}',
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -655,13 +657,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.s),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                boxShadow: AppShadow.cardShadowLight,
               ),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -724,9 +720,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
                       _deleteNote(note.id);
                     },
                     background: Container(
-                      color: Colors.red,
+                      color: AppColors.error,
                       alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.l),
                       child: const Icon(Icons.delete, color: Colors.white),
                     ),
                     child: CustomCard(
@@ -914,17 +910,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
             height: 44,
             decoration: BoxDecoration(
               color: player.position == 'GK'
-                  ? Colors.orange.shade700
+                  ? AppColors.goalkeeperOrange
                   : Theme.of(context).colorScheme.primary,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              boxShadow: AppShadow.playerMarker,
             ),
             child: Center(
               child: Text(
@@ -963,7 +953,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: (index == 0 ? Colors.orange.shade900 : Colors.black).withOpacity(
+        color: (index == 0 ? AppColors.goalkeeperYellow : Colors.black).withOpacity(
           0.3,
         ),
         shape: BoxShape.circle,
@@ -992,7 +982,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
           CircleAvatar(
             radius: 24,
             backgroundColor: player.position == 'GK'
-                ? Colors.orange.shade700
+                ? AppColors.goalkeeperOrange
                 : Theme.of(context).colorScheme.secondary,
             child: Text(
               player.jerseyNumber?.toString() ?? '?',

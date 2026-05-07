@@ -29,6 +29,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
         elevation: 2,
+        shadowColor: AppColors.shadowLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
         ),
@@ -81,9 +82,9 @@ class AppTheme {
         elevation: 8,
       ),
       tabBarTheme: const TabBarThemeData(
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.white70,
-        indicatorColor: Colors.white,
+        labelColor: Colors.black,
+        unselectedLabelColor: Colors.black54,
+        indicatorColor: Colors.black,
       ),
     );
   }
@@ -113,6 +114,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 2,
+        shadowColor: AppColors.shadowLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
         ),

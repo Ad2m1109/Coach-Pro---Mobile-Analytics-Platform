@@ -4,6 +4,7 @@ import 'package:frontend/models/analysis_report.dart';
 import 'package:frontend/services/analysis_service.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AnalysisReportCard extends StatelessWidget {
   final AnalysisReport report;
@@ -466,7 +467,7 @@ class _FullscreenVideoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: PremiumAppBar(title: title),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -496,7 +497,7 @@ class _FullscreenImagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: PremiumAppBar(title: title),
       body: SafeArea(
         child: Container(
           width: double.infinity,

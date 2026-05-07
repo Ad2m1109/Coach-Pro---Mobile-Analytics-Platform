@@ -9,6 +9,8 @@ import 'package:frontend/models/player.dart'; // New import
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/features/match_statistics/widgets/pass_network_visualizer.dart';
 import 'package:frontend/features/match_statistics/widgets/pitch_division_widget.dart';
+import 'package:frontend/services/analysis_service.dart';
+import 'package:provider/provider.dart';
 
 class MatchStatisticsPage extends StatefulWidget {
   final List<MatchTeamStatistics> teamStats;
@@ -17,6 +19,7 @@ class MatchStatisticsPage extends StatefulWidget {
   final List<PlayerMatchStatistics> playerStats;
   final List<MatchEvent> events;
   final Function(BuildContext context, PlayerMatchStatistics stats, Player player) showPlayerStatsDialog;
+  final String? matchHeatmapUrl;
 
   const MatchStatisticsPage({
     super.key,
@@ -26,6 +29,7 @@ class MatchStatisticsPage extends StatefulWidget {
     required this.playerStats,
     required this.events,
     required this.showPlayerStatsDialog,
+    this.matchHeatmapUrl,
   });
 
   @override
@@ -43,6 +47,10 @@ class _MatchStatisticsPageState extends State<MatchStatisticsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTeamComparison(context, widget.teamStats, widget.homeLineup, widget.awayLineup),
+          if (widget.matchHeatmapUrl != null) ...[
+            const SizedBox(height: AppSpacing.m),
+            _buildGlobalHeatmap(context),
+          ],
           const SizedBox(height: AppSpacing.m),
           _buildPlayerPerformance(context, widget.playerStats, widget.homeLineup, widget.awayLineup),
         ],
@@ -141,6 +149,81 @@ class _MatchStatisticsPageState extends State<MatchStatisticsPage> {
               color: Colors.orange,
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalHeatmap(BuildContext context) {
+    if (widget.matchHeatmapUrl == null) return const SizedBox.shrink();
+
+    final service = context.read<AnalysisService>();
+    final heatmapUrl = service.getFileUrl(widget.matchHeatmapUrl!);
+
+    return CustomCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Match Tactical Snapshot",
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Overall intensity and positioning zones for the full match",
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+          const SizedBox(height: AppSpacing.m),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                children: [
+                  Image.network(
+                    heatmapUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Center(
+                          child: Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      );
+                    },
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'FULL MATCH HEATMAP',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

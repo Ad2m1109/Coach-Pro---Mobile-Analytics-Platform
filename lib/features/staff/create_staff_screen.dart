@@ -5,6 +5,7 @@ import '../../services/staff_service.dart';
 import '../../services/team_service.dart';
 import '../../services/auth_service.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class CreateStaffScreen extends StatefulWidget {
   final Staff? staff;
@@ -147,8 +148,8 @@ class _CreateStaffScreenState extends State<CreateStaffScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.staff == null ? 'Add Staff Member' : 'Edit Staff Member'),
+      appBar: PremiumAppBar(
+        title: widget.staff == null ? 'Add Staff Member' : 'Edit Staff Member',
       ),
       body: _teams.isEmpty
           ? const Center(child: CircularProgressIndicator())

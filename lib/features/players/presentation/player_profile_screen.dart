@@ -8,6 +8,7 @@ import 'package:frontend/services/player_match_statistics_service.dart';
 import 'package:frontend/services/player_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class PlayerProfileScreen extends StatefulWidget {
   final Player player;
@@ -73,17 +74,16 @@ class _PlayerProfileScreenState extends State<PlayerProfileScreen> with SingleTi
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: PremiumAppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.of(context).pop(_profileWasUpdated);
             },
           ),
-          title: Text(_player.name),
+          title: _player.name,
           bottom: TabBar(
             controller: _tabController,
-            indicatorColor: Colors.white,
             indicatorWeight: 3,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [

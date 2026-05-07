@@ -7,6 +7,7 @@ import 'package:frontend/services/tracking_profile_service.dart';
 import 'package:frontend/models/tracking_profile.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class CalibrationScreen extends StatefulWidget {
   final String? matchId;
@@ -111,14 +112,15 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pitch Calibration'),
+      appBar: PremiumAppBar(
+        title: 'Pitch Calibration',
         actions: [
           if (_points.length >= 4)
             TextButton.icon(
               onPressed: _saveCalibration,
               icon: const Icon(Icons.check_circle, color: Colors.green),
-              label: const Text('Save Calibration', style: TextStyle(color: Colors.green)),
+              label: const Text('Save Calibration',
+                  style: TextStyle(color: Colors.green)),
             ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/analyze/presentation/history_screen.dart';
 import 'package:frontend/features/analyze/presentation/new_analysis_screen.dart';
+import 'package:frontend/features/analyze/presentation/history_screen.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 
 class AnalyzeScreen extends StatelessWidget {
@@ -12,10 +13,9 @@ class AnalyzeScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(appLocalizations.analyze),
+        appBar: PremiumAppBar(
+          title: appLocalizations.analyze,
           bottom: TabBar(
-            indicatorColor: Colors.white,
             indicatorWeight: 3,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [

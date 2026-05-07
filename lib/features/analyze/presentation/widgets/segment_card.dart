@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/models/analysis_segment.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend/services/video_analysis_service.dart';
 
 class SegmentCard extends StatefulWidget {
   final AnalysisSegment segment;
@@ -52,6 +54,7 @@ class _SegmentCardState extends State<SegmentCard> {
       padding: EdgeInsets.zero,
       color: Theme.of(context).cardTheme.color,
       child: ExpansionTile(
+        initiallyExpanded: true,
         key: PageStorageKey(widget.segment.id),
         leading: Container(
           width: 44,
@@ -98,9 +101,24 @@ class _SegmentCardState extends State<SegmentCard> {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Text(
-            'Team ${_focusedTeam == 'team_a' ? 'A' : 'B'} Health: ${(teamData['severity_score'] ?? widget.segment.severityScore * 100).toStringAsFixed(1)}%',
-            style: TextStyle(color: Theme.of(context).hintColor, fontSize: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Health: ${(teamData['severity_score'] ?? widget.segment.severityScore * 100).toStringAsFixed(1)}% • Line: ${(teamData['defensive_line'] ?? 0.0).toStringAsFixed(1)}m • Width: ${(teamData['width'] ?? 0.0).toStringAsFixed(1)}m',
+                style: TextStyle(color: Theme.of(context).hintColor, fontSize: 11),
+              ),
+              if (teamLabel != 'LOW')
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    'TACTICAL ALERT: ${widget.segment.recommendation?.split('.').first ?? "Anomalous behavior detected"}',
+                    style: TextStyle(color: severityColor, fontSize: 10, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
           ),
         ),
         children: [
@@ -111,6 +129,8 @@ class _SegmentCardState extends State<SegmentCard> {
               children: [
                 const Divider(),
                 const SizedBox(height: AppSpacing.s),
+                _buildHeatmap(context),
+                const SizedBox(height: AppSpacing.m),
                 _buildMetricsGrid(context, teamData),
                 const SizedBox(height: AppSpacing.m),
                 _buildRecommendationBox(context),
@@ -362,6 +382,75 @@ class _SegmentCardState extends State<SegmentCard> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeatmap(BuildContext context) {
+    if (widget.segment.heatmapPath == null || widget.segment.heatmapPath!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final service = context.read<VideoAnalysisService>();
+    final heatmapUrl = service.getFileUrl(widget.segment.heatmapPath);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'TACTICAL SNAPSHOT',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+                letterSpacing: 1.1,
+              ),
+        ),
+        const SizedBox(height: AppSpacing.s),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.borderRadiusM),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              children: [
+                Image.network(
+                  heatmapUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.black12,
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.black12,
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white24),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'SEGMENT HEATMAP',
+                      style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

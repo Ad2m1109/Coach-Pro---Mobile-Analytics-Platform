@@ -4,6 +4,7 @@ import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/models/event.dart';
 import 'package:frontend/services/event_service.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class EventsSettingsScreen extends StatefulWidget {
   const EventsSettingsScreen({super.key});
@@ -91,8 +92,8 @@ class _EventsSettingsScreenState extends State<EventsSettingsScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.manageEvents),
+      appBar: PremiumAppBar(
+        title: appLocalizations.manageEvents,
       ),
       body: FutureBuilder<List<Event>>(
         future: _eventsFuture,

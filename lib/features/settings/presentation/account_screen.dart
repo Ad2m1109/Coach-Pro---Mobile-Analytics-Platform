@@ -6,6 +6,7 @@ import 'package:frontend/models/user.dart';
 import 'package:frontend/models/team.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -65,9 +66,8 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final apiClient = Provider.of<ApiClient>(context, listen: false);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Account'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      appBar: const PremiumAppBar(
+        title: 'Account',
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _dataFuture,

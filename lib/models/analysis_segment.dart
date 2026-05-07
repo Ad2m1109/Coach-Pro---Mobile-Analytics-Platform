@@ -8,6 +8,8 @@ class AnalysisSegment {
   final double videoStartSec;
   final Map<String, dynamic>? analysisJson;
   final String? recommendation;
+  final String? videoPath;
+  final String? heatmapPath;
   final double severityScore;
   final String severityLabel;
   final String status;
@@ -34,6 +36,8 @@ class AnalysisSegment {
     required this.videoStartSec,
     this.analysisJson,
     this.recommendation,
+    this.videoPath,
+    this.heatmapPath,
     required this.severityScore,
     required this.severityLabel,
     required this.status,
@@ -52,6 +56,8 @@ class AnalysisSegment {
           ? Map<String, dynamic>.from(json['analysis_json'] ?? json['analysis'])
           : null,
       recommendation: json['recommendation'],
+      videoPath: json['video_path'],
+      heatmapPath: json['heatmap_path'],
       severityScore: (json['severity_score'] ?? 0).toDouble(),
       severityLabel: json['severity_label'] ?? 'LOW',
       status: json['status'] ?? 'PENDING',
@@ -68,6 +74,8 @@ class AnalysisSegment {
         'video_start_sec': videoStartSec,
         'analysis_json': analysisJson,
         'recommendation': recommendation,
+        'video_path': videoPath,
+        'heatmap_path': heatmapPath,
         'severity_score': severityScore,
         'severity_label': severityLabel,
         'status': status,

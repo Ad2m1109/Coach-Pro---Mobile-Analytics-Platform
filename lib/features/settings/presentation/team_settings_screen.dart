@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:frontend/models/team.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/services/team_service.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class TeamSettingsScreen extends StatefulWidget {
   const TeamSettingsScreen({super.key});
@@ -103,8 +104,8 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
     final authService = Provider.of<AuthService>(context);
     final canEditTeam = authService.canManageTeam;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.teamSettings),
+      appBar: PremiumAppBar(
+        title: appLocalizations.teamSettings,
       ),
       body: FutureBuilder<List<Team>>(
         future: _teamsFuture,
@@ -115,7 +116,7 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             // No teams found, show create new team form
-            return _buildTeamForm(context, isCreating: true);
+            return _buildTeamForm(context, canEditTeam, isCreating: true);
           }
 
           // Teams found, allow selection and editing
@@ -145,7 +146,8 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
                 ),
               ),
               Expanded(
-                child: _buildTeamForm(context, isCreating: false), // Pass false as it's editing
+                child: _buildTeamForm(context, canEditTeam,
+                    isCreating: false), // Pass false as it's editing
               ),
             ],
           );
@@ -154,7 +156,8 @@ class _TeamSettingsScreenState extends State<TeamSettingsScreen> {
     );
   }
 
-  Widget _buildTeamForm(BuildContext context, {bool isCreating = false}) {
+  Widget _buildTeamForm(BuildContext context, bool canEditTeam,
+      {bool isCreating = false}) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(16.0),

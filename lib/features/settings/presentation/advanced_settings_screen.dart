@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/models/user.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AdvancedSettingsScreen extends StatelessWidget {
   const AdvancedSettingsScreen({super.key});
@@ -15,8 +16,8 @@ class AdvancedSettingsScreen extends StatelessWidget {
     final User? user = authService.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.advancedSettings),
+      appBar: PremiumAppBar(
+        title: appLocalizations.advancedSettings,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),

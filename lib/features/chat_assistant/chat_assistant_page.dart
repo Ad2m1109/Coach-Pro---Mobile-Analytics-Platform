@@ -5,7 +5,9 @@ import 'package:frontend/services/api_client.dart';
 import 'package:frontend/services/assistant_service.dart';
 import 'package:frontend/core/design_system/app_colors.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/app_shadow.dart';
 import 'widgets/chat_message_bubble.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class ChatAssistantPage extends StatefulWidget {
   final bool embedded;
@@ -134,7 +136,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
+      appBar: PremiumAppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -287,21 +289,16 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
     );
   }
 
-  Widget _buildInputArea(bool isDark) {
-    final surfaceColor = isDark ? AppColors.surfaceDark : Colors.white;
+Widget _buildInputArea(bool isDark) {
+    final surfaceColor = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final inputFillColor = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.m, vertical: AppSpacing.s),
       decoration: BoxDecoration(
         color: surfaceColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
+        boxShadow: AppShadow.cardShadowLight,
       ),
       child: Row(
         children: [
@@ -316,9 +313,7 @@ class _ChatAssistantPageState extends State<ChatAssistantPage>
               decoration: InputDecoration(
                 hintText: 'Ask about tactics, formations...',
                 filled: true,
-                fillColor: isDark
-                    ? AppColors.backgroundDark
-                    : AppColors.backgroundLight,
+                fillColor: inputFillColor,
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.m, vertical: AppSpacing.s),
                 border: OutlineInputBorder(

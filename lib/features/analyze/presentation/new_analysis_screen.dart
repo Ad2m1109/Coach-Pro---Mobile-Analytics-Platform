@@ -13,7 +13,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/features/analyze/presentation/widgets/analysis_timeline.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/app_colors.dart';
 import 'package:frontend/models/match_note.dart';
+import 'package:frontend/widgets/common_widgets.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class _LiveChartMetric {
   final String label;
@@ -196,7 +199,24 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             CustomScrollView(
               controller: _scrollController,
               slivers: [
-                _buildSliverAppBar(appLocalizations),
+                SliverToBoxAdapter(
+                  child: PremiumAppBar(
+                    title: appLocalizations.newAnalysis,
+                    actions: [
+                      if (isAnalyzing)
+                        IconButton(
+                          onPressed: () => _showCancelDialog(),
+                          icon: const Icon(Icons.cancel_outlined),
+                          tooltip: 'Cancel Analysis',
+                        ),
+                      IconButton(
+                        icon: Icon(Icons.help_outline,
+                            color: Theme.of(context).colorScheme.primary),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
                 
                 // Show video player - tracking video during analysis, original otherwise
                 SliverToBoxAdapter(
@@ -219,8 +239,13 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                               liveStats: service.liveStats,
                             ),
                           ),
-                        // Control section (only when not analyzing)
-                        if (!isAnalyzing) ...[
+                        
+                        // LIVE TACTICAL FEED (Real-time segment results)
+                        if (isAnalyzing || service.segments.isNotEmpty)
+                          _buildLiveTacticalFeed(service),
+
+                        // Control section (only when not analyzing and no results yet)
+                        if (!isAnalyzing && service.segments.isEmpty) ...[
                           const SizedBox(height: AppSpacing.m),
                           CustomCard(
                             child: _buildControlSection(service, appLocalizations),
@@ -231,61 +256,20 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                   ),
                 ),
 
-                // Segments timeline (when segments exist)
-                if (service.segments.isNotEmpty)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SliverTimelineDelegate(
-                      child: Container(
-                        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.95),
-                        child: AnalysisTimeline(
-                          segments: service.segments,
-                          activeSegmentId: _activeSegmentId,
-                          isAnalyzing: isAnalyzing,
-                          onSegmentTap: (segment) {
-                            setState(() => _activeSegmentId = segment.id);
-                            _scrollToSegment(segment.id);
-                            _seekTo(segment.videoStartSec);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // Show segments list
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == service.segments.length) {
-                          return const SizedBox.shrink();
-                        }
-                        final segment = service.segments[index];
-                        _segmentKeys[segment.id] = _segmentKeys[segment.id] ?? GlobalKey();
-                        return Container(
-                          key: _segmentKeys[segment.id],
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: SegmentCard(
-                            segment: segment,
-                            onPlay: () {
-                              setState(() => _activeSegmentId = segment.id);
-                              _seekTo(segment.videoStartSec);
-                            },
-                          ),
-                        );
-                      },
-                      childCount: service.segments.length,
-                    ),
-                  ),
-                ),
+                // Removed duplicate segment list slivers as they are now in the Feed
 
                 // Always show progress during analysis
                 if (isAnalyzing)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.m),
-                      child: _buildLiveStatsChart(service.liveStats),
+                      child: Column(
+                        children: [
+                          _buildHealthMonitor(service),
+                          const SizedBox(height: AppSpacing.m),
+                          _buildLiveStatsChart(service.liveStats),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -301,35 +285,6 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(AppLocalizations l10n) {
-    final service = context.read<VideoAnalysisService>();
-    final isAnalyzing = service.isAnalyzing;
-
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      elevation: 0,
-      title: Text(
-        l10n.newAnalysis,
-        style: Theme.of(context).appBarTheme.titleTextStyle?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        if (isAnalyzing)
-          IconButton(
-            onPressed: () => _showCancelDialog(),
-            icon: const Icon(Icons.cancel_outlined),
-            tooltip: 'Cancel Analysis',
-          ),
-        IconButton(
-          icon: Icon(Icons.help_outline, color: Theme.of(context).colorScheme.primary),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
 
 
   Widget _buildControlSection(VideoAnalysisService service, AppLocalizations l10n) {
@@ -346,8 +301,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                       children: [
                         Text(
                           _videoFile != null ? 'READY TO ANALYZE' : 'SELECT SOURCE${_cameraCount == 2 ? " 1" : ""}',
-                          style: TextStyle(
-                            fontSize: 10,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                             color: Theme.of(context).colorScheme.primary,
                             letterSpacing: 1.5,
@@ -358,12 +312,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                           _videoFile != null ? _videoFile!.name : 'No video selected',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.s),
                   IconButton.filledTonal(
                     onPressed: _pickVideo,
                     icon: const Icon(Icons.video_library),
@@ -375,7 +329,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 ],
               ),
               if (_cameraCount == 2) ...[
-                const SizedBox(height: AppSpacing.m),
+                const SizedBox(height: AppSpacing.s),
                 Row(
                   children: [
                     Expanded(
@@ -384,8 +338,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                         children: [
                           Text(
                             _videoFile2 != null ? 'SOURCE 2 READY' : 'SELECT SOURCE 2',
-                            style: TextStyle(
-                              fontSize: 10,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: Theme.of(context).colorScheme.primary,
                               letterSpacing: 1.5,
@@ -396,12 +349,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                             _videoFile2 != null ? _videoFile2!.name : 'No video selected',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.s),
                     IconButton.filledTonal(
                       onPressed: _pickVideo2,
                       icon: const Icon(Icons.video_library),
@@ -460,14 +413,20 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   Widget _buildEngineSettings() {
     return CustomCard(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.m),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('ANALYSIS CONFIGURATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
-            const SizedBox(height: 16),
-            const Text('AI Target Focus', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            const SizedBox(height: 8),
+            const SectionHeader(
+              title: 'ANALYSIS CONFIGURATION',
+              color: AppColors.info,
+            ),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              'AI Target Focus',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: "Both", label: Text("Both")),
@@ -481,9 +440,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 });
               },
             ),
-            const SizedBox(height: 24),
-            const Text('ENGINE TUNING', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.m),
+            const SectionHeader(
+              title: 'ENGINE TUNING',
+              color: AppColors.info,
+            ),
+            const SizedBox(height: AppSpacing.s),
             _buildSliderRow(
               label: 'General Detection Threshold',
               value: _detectionThreshold,
@@ -506,10 +468,16 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               max: 60,
               isInteger: true,
             ),
-            const Divider(height: 32),
+            const Divider(height: AppSpacing.l),
             SwitchListTile(
-              title: const Text('Enable Player Re-Identification', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: const Text('Use deep learning models (BoT-SORT/OsNet) to maintain player IDs despite severe occlusions. Slower but more accurate.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              title: Text(
+                'Enable Player Re-Identification',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Use deep learning models (BoT-SORT/OsNet) to maintain player IDs despite severe occlusions. Slower but more accurate.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGreyLight),
+              ),
               value: _enableReid,
               onChanged: (val) {
                 setState(() => _enableReid = val);
@@ -517,13 +485,16 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               contentPadding: EdgeInsets.zero,
             ),
             if (_enableReid)
-               const Padding(
-                 padding: EdgeInsets.only(top: 8.0, bottom: 8.0),
+               Padding(
+                 padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.xs),
                  child: Row(
                    children: [
-                     Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 16),
-                     SizedBox(width: 8),
-                     Expanded(child: Text("Requires significantly more GPU memory.", style: TextStyle(color: Colors.orange, fontSize: 12))),
+                     Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 16),
+                     const SizedBox(width: AppSpacing.xs),
+                     Expanded(child: Text(
+                       "Requires significantly more GPU memory.",
+                       style: TextStyle(color: AppColors.warning, fontSize: 12),
+                     )),
                    ],
                  ),
                ),
@@ -536,14 +507,20 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   Widget _buildCameraConfig() {
     return CustomCard(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.m),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('CAMERA CONFIGURATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.orange)),
-            const SizedBox(height: 16),
-            const Text('Number of Cameras', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            const SizedBox(height: 8),
+            const SectionHeader(
+              title: 'CAMERA CONFIGURATION',
+              color: AppColors.warning,
+            ),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              'Number of Cameras',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             SegmentedButton<int>(
               segments: const [
                 ButtonSegment(value: 1, label: Text("1 Camera")),
@@ -556,9 +533,12 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 });
               },
             ),
-            const SizedBox(height: 16),
-            const Text('Camera Type', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s),
+            Text(
+              'Camera Type',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             SegmentedButton<String>(
               segments: const [
                 ButtonSegment(value: "Fixed", label: Text("Fixed Camera")),
@@ -579,47 +559,51 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
   Widget _buildHealthMonitor(VideoAnalysisService service) {
     if (service.liveStats == null) return const SizedBox.shrink();
-    
-    // Determine health status based on tracking rate
+
     final trackingRate = double.tryParse((service.liveStats!['players_detected'] ?? '0').toString()) ?? 0;
-    final bool isHealthy = trackingRate > 10; // Simple heuristic
+    final bool isHealthy = trackingRate > 10;
 
     return CustomCard(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.m),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Text('SYSTEM HEALTH', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2, color: Colors.blue)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isHealthy ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(isHealthy ? Icons.check_circle : Icons.warning_amber, 
-                           color: isHealthy ? Colors.green : Colors.orange, size: 14),
-                      const SizedBox(width: 4),
-                      Text(isHealthy ? 'OPTIMAL' : 'LOW VISIBILITY', 
-                           style: TextStyle(color: isHealthy ? Colors.green : Colors.orange, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+            SectionHeader(
+              title: 'SYSTEM HEALTH',
+              color: AppColors.info,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.xs),
+                decoration: BoxDecoration(
+                  color: isHealthy ? AppColors.success.withOpacity(0.2) : AppColors.warning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(AppSpacing.borderRadiusS),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(isHealthy ? Icons.check_circle : Icons.warning_amber,
+                           color: isHealthy ? AppColors.success : AppColors.warning, size: 14),
+                    const SizedBox(width: 4),
+                    Text(isHealthy ? 'OPTIMAL' : 'LOW VISIBILITY',
+                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                             color: isHealthy ? AppColors.success : AppColors.warning,
+                             fontWeight: FontWeight.bold,
+                           )),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s),
             LinearProgressIndicator(
               value: isHealthy ? 1.0 : 0.4,
-              backgroundColor: Colors.grey.withOpacity(0.2),
-              color: isHealthy ? Colors.green : Colors.orange,
+              backgroundColor: AppColors.greyLight.withOpacity(0.2),
+              color: isHealthy ? AppColors.success : AppColors.warning,
             ),
-            const SizedBox(height: 8),
-            Text('Confidence: ${isHealthy ? "High" : "Degraded"} (Players: ${trackingRate.toInt()})', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Confidence: ${isHealthy ? "High" : "Degraded"} (Players: ${trackingRate.toInt()})',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGreyLight),
+            ),
           ],
         ),
       ),
@@ -639,9 +623,9 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 13)),
-            Text(isInteger ? value.toInt().toString() : value.toStringAsFixed(2), 
-                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+            Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            Text(isInteger ? value.toInt().toString() : value.toStringAsFixed(2),
+                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold, color: AppColors.info)),
           ],
         ),
         Slider(
@@ -760,6 +744,179 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   }
 
 
+  Widget _buildLiveTacticalFeed(VideoAnalysisService service) {
+    final segments = service.segments;
+    final total = service.totalSegments;
+    final currentCount = segments.length;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.l),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SectionHeader(
+                  title: 'LIVE TACTICAL FEED',
+                  color: AppColors.primary,
+                ),
+                Text(
+                  service.isAnalyzing ? 'Processing Real-time Intelligence' : 'Match Analysis Results',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textGreyLight),
+                ),
+              ],
+            ),
+            if (service.isAnalyzing)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 10,
+                      height: 10,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'SEGMENT ${currentCount + 1}${total > 0 ? "/$total" : ""}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.m),
+        
+        // Horizontal Timeline if segments exist
+        if (segments.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.m),
+            child: AnalysisTimeline(
+              segments: segments,
+              activeSegmentId: _activeSegmentId,
+              isAnalyzing: service.isAnalyzing,
+              onSegmentTap: (segment) {
+                setState(() => _activeSegmentId = segment.id);
+                _scrollToSegment(segment.id);
+                _seekTo(segment.videoStartSec);
+              },
+            ),
+          ),
+
+        // The Results List
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: service.isAnalyzing && total > currentCount ? total : currentCount,
+          itemBuilder: (context, index) {
+            // Newest segments at the top (reverse of chronological if we want streaming feel)
+            // Actually, segments are already inserted at 0 in service.
+            
+            if (index < currentCount) {
+              final segment = segments[index];
+              _segmentKeys[segment.id] = _segmentKeys[segment.id] ?? GlobalKey();
+              return Container(
+                key: _segmentKeys[segment.id],
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SegmentCard(
+                  segment: segment,
+                  onPlay: () {
+                    setState(() => _activeSegmentId = segment.id);
+                    _seekTo(segment.videoStartSec);
+                  },
+                ),
+              );
+            } else if (service.isAnalyzing) {
+              // Show placeholders for future segments
+              return _buildSegmentPlaceholder(index);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSegmentPlaceholder(int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 100,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'AWAITING',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.1),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _scrollToSegment(String segmentId) {
     _scrollController.animateTo(
       _scrollController.offset + 100, // Minimal move to trigger mini-player logic or generic scroll
@@ -836,7 +993,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
             const SizedBox(height: AppSpacing.s),
             Text(
               'Waiting for tactical data...',
-              style: TextStyle(color: Theme.of(context).hintColor),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textGreyLight),
             ),
           ],
         ),
@@ -862,7 +1019,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         child: Center(
           child: Text(
             'Processing player tracking...',
-            style: TextStyle(color: Theme.of(context).hintColor),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textGreyLight),
           ),
         ),
       );
@@ -874,11 +1031,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     final avgSpeed = totalSpeed / playerCount;
 
     final metrics = [
-      _LiveChartMetric('Def Line', avgDefLine, Colors.red),
-      _LiveChartMetric('Width', avgWidth, Colors.blue),
-      _LiveChartMetric('Compact', avgCompact, Colors.green),
-      _LiveChartMetric('Speed', avgSpeed, Colors.orange),
-      _LiveChartMetric('Press', pressingCount.toDouble(), Colors.purple),
+      _LiveChartMetric('Def Line', avgDefLine, AppColors.error),
+      _LiveChartMetric('Width', avgWidth, AppColors.info),
+      _LiveChartMetric('Compact', avgCompact, AppColors.success),
+      _LiveChartMetric('Speed', avgSpeed, AppColors.warning),
+      _LiveChartMetric('Press', pressingCount.toDouble(), AppColors.secondary),
     ];
 
     return CustomCard(

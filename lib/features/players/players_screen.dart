@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/features/players/presentation/add_player_screen.dart';
 import 'package:frontend/features/players/presentation/player_profile_screen.dart';
 import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 import 'package:frontend/models/player.dart';
 import 'package:frontend/services/api_client.dart';
 import 'package:frontend/services/player_service.dart';
@@ -113,8 +114,8 @@ class _PlayersScreenState extends State<PlayersScreen> {
     final canEdit = authService.canManagePlayers;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.players),
+      appBar: PremiumAppBar(
+        title: appLocalizations.players,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70.0),
           child: Padding(

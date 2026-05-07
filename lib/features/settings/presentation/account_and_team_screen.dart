@@ -6,6 +6,7 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/services/team_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AccountAndTeamScreen extends StatefulWidget {
   const AccountAndTeamScreen({super.key});
@@ -244,8 +245,8 @@ class _AccountAndTeamScreenState extends State<AccountAndTeamScreen> {
     final canEditTeam = authService.canManageTeam;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.teamAndAccount),
+      appBar: PremiumAppBar(
+        title: appLocalizations.teamAndAccount,
       ),
       body: FutureBuilder<Team?>(
         future: _teamFuture,

@@ -32,4 +32,82 @@ class AppColors {
   static const Color success = Color(0xFF388E3C);
   static const Color warning = Color(0xFFFBC02D);
   static const Color info = Color(0xFF1976D2);
+
+  // Sports-specific Colors
+  static const Color goalkeeperYellow = Color(0xFFFFB300);
+  static const Color goalkeeperOrange = Color(0xFFFF8C00);
+  static const Color teamA = Color(0xFF2196F3);
+  static const Color teamB = Color(0xFFFF5722);
+  static const Color goalGreen = Color(0xFF4CAF50);
+  static const Color cardYellow = Color(0xFFFFC107);
+  static const Color cardRed = Color(0xFFF44336);
+  static const Color substitutionBlue = Color(0xFF2196F3);
+  static const Color statusPending = Colors.grey;
+  static const Color statusProcessing = Color(0xFF2196F3);
+  static const Color statusCompleted = Color(0xFF4CAF50);
+  static const Color statusFailed = Color(0xFFF44336);
+
+  // Shadow Colors
+  static const Color shadowLight = Color(0x1A000000);
+  static const Color shadowMedium = Color(0x33000000);
+
+  static Color getEventColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'goal':
+        return goalGreen;
+      case 'yellow_card':
+        return cardYellow;
+      case 'red_card':
+        return cardRed;
+      case 'substitution':
+        return substitutionBlue;
+      default:
+        return textGreyLight;
+    }
+  }
+
+  static Color getEventIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'goal':
+        return goalGreen;
+      case 'yellow_card':
+        return cardYellow;
+      case 'red_card':
+        return cardRed;
+      case 'substitution':
+        return substitutionBlue;
+      default:
+        return textGreyLight;
+    }
+  }
+
+  static IconData getEventIconData(String type) {
+    switch (type.toLowerCase()) {
+      case 'goal':
+        return Icons.sports_soccer;
+      case 'yellow_card':
+        return Icons.square;
+      case 'red_card':
+        return Icons.square;
+      case 'substitution':
+        return Icons.swap_horiz;
+      default:
+        return Icons.event_note;
+    }
+  }
+
+  static Color getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return statusPending;
+      case 'PROCESSING':
+        return statusProcessing;
+      case 'COMPLETED':
+        return statusCompleted;
+      case 'FAILED':
+        return statusFailed;
+      default:
+        return statusPending;
+    }
+  }
 }

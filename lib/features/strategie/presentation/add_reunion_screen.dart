@@ -4,6 +4,7 @@ import 'package:frontend/models/reunion.dart';
 import 'package:frontend/services/reunion_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AddReunionScreen extends StatefulWidget {
   const AddReunionScreen({super.key});
@@ -80,8 +81,8 @@ class _AddReunionScreenState extends State<AddReunionScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.addReunion),
+      appBar: PremiumAppBar(
+        title: appLocalizations.addReunion,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

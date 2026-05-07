@@ -9,8 +9,10 @@ import 'package:frontend/services/match_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend/l10n/app_localizations.dart';
 import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/app_colors.dart';
 import 'package:frontend/services/api_client.dart';
 
 class MatchesScreen extends StatefulWidget {
@@ -92,18 +94,7 @@ class _MatchesScreenState extends State<MatchesScreen>
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
-      case 'PENDING':
-        return Colors.grey;
-      case 'PROCESSING':
-        return Colors.blue;
-      case 'COMPLETED':
-        return Colors.green;
-      case 'FAILED':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+    return AppColors.getStatusColor(status);
   }
 
   void _navigateAndRefresh() async {
@@ -124,11 +115,10 @@ class _MatchesScreenState extends State<MatchesScreen>
     final canEdit = authService.hasPermission('edit');
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.matches),
+      appBar: PremiumAppBar(
+        title: appLocalizations.matches,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [

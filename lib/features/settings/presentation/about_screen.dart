@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -8,9 +9,8 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.about),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      appBar: PremiumAppBar(
+        title: appLocalizations.about,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

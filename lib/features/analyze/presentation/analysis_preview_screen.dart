@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:frontend/features/analyze/presentation/widgets/premium_video_player.dart';
 import 'package:frontend/core/design_system/app_colors.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class AnalysisPreviewScreen extends StatefulWidget {
   final AnalysisReport report;
@@ -173,16 +174,18 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
   void _scrollToSegment(int index) {
     if (!_timelineScrollController.hasClients) return;
 
-    // Approximate item width (padding + content)
-    const double itemWidth = 100.0;
+    // Fixed item width for the horizontal list (card width 120 + 8 margin)
+    const double itemWidth = 128.0;
     final double screenWidth = MediaQuery.of(context).size.width;
+    
+    // Center the selected segment in the viewport
     final double targetOffset =
         (index * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
 
     _timelineScrollController.animateTo(
       targetOffset.clamp(0, _timelineScrollController.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.elasticOut,
     );
   }
 
@@ -192,10 +195,8 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(report.inputVideoName ?? 'Analysis Preview'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      appBar: PremiumAppBar(
+        title: report.inputVideoName ?? 'Analysis Preview',
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -250,6 +251,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         ? segment.teamATags
         : segment.teamBTags;
 
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceSubtle = onSurface.withOpacity(0.38);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -260,9 +265,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
               Text(
                 'TACTICAL COMMAND CENTER',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: onSurface,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -270,7 +275,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
               Text(
                 'Live Intelligence Feed',
                 style: TextStyle(
-                  color: Colors.white38,
+                  color: onSurfaceSubtle,
                   fontSize: 10,
                   letterSpacing: 0.5,
                 ),
@@ -288,9 +293,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor.withOpacity(0.3),
+            color: theme.cardColor.withOpacity(0.3),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: onSurface.withOpacity(0.05)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,13 +305,13 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                   Icon(
                     Icons.radar,
                     size: 14,
-                    color: Theme.of(context).primaryColor,
+                    color: theme.primaryColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'TACTICAL STATUS BOARD',
                     style: TextStyle(
-                      color: Theme.of(context).primaryColor.withOpacity(0.7),
+                      color: theme.primaryColor.withOpacity(0.7),
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.1,
@@ -319,22 +324,22 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                 'DEFENSIVE LINE',
                 _getTagForCategory(tags, 'DEFENSIVE_LINE'),
               ),
-              const Divider(height: 12, color: Colors.white12),
+              const Divider(height: 12, color: Colors.transparent),
               _buildStatusReadout(
                 'TEAM WIDTH',
                 _getTagForCategory(tags, 'WIDTH'),
               ),
-              const Divider(height: 12, color: Colors.white12),
+              const Divider(height: 12, color: Colors.transparent),
               _buildStatusReadout(
                 'COMPACTNESS',
                 _getTagForCategory(tags, 'COMPACTNESS'),
               ),
-              const Divider(height: 12, color: Colors.white12),
+              const Divider(height: 12, color: Colors.transparent),
               _buildStatusReadout(
                 'TRANSITION SPEED',
                 _getTagForCategory(tags, 'SPEED'),
               ),
-              const Divider(height: 12, color: Colors.white12),
+              const Divider(height: 12, color: Colors.transparent),
               _buildStatusReadout(
                 'PRESSING SYSTEM',
                 _getTagForCategory(tags, 'PRESSING'),
@@ -351,15 +356,15 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Theme.of(context).primaryColor.withOpacity(0.1),
-                  Colors.white.withOpacity(0.02),
+                  theme.primaryColor.withOpacity(0.1),
+                  onSurface.withOpacity(0.02),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Theme.of(context).primaryColor.withOpacity(0.15),
+                color: theme.primaryColor.withOpacity(0.15),
               ),
             ),
             child: Column(
@@ -371,7 +376,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.05),
+                    color: theme.primaryColor.withOpacity(0.05),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(20),
                     ),
@@ -384,10 +389,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                         size: 16,
                       ),
                       const SizedBox(width: 12),
-                      const Text(
+                      Text(
                         'STRATEGIC INTELLIGENCE BRIEFING',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: onSurface,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -424,10 +429,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                       const SizedBox(height: 8),
                       Text(
                         segment.tacticalNarrative,
-                        style: const TextStyle(
+                        style: TextStyle(
                           height: 1.6,
                           fontSize: 13,
-                          color: Colors.white70,
+                          color: onSurface.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -436,7 +441,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
+                          color: onSurface.withOpacity(0.03),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -454,11 +459,11 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
                                         true
                                     ? segment.recommendation!.trim()
                                     : 'Optimize defensive compactness to minimize vertical gaps.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   height: 1.5,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: onSurface,
                                 ),
                               ),
                             ),
@@ -542,6 +547,10 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       color = isWarning ? AppColors.secondary : AppColors.primary;
     }
 
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+    final onSurfaceSubtle = onSurface.withOpacity(0.38);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -549,8 +558,8 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
           width: 80,
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.white38,
+            style: TextStyle(
+              color: onSurfaceSubtle,
               fontSize: 8,
               fontWeight: FontWeight.bold,
             ),
@@ -564,7 +573,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
               Text(
                 tagText,
                 style: TextStyle(
-                  color: hasComment ? color : Colors.white24,
+                  color: hasComment ? color : onSurfaceSubtle,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
@@ -574,7 +583,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
               Text(
                 comment,
                 style: TextStyle(
-                  color: hasComment ? Colors.white70 : Colors.white10,
+                  color: hasComment ? onSurface.withOpacity(0.7) : onSurface.withOpacity(0.1),
                   fontSize: 11,
                   height: 1.3,
                 ),
@@ -589,7 +598,7 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
             color: color.withOpacity(0.5),
           )
         else
-          Icon(Icons.check_circle_outline, size: 12, color: Colors.white10),
+          Icon(Icons.check_circle_outline, size: 12, color: onSurface.withOpacity(0.1)),
       ],
     );
   }
@@ -635,7 +644,8 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
   }
 
   Widget _buildTeamTab(String teamKey, String label) {
-    final bool isSelected = _focusedTeam == teamKey;
+    final theme = Theme.of(context);
+    final isSelected = _focusedTeam == teamKey;
     return GestureDetector(
       onTap: () => setState(() => _focusedTeam = teamKey),
       child: AnimatedContainer(
@@ -644,14 +654,14 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).primaryColor
+              ? theme.primaryColor
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white38,
+            color: isSelected ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.38),
             fontSize: 9,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
@@ -661,8 +671,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
     );
   }
 
-  // Enhanced Timeline with visual progress bar and segment markers
+  // Enhanced Timeline: Horizontal scrollable list of segment cards
   Widget _buildEnhancedTimeline() {
+    final theme = Theme.of(context);
     if (_segments.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16),
@@ -670,129 +681,154 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
             children: [
+              Container(
+                width: 4,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
-                'Timeline',
+                'MATCH SEGMENTS',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
+                  letterSpacing: 1.2,
+                  fontSize: 12,
                 ),
               ),
               const Spacer(),
               Text(
-                '${_segments.length} segments',
-                style: Theme.of(context).textTheme.bodySmall,
+                '${_segments.length} PHASES',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.38),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+        ),
+        const SizedBox(height: 8),
 
-          // Visual timeline with segment markers
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                // Video progress bar (background)
-                if (_controller != null && _controller!.value.isInitialized)
-                  Positioned(
-                    top: 20,
-                    left: 16,
-                    right: 16,
-                    child: VideoProgressIndicator(
-                      _controller!,
-                      allowScrubbing: true,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      colors: VideoProgressColors(
-                        playedColor: Theme.of(context).primaryColor,
-                        bufferedColor: Colors.white24,
-                        backgroundColor: Colors.white12,
-                      ),
-                    ),
+        // Horizontal scrollable segment list
+        SizedBox(
+          height: 105,
+          child: ListView.builder(
+            controller: _timelineScrollController,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _segments.length,
+            itemBuilder: (context, index) {
+              return _buildSegmentCard(index);
+            },
+          ),
+        ),
+        
+        // Mini progress bar indicating overall video position
+        if (_controller != null && _controller!.value.isInitialized)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: SizedBox(
+                height: 2,
+                child: VideoProgressIndicator(
+                  _controller!,
+                  allowScrubbing: true,
+                  colors: VideoProgressColors(
+                    playedColor: Theme.of(context).primaryColor,
+                    bufferedColor: Colors.white12,
+                    backgroundColor: Colors.white.withOpacity(0.05),
                   ),
-
-                // Segment markers
-                ...List.generate(_segments.length, (i) {
-                  final seg = _segments[i];
-                  final isSelected = i == _selected;
-                  final color = _severityColor(seg.severityLabel);
-
-                  // Calculate position based on segment index (equal spacing)
-                  final double position = i / _segments.length;
-
-                  return Positioned(
-                    left:
-                        16 +
-                        (MediaQuery.of(context).size.width - 32) * position,
-                    top: 10,
-                    child: GestureDetector(
-                      onTap: () => _selectSegment(i),
-                      child: Container(
-                        width: 8,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: isSelected ? color : color.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(4),
-                          border: isSelected
-                              ? Border.all(color: Colors.white, width: 2)
-                              : null,
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-
-                // Playback head (if video is available)
-                if (_controller != null && _controller!.value.isInitialized)
-                  AnimatedBuilder(
-                    animation: _controller!,
-                    builder: (context, _) {
-                      final position = _controller!.value.position.inSeconds
-                          .toDouble();
-                      final duration = _controller!.value.duration.inSeconds
-                          .toDouble();
-                      if (duration == 0) return const SizedBox.shrink();
-
-                      final progress = position / duration;
-                      return Positioned(
-                        left:
-                            16 +
-                            (MediaQuery.of(context).size.width - 32) *
-                                progress -
-                            6,
-                        top: 14,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(
-                                  context,
-                                ).primaryColor.withOpacity(0.5),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-              ],
+                ),
+              ),
             ),
           ),
-        ],
+      ],
+    );
+  }
+
+  Widget _buildSegmentCard(int index) {
+    final seg = _segments[index];
+    final isSelected = index == _selected;
+    final color = _severityColor(seg.severityLabel);
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
+    return GestureDetector(
+      onTap: () => _selectSegment(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 130,
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? color.withOpacity(0.2) 
+              : theme.cardColor.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color : onSurface.withOpacity(0.12),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 1,
+            )
+          ] : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'PHASE ${seg.segmentIndex + 1}',
+              style: TextStyle(
+                color: isSelected ? onSurface : onSurface.withOpacity(0.38),
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              _formatTime(seg.startSec),
+              style: TextStyle(
+                color: isSelected ? onSurface : onSurface.withOpacity(0.7),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                seg.severityLabel.toUpperCase(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 7,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -838,6 +874,9 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
 
           // Per-segment chart (5 tactical metrics)
           _buildSegmentMetricsChart(currentSeg),
+
+          const SizedBox(height: 16),
+          _buildHeatmap(currentSeg),
 
           const SizedBox(height: 16),
 
@@ -950,6 +989,73 @@ class _AnalysisPreviewScreenState extends State<AnalysisPreviewScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeatmap(AnalysisSegment segment) {
+    if (segment.heatmapPath == null || segment.heatmapPath!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final service = context.read<AnalysisService>();
+    final heatmapUrl = service.getFileUrl(segment.heatmapPath);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildBriefHeader('TACTICAL SNAPSHOT'),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              children: [
+                Image.network(
+                  heatmapUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.white.withOpacity(0.05),
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.white.withOpacity(0.05),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white10),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'ZONE HEATMAP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,11 +4,11 @@ import 'package:frontend/models/match.dart';
 import 'package:frontend/models/match_details.dart';
 import 'package:frontend/models/match_event.dart';
 import 'package:frontend/models/player_match_statistics.dart';
-import 'package:frontend/models/player.dart'; // New import
+import 'package:frontend/models/player.dart';
 import 'package:frontend/services/match_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:frontend/features/players/presentation/player_profile_screen.dart'; // New import
+import 'package:frontend/features/players/presentation/player_profile_screen.dart';
 import 'package:frontend/features/match_statistics/presentation/match_lineups_page.dart';
 import 'package:frontend/features/match_statistics/presentation/match_statistics_page.dart';
 import 'package:frontend/models/match_note.dart';
@@ -17,7 +17,9 @@ import 'package:frontend/services/api_client.dart';
 import 'package:frontend/features/match_statistics/presentation/tactical_dashboard_page.dart';
 
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/app_colors.dart';
 import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class MatchStatisticsScreen extends StatefulWidget {
   final Match match;
@@ -30,18 +32,31 @@ class MatchStatisticsScreen extends StatefulWidget {
 
 class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with SingleTickerProviderStateMixin {
   late Future<MatchDetails> _detailsFuture;
+  late Future<Map<String, dynamic>?> _analysisFuture;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _detailsFuture = Provider.of<MatchService>(context, listen: false).getMatchDetails(widget.match.id);
+    final matchService = Provider.of<MatchService>(context, listen: false);
+    final apiClient = Provider.of<ApiClient>(context, listen: false);
+    
+    _detailsFuture = matchService.getMatchDetails(widget.match.id);
+    _analysisFuture = apiClient.get('/matches/${widget.match.id}/analysis')
+        .then((data) => data != null ? Map<String, dynamic>.from(data as Map) : null)
+        .catchError((_) => null);
+        
     _tabController = TabController(length: 5, vsync: this);
   }
 
   void _refreshMatchDetails() {
+    final matchService = Provider.of<MatchService>(context, listen: false);
+    final apiClient = Provider.of<ApiClient>(context, listen: false);
     setState(() {
-      _detailsFuture = Provider.of<MatchService>(context, listen: false).getMatchDetails(widget.match.id);
+      _detailsFuture = matchService.getMatchDetails(widget.match.id);
+      _analysisFuture = apiClient.get('/matches/${widget.match.id}/analysis')
+          .then((data) => data != null ? Map<String, dynamic>.from(data as Map) : null)
+          .catchError((_) => null);
     });
   }
 
@@ -55,11 +70,10 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.matchReport),
+      appBar: PremiumAppBar(
+        title: appLocalizations.matchReport,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: [
@@ -71,18 +85,25 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
           ],
         ),
       ),
-      body: FutureBuilder<MatchDetails>(
-        future: _detailsFuture,
+      body: FutureBuilder<List<dynamic>>(
+        future: Future.wait([_detailsFuture, _analysisFuture]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('${appLocalizations.errorWithMessage(snapshot.error.toString())}'));
-          } else if (!snapshot.hasData) {
+          } else if (!snapshot.hasData || snapshot.data![0] == null) {
             return Center(child: Text(appLocalizations.noDetailsFoundForThisMatch));
           }
 
-          final details = snapshot.data!;
+          final details = snapshot.data![0] as MatchDetails;
+          final analysis = snapshot.data![1] as Map<String, dynamic>?;
+          
+          final outputs = analysis != null && analysis['outputs'] is Map
+              ? Map<String, dynamic>.from(analysis['outputs'] as Map)
+              : <String, dynamic>{};
+          
+          final heatmapPath = outputs['heatmap_image_path'] as String?;
 
           return TabBarView(
             controller: _tabController,
@@ -102,6 +123,7 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
                 playerStats: details.playerStats,
                 events: details.events,
                 showPlayerStatsDialog: _showPlayerStatsDialog,
+                matchHeatmapUrl: heatmapPath,
               ),
               _buildNotesTab(appLocalizations),
               TacticalDashboardPage(
@@ -264,33 +286,11 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
   }
 
   IconData _getEventIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'goal':
-        return Icons.sports_soccer;
-      case 'yellow_card':
-        return Icons.square;
-      case 'red_card':
-        return Icons.square;
-      case 'substitution':
-        return Icons.swap_horiz;
-      default:
-        return Icons.event_note;
-    }
+    return AppColors.getEventIconData(type);
   }
 
   Color _getEventColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'goal':
-        return Colors.green;
-      case 'yellow_card':
-        return Colors.amber;
-      case 'red_card':
-        return Colors.red;
-      case 'substitution':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
+    return AppColors.getEventColor(type);
   }
 
   void _showPlayerStatsDialog(BuildContext context, PlayerMatchStatistics stats, Player player) {
@@ -488,11 +488,11 @@ class _MatchStatisticsScreenState extends State<MatchStatisticsScreen> with Sing
   Color _getNoteTypeColor(NoteType type, BuildContext context) {
     switch (type) {
       case NoteType.preMatch:
-        return Colors.blue;
+        return AppColors.info;
       case NoteType.liveReaction:
-        return Colors.orange;
+        return AppColors.warning;
       case NoteType.tactical:
-        return Colors.purple;
+        return AppColors.secondary;
     }
   }
 

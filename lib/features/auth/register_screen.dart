@@ -10,6 +10,7 @@ import 'package:frontend/features/auth/widgets/email_verification_dialog.dart';
 import 'package:frontend/widgets/custom_text_field.dart';
 import 'package:frontend/widgets/custom_button.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -137,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
     final authService = context.watch<AuthService>();
     return Scaffold(
-      appBar: AppBar(title: Text(appLocalizations.register)),
+      appBar: PremiumAppBar(title: appLocalizations.register),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.l),

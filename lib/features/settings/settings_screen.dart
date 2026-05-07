@@ -13,6 +13,7 @@ import 'package:frontend/services/chat_bubble_notifier.dart';
 
 import 'package:frontend/widgets/custom_card.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -79,18 +80,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.settings),
+      appBar: PremiumAppBar(
+        title: appLocalizations.settings,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70.0),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m, vertical: AppSpacing.s),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.m, vertical: AppSpacing.s),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
                 labelText: appLocalizations.searchSettings,
                 prefixIcon: const Icon(Icons.search),
-                contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s, horizontal: AppSpacing.m),
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.s, horizontal: AppSpacing.m),
               ),
               style: const TextStyle(fontSize: 14.0),
             ),

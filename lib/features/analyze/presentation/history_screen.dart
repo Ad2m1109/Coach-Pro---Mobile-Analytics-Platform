@@ -7,6 +7,7 @@ import 'package:frontend/features/analyze/presentation/widgets/segment_card.dart
 import 'package:frontend/features/analyze/presentation/widgets/premium_video_player.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -497,10 +498,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(appLocalizations.history),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      appBar: PremiumAppBar(
+        title: appLocalizations.history,
       ),
       body: Consumer<AnalysisService>(
         builder: (context, analysisService, child) {

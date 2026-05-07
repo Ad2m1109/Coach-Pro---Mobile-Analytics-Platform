@@ -7,6 +7,7 @@ import 'package:frontend/models/tracking_profile.dart';
 import 'package:frontend/services/tracking_profile_service.dart';
 import 'package:frontend/core/design_system/app_spacing.dart';
 import 'package:frontend/widgets/custom_card.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class SyncCalibrationScreen extends StatefulWidget {
   final String? matchId;
@@ -72,14 +73,15 @@ class _SyncCalibrationScreenState extends State<SyncCalibrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Multi-Camera Sync'),
+      appBar: PremiumAppBar(
+        title: 'Multi-Camera Sync',
         actions: [
           if (_video1 != null && _video2 != null)
             TextButton.icon(
               onPressed: _saveSyncData,
               icon: const Icon(Icons.check_circle, color: Colors.green),
-              label: const Text('Save Sync', style: TextStyle(color: Colors.green)),
+              label:
+                  const Text('Save Sync', style: TextStyle(color: Colors.green)),
             ),
         ],
       ),

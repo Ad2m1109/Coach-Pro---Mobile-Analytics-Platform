@@ -111,4 +111,14 @@ class AnalysisService with ChangeNotifier {
       return [];
     }
   }
+
+  String getFileUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    final token = _apiClient.token;
+    final encodedPath = Uri.encodeQueryComponent(path);
+    if (token != null && token.isNotEmpty) {
+      return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath&access_token=$token';
+    }
+    return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath';
+  }
 }

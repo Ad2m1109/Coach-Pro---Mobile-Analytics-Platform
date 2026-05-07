@@ -4,6 +4,7 @@ import '../../services/staff_service.dart';
 import '../../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'create_staff_screen.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 
 class StaffListScreen extends StatefulWidget {
   const StaffListScreen({Key? key}) : super(key: key);
@@ -115,8 +116,8 @@ class _StaffListScreenState extends State<StaffListScreen> {
     final canManageAccounts = authService.canManageAccounts;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Staff Members'),
+      appBar: PremiumAppBar(
+        title: 'Staff Members',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

@@ -4,6 +4,7 @@ import 'package:frontend/models/match.dart';
 import 'package:frontend/services/match_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
 import 'package:frontend/models/event.dart';
 import 'package:frontend/services/event_service.dart';
 
@@ -117,8 +118,8 @@ class _AddMatchScreenState extends State<AddMatchScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.addNewMatch),
+      appBar: PremiumAppBar(
+        title: appLocalizations.addNewMatch,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

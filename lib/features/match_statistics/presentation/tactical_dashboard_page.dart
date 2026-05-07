@@ -321,8 +321,91 @@ class _TacticalDashboardPageState extends State<TacticalDashboardPage> {
               _buildStatusReadout('PRESSING', _getTagForCategory(tags, 'PRESSING')),
             ],
           ),
+          const SizedBox(height: 24),
+          _buildHeatmap(segment),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeatmap(AnalysisSegment segment) {
+    if (segment.heatmapPath == null || segment.heatmapPath!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final service = context.read<AnalysisService>();
+    final heatmapUrl = service.getFileUrl(segment.heatmapPath);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.camera_alt_outlined, size: 14, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              'TACTICAL SNAPSHOT',
+              style: TextStyle(
+                color: Theme.of(context).primaryColor.withOpacity(0.7),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              children: [
+                Image.network(
+                  heatmapUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.white.withOpacity(0.05),
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.white.withOpacity(0.05),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, color: Colors.white10),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'ZONE HEATMAP',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

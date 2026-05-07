@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/services/theme_notifier.dart';
-import 'package:frontend/l10n/app_localizations.dart'; // New import
-import 'package:frontend/services/locale_notifier.dart'; // New import
+import 'package:frontend/l10n/app_localizations.dart';
+import 'package:frontend/core/design_system/widgets/premium_app_bar.dart';
+import 'package:frontend/services/locale_notifier.dart';
 
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
@@ -66,9 +67,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     final appLocalizations = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations!.language), // Use localized string
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      appBar: PremiumAppBar(
+        title: appLocalizations.preferences,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),

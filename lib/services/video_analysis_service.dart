@@ -24,6 +24,7 @@ class VideoAnalysisService extends ChangeNotifier {
   bool _isCanceling = false;
   bool _isRetrying = false;
   List<AnalysisSegment> _segments = [];
+  int _totalSegments = 0;
   StreamSubscription? _sseSubscription;
 
   bool get isAnalyzing => _isAnalyzing;
@@ -41,6 +42,7 @@ class VideoAnalysisService extends ChangeNotifier {
   String? get originalVideoUrl => _originalVideoUrl;
   String? get trackingVideoUrl => _trackingVideoUrl;  // Getter for streaming tracking video
   List<AnalysisSegment> get segments => _segments;
+  int get totalSegments => _totalSegments;
 
   VideoAnalysisService({required ApiClient apiClient}) : _apiClient = apiClient;
 
@@ -166,6 +168,7 @@ class VideoAnalysisService extends ChangeNotifier {
             : null;
 
         _segments = [];
+        _totalSegments = 0;
         notifyListeners();
 
         if (analysisId.isNotEmpty) {
@@ -222,6 +225,10 @@ class VideoAnalysisService extends ChangeNotifier {
                   (statusData['live_stats'] is Map ? Map<String, dynamic>.from(statusData['live_stats']) : null) ??
                   _liveStats,
             );
+            if (statusData['total_segments'] != null) {
+              _totalSegments = (statusData['total_segments'] as num).toInt();
+              notifyListeners();
+            }
           }
 
           final status = (statusData['status'] as String? ?? '').toUpperCase();
@@ -297,7 +304,10 @@ class VideoAnalysisService extends ChangeNotifier {
                 final data = line.substring(6);
                 try {
                   final payload = Map<String, dynamic>.from(json.decode(data));
-                  if (payload['type'] == 'segment' ||
+                  if (payload['type'] == 'start' || payload['status'] == 'START') {
+                    _totalSegments = payload['total_segments'] ?? 0;
+                    notifyListeners();
+                  } else if (payload['type'] == 'segment' ||
                       payload['status'] == 'SEGMENT_DONE') {
                     final segment = AnalysisSegment.fromJson(payload);
                     _segments.insert(0, segment); // Newest first
@@ -425,5 +435,15 @@ class VideoAnalysisService extends ChangeNotifier {
       _isRetrying = false;
       notifyListeners();
     }
+  }
+
+  String getFileUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    final token = _apiClient.token;
+    final encodedPath = Uri.encodeQueryComponent(path);
+    if (token != null && token.isNotEmpty) {
+      return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath&access_token=$token';
+    }
+    return '${_apiClient.baseUrl}/analysis/files?path=$encodedPath';
   }
 }
